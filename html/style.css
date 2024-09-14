@@ -3,9 +3,9 @@
     --BGCOLOR1: #F8F8F8;
     --BGCOLOR2: #CCCCCC;
     --ACCENT: #00596b;
-    --FS1: calc( 10px * var(--SCALE));
-    --FS2: calc( 13px * var(--SCALE));
-    --FS3: calc( 17px * var(--SCALE));
+    --FS1: calc( 11px * var(--SCALE));
+    --FS2: calc( 14px * var(--SCALE));
+    --FS3: calc( 18px * var(--SCALE));
     --TXTCOLOR1: #003f4b;
     --TXTCOLOR2: #050505;
     --TXTCOLOR3: #101010;
@@ -41,11 +41,13 @@ select {
 }
 
 #selected_infoblock {
+    border-radius: calc( 10px * var(--SCALE));
     position: absolute;
-    left: 0px;
-    bottom: 0px;
-    width:  calc(180px * var(--SCALE));
-    height: 100%;
+    left: 10px;
+    top: 10px;
+    bottom: 10px;
+    width:  calc(260px * var(--SCALE));
+    height: calc(100% - 20px);
     overflow: auto;
     z-index: 1;
     background-color: var(--BGCOLOR1);
@@ -66,9 +68,11 @@ select {
     opacity: 0.12;
 }
 #infoblock-container {
+    padding-left: 12px;
+    padding-right: 12px;
     position:relative;
     overflow: auto;
-    height: 100%;
+    height: calc(100% - 20px);
     z-index:3;
 }
 #sidebar_canvas {
@@ -398,11 +402,19 @@ select.error, textarea.error, input.error {
 }
 
 .sectionTitle {
+    border-radius: calc(10px*var(--SCALE)) calc(10px*var(--SCALE)) 0px 0px;
     width: 100%;
     text-transform: uppercase;
     text-align: center;
     color: #e8e8e8;
-    background: #003f4b;
+    background: #515151;
+    font-weight: bold;
+}
+
+.sectionTitleNoBg {
+    margin-top: 21px;
+    background: none;
+    margin-bottom: 10px;
 }
 
 .section-title-content {
@@ -512,18 +524,24 @@ select.error, textarea.error, input.error {
     position: absolute;
     left: calc( 40px * var(--SCALE));
     top: calc( 60px * var(--SCALE));
-    min-width:  calc(132px * var(--SCALE));
-    padding-right: calc( 5px * var(--SCALE));
+    min-width:  calc(155px * var(--SCALE));
     box-shadow: calc( 4px * var(--SCALE)) calc( 4px * var(--SCALE)) calc( 10px * var(--SCALE)) #444444;
     cursor: pointer;
     z-index: 9999;
     display: none;
+    padding-left: calc( 7px * var(--SCALE));
+    padding-right: calc( 7px * var(--SCALE));
+    border-radius: calc( 8px * var(--SCALE));
 }
 
 .highlightedTitle {
     border-bottom: calc( 1px * var(--SCALE)) solid #67b6c3;
     display: inline-block;
     width: 90%;
+    background-color: transparent !important;
+    border-radius: 0px 0px 0px 0px;
+    border: none;
+    margin-top: 10px;
 }
 
 .identLarge {
@@ -587,6 +605,13 @@ table.infoSectionTable tr td {
     padding-bottom: calc( 7px * var(--SCALE));
     padding-left: calc( 7px * var(--SCALE));
     padding-right: calc( 7px * var(--SCALE));
+    background: #515151;    
+    margin-bottom: 10px;
+    border-radius: 0px 0px calc(10px*var(--SCALE)) calc(10px*var(--SCALE)) ;
+}
+
+.infoBlockSectionRoundedTop {
+    border-radius: calc(8px*var(--SCALE)) calc(8px*var(--SCALE)) calc(8px*var(--SCALE)) calc(8px*var(--SCALE))  !important;
 }
 
 .largeText a {
@@ -667,7 +692,7 @@ table.infoSectionTable tr td {
 
 .infoblockCloseBox {
     position: absolute;
-    right: calc( 20px * var(--SCALE));
+    right: calc( 32px * var(--SCALE));
     top: calc( 8px * var(--SCALE));
     background-image: url('images/close-settings.png');
     background-size: cover;
@@ -912,4 +937,8 @@ input{
 }
 #replaySpeedHint{
   grid-area: speedHint;
+}
+
+.exportButton {
+    width: 100%;
 }

@@ -4646,7 +4646,7 @@ function adjustInfoBlock() {
             jQuery('#credits').css('bottom', '295px');
             jQuery('#credits').css('left', '5px');
         } else {
-            jQuery('#selected_infoblock').css('height', '100%');
+            jQuery('#selected_infoblock').css('height', 'calc(100% - 20px)');
             jQuery('#credits').css('bottom', '');
             jQuery('#credits').css('left', '');
         }
@@ -4666,7 +4666,7 @@ function adjustInfoBlock() {
     }
 
     let photoWidth = document.getElementById('photo_container').clientWidth;
-    let refWidth = infoBlockWidth * globalScale - 29;
+    let refWidth = infoBlockWidth * globalScale - 53;
     if (Math.abs(photoWidth / refWidth - 1) > 0.05)
         photoWidth = refWidth;
 
@@ -6659,7 +6659,7 @@ function setLineWidth() {
     labelFill = new ol.style.Fill({color: 'white' });
     blackFill = new ol.style.Fill({color: 'black' });
     labelStroke = new ol.style.Stroke({color: 'rgba(0,0,0,0.7', width: 4 * globalScale});
-    labelStrokeNarrow = new ol.style.Stroke({color: 'rgba(0,0,0,0.7', width: 2.5 * globalScale});
+    labelStrokeNarrow = new ol.style.Stroke({color: 'rgba(0,0,0,0.7', width: 3 * globalScale});
     bgFill = new ol.style.Stroke({color: 'rgba(0,0,0,0.25'});
 }
 let lastCallLocationChange = 0;

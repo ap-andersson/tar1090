@@ -27,7 +27,7 @@
     <div id="layout_container">
 
       <div id="highlighted_infoblock" style="pointer-events: none">
-        <div class="highlightedTitle infoBlockSection">
+        <div class="infoBlockSection highlightedTitle">
           <div>
             <span class="identLarge"><span id="highlighted_callsign">n/a</span></span>
           </div>
@@ -35,7 +35,7 @@
             <span class="identSmall"><span id="highlighted_pf_route"></span></span>
           </div>
         </div>
-        <div class="infoBlockSection">
+        <div class="infoBlockSection infoBlockSectionRoundedTop">
           <div>
             <div class="infoHeading"><span>Reg.: </span></div>
             <div class="infoData"><span id="highlighted_registration">n/a</span></div>
@@ -142,7 +142,7 @@
               <span><a class="link" target="_blank" href="https://en.wikipedia.org/wiki/Aviation_transponder_interrogation_modes#ICAO_24-bit_address" rel="noreferrer">What is a hex ID?</a></span>
             </div>
           </div>
-          <div id=reg_info class="infoBlockSection">
+          <div id=reg_info class="infoBlockSection infoBlockSectionRoundedTop">
             <table class="infoSectionTable">
               <tr id=pf_info_container class=>
                 <td>
@@ -718,14 +718,14 @@
               </div>
           </div>
 
-          <div class="sectionTitle">
+          <div class="sectionTitle sectionTitleNoBg">
             <div class="section-title-content">
               Export KML
             </div>
           </div>
-          <button id="export_kml_geom" onclick='exportKML("geom")'>geometric altitude (EGM96)</button>
-          <button id="export_kml_geom_avg" onclick='exportKML("geom_avg")'>baro + avg.(EGM96 - baro)</button>
-          <button id="export_kml_baro" onclick='exportKML("baro")'>uncorrected pressure alt.</button>
+          <button id="export_kml_geom" class="exportButton" onclick='exportKML("geom")'>geometric altitude (EGM96)</button>
+          <button id="export_kml_geom_avg" class="exportButton" onclick='exportKML("geom_avg")'>baro + avg.(EGM96 - baro)</button>
+          <button id="export_kml_baro" class="exportButton" onclick='exportKML("baro")'>uncorrected pressure alt.</button>
 
         </div>
       </div> <!-- selected_infoblock -->
