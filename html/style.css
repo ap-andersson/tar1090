@@ -651,6 +651,7 @@ table.infoSectionTable tr td {
     z-index: 9999;
     display: none;
     background-color: var(--BGCOLOR1);
+    border-radius: calc( 10px * var(--SCALE));
 }
 
 .settingsColumn {
