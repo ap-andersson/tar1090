@@ -361,7 +361,7 @@ let windLabelsSlim = false;
 let showLabelUnits = true;
 
 let wideInfoBlock = false;
-let baseInfoBlockWidth = 200;
+let baseInfoBlockWidth = 260;
 
 // enable DWD Radolan (NEXRAD like weather for Germany)
 let enableDWD = true;

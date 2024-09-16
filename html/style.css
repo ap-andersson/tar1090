@@ -3,9 +3,9 @@
     --BGCOLOR1: #F8F8F8;
     --BGCOLOR2: #CCCCCC;
     --ACCENT: #00596b;
-    --FS1: calc( 10px * var(--SCALE));
-    --FS2: calc( 13px * var(--SCALE));
-    --FS3: calc( 17px * var(--SCALE));
+    --FS1: calc( 11px * var(--SCALE));
+    --FS2: calc( 14px * var(--SCALE));
+    --FS3: calc( 18px * var(--SCALE));
     --TXTCOLOR1: #003f4b;
     --TXTCOLOR2: #050505;
     --TXTCOLOR3: #101010;
@@ -41,14 +41,16 @@ select {
 }
 
 #selected_infoblock {
+    border-radius: calc( 10px * var(--SCALE));
     position: absolute;
-    left: 0px;
-    bottom: 0px;
-    width:  calc(180px * var(--SCALE));
-    height: 100%;
+    left: 10px;
+    top: 10px;
+    bottom: 10px;
+    width:  calc(260px * var(--SCALE));
+    height: calc(100% - 20px);
     overflow: auto;
     z-index: 1;
-    background-color: var(--BGCOLOR1);
+    background-color: var(--BGCOLOR2);
 }
 .aggregator-selected-bg:before {
     content: ' ';
@@ -66,9 +68,11 @@ select {
     opacity: 0.12;
 }
 #infoblock-container {
+    padding-left: 12px;
+    padding-right: 12px;
     position:relative;
     overflow: auto;
-    height: 100%;
+    height: calc(100% - 20px);
     z-index:3;
 }
 #sidebar_canvas {
@@ -117,22 +121,11 @@ select {
 
 #toggle_sidebar_button.show_sidebar {
     transform: scaleX(-1);
-    background-image: url("images/hide_sidebar.png");
-}
-
-#toggle_sidebar_button.hide_sidebar {
-    background-image: url("images/hide_sidebar.png");
-}
-
-#shrink_sidebar_button {
-    background-image: url("images/hide_sidebar.png");
 }
 
 #expand_sidebar_button {
     transform: scaleX(-1);
-    background-image: url("images/hide_sidebar.png");
 }
-
 
 #credits {
     display: flex;
@@ -354,16 +347,18 @@ select.error, textarea.error, input.error {
 }
 
 .layer-switcher {
-    top: calc( 3px * var(--SCALE)) !important;
-    right: calc( 44px * var(--SCALE)) !important;
+    top: calc( 6px * var(--SCALE)) !important;
+    right: calc( 50px * var(--SCALE)) !important;
     z-index: 999;
+    border-radius: calc( 4px * var(--SCALE));
 }
 .layer-switcher button {
     background-size: calc( 26px * var(--SCALE)) calc( 26px * var(--SCALE));
     background-repeat: no-repeat;
     background-position: center;
     width: calc( 30px * var(--SCALE));
-    height: calc( 30px * var(--SCALE));
+    height: calc( 28px * var(--SCALE));
+    border-radius: calc( 4px * var(--SCALE));
 }
 .layer-switcher !.shown {
     top: calc( 3px * var(--SCALE)) !important;
@@ -398,11 +393,18 @@ select.error, textarea.error, input.error {
 }
 
 .sectionTitle {
+    border-radius: calc(10px*var(--SCALE)) calc(10px*var(--SCALE)) 0px 0px;
     width: 100%;
     text-transform: uppercase;
     text-align: center;
-    color: #e8e8e8;
-    background: #003f4b;
+    background: var(--BGCOLOR1);
+    font-weight: bold;
+}
+
+.sectionTitleNoBg {
+    margin-top: 21px;
+    background: none;
+    margin-bottom: 10px;
 }
 
 .section-title-content {
@@ -458,23 +460,42 @@ select.error, textarea.error, input.error {
     border-radius: calc( 2px * var(--SCALE));
 }
 
+.button-fa {
+    background-color: var(--ACCENT);
+    width: calc( 30px * var(--SCALE));
+    height: calc( 28px * var(--SCALE));
+    cursor: pointer;
+    margin: calc( 4px * var(--SCALE));
+    display: inline-block;
+    border-radius: calc( 4px * var(--SCALE));
+    font-size: calc( 20px * var(--SCALE));
+    padding-top: 4px;
+}
+
 .fullscreenButton {
     background-image: url('images/fullscreen.svg');
     background-size: 90%;
 }
 
 .settingsCog {
-    background-image: url('images/cog-white.svg');
-    background-size: 120%;
+    margin-top: calc( 12px * var(--SCALE));
+    margin-bottom: calc( 12px * var(--SCALE));
+}
+
+#toggle_sidebar_control,
+#expand_sidebar_control,
+#shrink_sidebar_control,
+.settingsCog {
+    color: #fff;
 }
 
 
 .button {
     background-color: var(--ACCENT);
-    width: calc( 27px * var(--SCALE));
-    height: calc( 27px * var(--SCALE));
-    border-radius: calc( 2px * var(--SCALE));
-    margin: calc( 2px * var(--SCALE));
+    width: calc( 30px * var(--SCALE));
+    height: calc( 28px * var(--SCALE));
+    border-radius: calc( 4px * var(--SCALE));
+    margin: calc( 4px * var(--SCALE));
     display: inline-block;
     cursor: pointer;
     text-align: center;
@@ -512,18 +533,24 @@ select.error, textarea.error, input.error {
     position: absolute;
     left: calc( 40px * var(--SCALE));
     top: calc( 60px * var(--SCALE));
-    min-width:  calc(132px * var(--SCALE));
-    padding-right: calc( 5px * var(--SCALE));
+    min-width:  calc(155px * var(--SCALE));
     box-shadow: calc( 4px * var(--SCALE)) calc( 4px * var(--SCALE)) calc( 10px * var(--SCALE)) #444444;
     cursor: pointer;
     z-index: 9999;
     display: none;
+    padding-left: calc( 7px * var(--SCALE));
+    padding-right: calc( 7px * var(--SCALE));
+    border-radius: calc( 8px * var(--SCALE));
 }
 
 .highlightedTitle {
     border-bottom: calc( 1px * var(--SCALE)) solid #67b6c3;
     display: inline-block;
     width: 90%;
+    background-color: transparent !important;
+    border-radius: 0px 0px 0px 0px;
+    border: none;
+    margin-top: 10px;
 }
 
 .identLarge {
@@ -587,6 +614,13 @@ table.infoSectionTable tr td {
     padding-bottom: calc( 7px * var(--SCALE));
     padding-left: calc( 7px * var(--SCALE));
     padding-right: calc( 7px * var(--SCALE));
+    background: var(--BGCOLOR1);
+    margin-bottom: 10px;
+    border-radius: 0px 0px calc(10px*var(--SCALE)) calc(10px*var(--SCALE));
+}
+
+.infoBlockSectionRoundedTop {
+    border-radius: calc(8px*var(--SCALE)) calc(8px*var(--SCALE)) calc(8px*var(--SCALE)) calc(8px*var(--SCALE))  !important;
 }
 
 .largeText a {
@@ -626,6 +660,7 @@ table.infoSectionTable tr td {
     z-index: 9999;
     display: none;
     background-color: var(--BGCOLOR1);
+    border-radius: calc( 10px * var(--SCALE));
 }
 
 .settingsColumn {
@@ -667,7 +702,7 @@ table.infoSectionTable tr td {
 
 .infoblockCloseBox {
     position: absolute;
-    right: calc( 20px * var(--SCALE));
+    right: calc( 32px * var(--SCALE));
     top: calc( 8px * var(--SCALE));
     background-image: url('images/close-settings.png');
     background-size: cover;
@@ -912,4 +947,8 @@ input{
 }
 #replaySpeedHint{
   grid-area: speedHint;
+}
+
+.exportButton {
+    width: 100%;
 }
