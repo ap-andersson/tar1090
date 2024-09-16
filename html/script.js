@@ -1175,8 +1175,8 @@ function earlyInitPage() {
     });
 
     // Set up event handlers for buttons
-    jQuery("#expand_sidebar_button").click(expandSidebar);
-    jQuery("#shrink_sidebar_button").click(showMap);
+    jQuery("#expand_sidebar_control").click(expandSidebar);
+    jQuery("#shrink_sidebar_control").click(showMap);
 
     jQuery("#altimeter_form").submit(onAltimeterChange);
     jQuery("#altimeter_set_standard").click(onAltimeterSetStandard);
@@ -1534,12 +1534,12 @@ jQuery('#selected_altitude_geom1')
         display: "Sidebar visible",
         container: null,
         checkbox: null,
-        button: '#toggle_sidebar_button',
+        button: '#toggle_sidebar_control',
         init: (onMobile ? false : true),
         setState: function (state) {
             if (state) {
                 jQuery("#sidebar_container").show();
-                jQuery("#expand_sidebar_button").show();
+                jQuery("#expand_sidebar_control").show();
                 jQuery("#toggle_sidebar_button").removeClass("show_sidebar");
                 jQuery("#toggle_sidebar_button").addClass("hide_sidebar");
                 if (!g.sidebar_initiated) {
@@ -1569,7 +1569,7 @@ jQuery('#selected_altitude_geom1')
             } else {
                 if (loadFinished) {
                     jQuery("#sidebar_container").hide();
-                    jQuery("#expand_sidebar_button").hide();
+                    jQuery("#expand_sidebar_control").hide();
                     jQuery("#toggle_sidebar_button").removeClass("hide_sidebar");
                     jQuery("#toggle_sidebar_button").addClass("show_sidebar");
                 }
@@ -4594,7 +4594,7 @@ function expandSidebar(e) {
     mapIsVisible = false;
     jQuery("#toggle_sidebar_control").hide();
     jQuery("#splitter").hide();
-    jQuery("#shrink_sidebar_button").show();
+    jQuery("#shrink_sidebar_control").show();
     jQuery("#sidebar_container").width("100%");
     TAR.planeMan.redraw();
     updateMapSize();
@@ -4607,7 +4607,7 @@ function showMap() {
     mapIsVisible = true;
     jQuery("#toggle_sidebar_control").show();
     jQuery("#splitter").show();
-    jQuery("#shrink_sidebar_button").hide();
+    jQuery("#shrink_sidebar_control").hide();
     TAR.planeMan.redraw();
     updateMapSize();
 }

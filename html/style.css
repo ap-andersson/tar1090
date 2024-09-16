@@ -121,22 +121,11 @@ select {
 
 #toggle_sidebar_button.show_sidebar {
     transform: scaleX(-1);
-    background-image: url("images/hide_sidebar.png");
-}
-
-#toggle_sidebar_button.hide_sidebar {
-    background-image: url("images/hide_sidebar.png");
-}
-
-#shrink_sidebar_button {
-    background-image: url("images/hide_sidebar.png");
 }
 
 #expand_sidebar_button {
     transform: scaleX(-1);
-    background-image: url("images/hide_sidebar.png");
 }
-
 
 #credits {
     display: flex;
@@ -358,16 +347,18 @@ select.error, textarea.error, input.error {
 }
 
 .layer-switcher {
-    top: calc( 3px * var(--SCALE)) !important;
-    right: calc( 44px * var(--SCALE)) !important;
+    top: calc( 6px * var(--SCALE)) !important;
+    right: calc( 50px * var(--SCALE)) !important;
     z-index: 999;
+    border-radius: calc( 4px * var(--SCALE));
 }
 .layer-switcher button {
     background-size: calc( 26px * var(--SCALE)) calc( 26px * var(--SCALE));
     background-repeat: no-repeat;
     background-position: center;
     width: calc( 30px * var(--SCALE));
-    height: calc( 30px * var(--SCALE));
+    height: calc( 28px * var(--SCALE));
+    border-radius: calc( 4px * var(--SCALE));
 }
 .layer-switcher !.shown {
     top: calc( 3px * var(--SCALE)) !important;
@@ -470,23 +461,42 @@ select.error, textarea.error, input.error {
     border-radius: calc( 2px * var(--SCALE));
 }
 
+.button-fa {
+    background-color: var(--ACCENT);
+    width: calc( 30px * var(--SCALE));
+    height: calc( 28px * var(--SCALE));
+    cursor: pointer;
+    margin: calc( 4px * var(--SCALE));
+    display: inline-block;
+    border-radius: calc( 4px * var(--SCALE));
+    font-size: calc( 20px * var(--SCALE));
+    padding-top: 4px;
+}
+
 .fullscreenButton {
     background-image: url('images/fullscreen.svg');
     background-size: 90%;
 }
 
 .settingsCog {
-    background-image: url('images/cog-white.svg');
-    background-size: 120%;
+    margin-top: calc( 12px * var(--SCALE));
+    margin-bottom: calc( 12px * var(--SCALE));
+}
+
+#toggle_sidebar_control,
+#expand_sidebar_control,
+#shrink_sidebar_control,
+.settingsCog {
+    color: #fff;
 }
 
 
 .button {
     background-color: var(--ACCENT);
-    width: calc( 27px * var(--SCALE));
-    height: calc( 27px * var(--SCALE));
-    border-radius: calc( 2px * var(--SCALE));
-    margin: calc( 2px * var(--SCALE));
+    width: calc( 30px * var(--SCALE));
+    height: calc( 28px * var(--SCALE));
+    border-radius: calc( 4px * var(--SCALE));
+    margin: calc( 4px * var(--SCALE));
     display: inline-block;
     cursor: pointer;
     text-align: center;
