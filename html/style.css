@@ -406,8 +406,7 @@ select.error, textarea.error, input.error {
     width: 100%;
     text-transform: uppercase;
     text-align: center;
-    color: #e8e8e8;
-    background: #515151;
+    background: var(--BGCOLOR2);
     font-weight: bold;
 }
 
@@ -605,9 +604,9 @@ table.infoSectionTable tr td {
     padding-bottom: calc( 7px * var(--SCALE));
     padding-left: calc( 7px * var(--SCALE));
     padding-right: calc( 7px * var(--SCALE));
-    background: #515151;    
+    background: var(--BGCOLOR2);
     margin-bottom: 10px;
-    border-radius: 0px 0px calc(10px*var(--SCALE)) calc(10px*var(--SCALE)) ;
+    border-radius: 0px 0px calc(10px*var(--SCALE)) calc(10px*var(--SCALE));
 }
 
 .infoBlockSectionRoundedTop {
