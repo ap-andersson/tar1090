@@ -163,40 +163,17 @@ select {
     display: block;
     position: absolute;
     z-index: 99;
-    top:  calc( 5px * var(--SCALE));
+    top:  calc( 7px * var(--SCALE));
     left: calc( 0px * var(--SCALE));
     float: right;
     width: calc( 30px * var(--SCALE));
     height: calc( 30px * var(--SCALE));
-    background-size: calc( 30px * var(--SCALE)) calc( 30px * var(--SCALE));
-    background-repeat: no-repeat;
-    background-color: transparent;
     border: none;
-    background-image: url("images/toggle-width.png");
-    background-size: cover;
-    transform: scaleX(-1);
+    font-size: calc( 26px * var(--SCALE)) !important;
+    background-color: var(--ACCENT);
+    border-radius: 0px calc(4px*var(--SCALE)) calc(4px*var(--SCALE)) 0px;
+    padding-left: 4px;
 }
-
-#splitter-infoblock {
-    cursor: ns-resize;
-    display: inline-block;
-    position: absolute	;
-    top: calc( 0px * var(--SCALE));
-    right: 0;
-    margin-left: auto;
-    width: calc( 24px * var(--SCALE));
-    height: calc( 4px * var(--SCALE));
-    background-size: calc( 24px * var(--SCALE)) calc( 25px * var(--SCALE));
-    background-repeat: no-repeat;
-    background-position: calc( 0px * var(--SCALE));
-    border: none;
-    width: 100%;
-    border-bottom: #234c75;
-    background-color: #65819e;
-    border-bottom-width: calc( 1px * var(--SCALE));
-    border-bottom-style: solid;
-}
-
 /* remove the blue highlighting around the map buttons */
 .ol-control button {
     outline: none;
@@ -461,25 +438,14 @@ select.error, textarea.error, input.error {
 }
 
 .button-fa {
-    background-color: var(--ACCENT);
-    width: calc( 30px * var(--SCALE));
-    height: calc( 28px * var(--SCALE));
-    cursor: pointer;
-    margin: calc( 4px * var(--SCALE));
-    display: inline-block;
-    border-radius: calc( 4px * var(--SCALE));
     font-size: calc( 20px * var(--SCALE));
-    padding-top: 4px;
+    padding-top: calc( 4px * var(--SCALE));
 }
+
 
 .fullscreenButton {
     background-image: url('images/fullscreen.svg');
     background-size: 90%;
-}
-
-.settingsCog {
-    margin-top: calc( 12px * var(--SCALE));
-    margin-bottom: calc( 12px * var(--SCALE));
 }
 
 #toggle_sidebar_control,
@@ -691,25 +657,21 @@ table.infoSectionTable tr td {
 
 .settingsCloseBox {
     position: absolute;
-    right: calc( 8px * var(--SCALE));
+    right: calc( 12px * var(--SCALE));
     top: calc( 8px * var(--SCALE));
-    background-image: url('images/close-settings.png');
-    background-size: cover;
-    width: calc( 20px * var(--SCALE));
-    height: calc( 20px * var(--SCALE));
     cursor: pointer;
+    font-size: calc( 24px * var(--SCALE));
+    color: #000000;
 }
 
 .infoblockCloseBox {
     position: absolute;
-    right: calc( 32px * var(--SCALE));
+    right: calc( 26px * var(--SCALE));
     top: calc( 8px * var(--SCALE));
-    background-image: url('images/close-settings.png');
-    background-size: cover;
-    width: calc( 20px * var(--SCALE));
-    height: calc( 20px * var(--SCALE));
     cursor: pointer;
     z-index: 99;
+    font-size: calc( 24px * var(--SCALE));
+    color: #000000;
 }
 
 .settingsText {
