@@ -1020,6 +1020,10 @@ PlaneObject.prototype.processTrace = function() {
     if (replay && !this.fullTrace)
         return;
 
+    if (!showTrace && !this.fullTrace && !this.recentTrace) {
+        return;
+    }
+
     if (!now)
         now = new Date().getTime()/1000;
 
@@ -1853,7 +1857,7 @@ function altitudeLines (segment) {
                 new ol.style.Style({
                     stroke: new ol.style.Stroke({
                         color: color,
-                        width: 2 * newWidth * multiplier,
+                        width: 1 * newWidth * multiplier,
                         lineJoin: join,
                         lineCap: cap,
                     })
@@ -1875,7 +1879,7 @@ function altitudeLines (segment) {
                 new ol.style.Style({
                     stroke: new ol.style.Stroke({
                         color: color,
-                        width: 2 * newWidth * multiplier,
+                        width: 1 * newWidth * multiplier,
                         lineJoin: join,
                         lineCap: cap,
                     })
@@ -1975,7 +1979,8 @@ PlaneObject.prototype.updateLines = function() {
             const historic = (showTrace || replay);
             const useLocal = ((historic && !utcTimesHistoric) || (!historic && !utcTimesLive));
             const date = new Date(seg.ts * 1000);
-            const refDate = (showTrace || replay) ? traceDate : new Date();
+            let refDate = showTrace ? traceDate : new Date();
+            if (replay) { refDate = replay.ts };
             if (getDay(refDate) == getDay(date)) {
                 timestamp1 = "";
             } else {
