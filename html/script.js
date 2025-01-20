@@ -1177,8 +1177,8 @@ function earlyInitPage() {
     });
 
     // Set up event handlers for buttons
-    jQuery("#expand_sidebar_button").click(expandSidebar);
-    jQuery("#shrink_sidebar_button").click(showMap);
+    jQuery("#expand_sidebar_control").click(expandSidebar);
+    jQuery("#shrink_sidebar_control").click(showMap);
 
     jQuery("#altimeter_form").submit(onAltimeterChange);
     jQuery("#altimeter_set_standard").click(onAltimeterSetStandard);
@@ -1528,12 +1528,12 @@ jQuery('#selected_altitude_geom1')
         display: "Sidebar visible",
         container: null,
         checkbox: null,
-        button: '#toggle_sidebar_button',
+        button: '#toggle_sidebar_control',
         init: (onMobile ? false : true),
         setState: function (state) {
             if (state) {
                 jQuery("#sidebar_container").show();
-                jQuery("#expand_sidebar_button").show();
+                jQuery("#expand_sidebar_control").show();
                 jQuery("#toggle_sidebar_button").removeClass("show_sidebar");
                 jQuery("#toggle_sidebar_button").addClass("hide_sidebar");
                 if (!g.sidebar_initiated) {
@@ -1563,7 +1563,7 @@ jQuery('#selected_altitude_geom1')
             } else {
                 if (loadFinished) {
                     jQuery("#sidebar_container").hide();
-                    jQuery("#expand_sidebar_button").hide();
+                    jQuery("#expand_sidebar_control").hide();
                     jQuery("#toggle_sidebar_button").removeClass("hide_sidebar");
                     jQuery("#toggle_sidebar_button").addClass("show_sidebar");
                 }
@@ -4585,7 +4585,7 @@ function expandSidebar(e) {
     mapIsVisible = false;
     jQuery("#toggle_sidebar_control").hide();
     jQuery("#splitter").hide();
-    jQuery("#shrink_sidebar_button").show();
+    jQuery("#shrink_sidebar_control").show();
     jQuery("#sidebar_container").width("100%");
     TAR.planeMan.redraw();
     updateMapSize();
@@ -4598,7 +4598,7 @@ function showMap() {
     mapIsVisible = true;
     jQuery("#toggle_sidebar_control").show();
     jQuery("#splitter").show();
-    jQuery("#shrink_sidebar_button").hide();
+    jQuery("#shrink_sidebar_control").hide();
     TAR.planeMan.redraw();
     updateMapSize();
 }
@@ -4637,7 +4637,7 @@ function adjustInfoBlock() {
             jQuery('#credits').css('bottom', '295px');
             jQuery('#credits').css('left', '5px');
         } else {
-            jQuery('#selected_infoblock').css('height', '100%');
+            jQuery('#selected_infoblock').css('height', 'calc(100% - 20px)');
             jQuery('#credits').css('bottom', '');
             jQuery('#credits').css('left', '');
         }
@@ -4657,7 +4657,7 @@ function adjustInfoBlock() {
     }
 
     let photoWidth = document.getElementById('photo_container').clientWidth;
-    let refWidth = infoBlockWidth * globalScale - 29;
+    let refWidth = infoBlockWidth * globalScale - 53;
     if (Math.abs(photoWidth / refWidth - 1) > 0.05)
         photoWidth = refWidth;
 
@@ -6659,7 +6659,7 @@ function setLineWidth() {
     labelFill = new ol.style.Fill({color: 'white' });
     blackFill = new ol.style.Fill({color: 'black' });
     labelStroke = new ol.style.Stroke({color: 'rgba(0,0,0,0.7', width: 4 * globalScale});
-    labelStrokeNarrow = new ol.style.Stroke({color: 'rgba(0,0,0,0.7', width: 2.5 * globalScale});
+    labelStrokeNarrow = new ol.style.Stroke({color: 'rgba(0,0,0,0.7', width: 3 * globalScale});
     bgFill = new ol.style.Stroke({color: 'rgba(0,0,0,0.25'});
 }
 let lastCallLocationChange = 0;
