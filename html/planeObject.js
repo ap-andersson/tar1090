@@ -2003,7 +2003,7 @@ PlaneObject.prototype.updateLines = function() {
                 timestamp2 += zuluTime(date);
             }
 
-            if (traces_high_res) {
+            if (traces_high_res || debugTracks) {
                 timestamp2 += '.' + (Math.floor((seg.ts*10)) % 10);
             }
 
