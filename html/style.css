@@ -52,7 +52,7 @@ select {
     top: 10px;
     bottom: 10px;
     width:  calc(260px * var(--SCALE));
-    height: calc(100% - 20px);
+    height: calc(100%);
     overflow: auto;
     z-index: 1;
     background-color: var(--BGCOLOR2);
@@ -78,8 +78,10 @@ select {
     padding-right: 12px;
     position:relative;
     overflow: auto;
-    height: calc(100% - 20px);
+    height: calc(100%);
     z-index:3;
+    scrollbar-color: VAR(--DARK_ACCENT) var(--BGCOLOR2);
+    scrollbar-width: thin;
 }
 #sidebar_canvas {
     padding: calc( 5px * var(--SCALE));
@@ -678,7 +680,7 @@ table.infoSectionTable tr td {
 
 .infoblockCloseBox {
     position: absolute;
-    right: calc( 26px * var(--SCALE));
+    right: calc( 18px * var(--SCALE));
     top: calc( 8px * var(--SCALE));
     cursor: pointer;
     z-index: 99;
@@ -825,11 +827,18 @@ table.infoSectionTable tr td {
 #copyrightInfo {
   position: Relative;
   font-size: var(--FS1);
-
+  margin-bottom: 12px;
 }
-#selected_photo{
+div#selected_photo{
   text-align: center;
   display: block;
+  margin-top: 1px;
+}
+div#reg_info {
+    padding-top: 6px;
+}
+#airplanePhoto {
+    border-radius: calc(8px*var(--SCALE)) calc(8px*var(--SCALE)) calc(8px*var(--SCALE)) calc(8px*var(--SCALE));
 }
 .ui-widget-content .ui-state-default, .ui-widget-header .ui-state-default, .ui-button, html .ui-button.ui-state-disabled:hover, html .ui-button.ui-state-disabled:active {
   background: var(--BGCOLOR1);
@@ -928,4 +937,14 @@ input{
 
 .exportButton {
     width: 100%;
+    margin-bottom: 12px;
+}
+
+div#placeholder-photo {
+    font-size: 96px;
+    align-content: center;
+    height: 130px;
+}
+tr#photo_container {
+    vertical-align: top;
 }

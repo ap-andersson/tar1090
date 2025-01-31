@@ -4650,6 +4650,12 @@ function setPhotoHtml(source) {
     if (selectedPhotoCache == source)
         return;
     //console.log(source + ' ' + selectedPhotoCache);
+
+    // If setting empty picture, put in placeholder plane icon instead
+    if(source == "") {
+        source = "<div id=\"placeholder-photo\"><i class=\"fa-solid fa-plane\"></i></div>";
+    }
+
     selectedPhotoCache = source;
     jQuery('#selected_photo').html(source);
 }
@@ -4677,7 +4683,7 @@ function adjustInfoBlock() {
             jQuery('#credits').css('bottom', '295px');
             jQuery('#credits').css('left', '5px');
         } else {
-            jQuery('#selected_infoblock').css('height', 'calc(100% - 20px)');
+            jQuery('#selected_infoblock').css('height', 'calc(100% - 24px)');
             jQuery('#credits').css('bottom', '');
             jQuery('#credits').css('left', '');
         }
@@ -4706,7 +4712,7 @@ function adjustInfoBlock() {
 
     if (showPictures) {
         if (planespottersAPI || planespottingAPI) {
-            jQuery('#photo_container').css('height', photoWidth * 0.883 + 'px');
+            jQuery('#photo_container').css('height', photoWidth * 0.78 + 'px');
         } else {
             jQuery('#photo_container').css('height', '40px');
         }
