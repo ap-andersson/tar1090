@@ -2024,11 +2024,6 @@ function setIntervalTimers() {
         timers.trailReaper = window.setInterval(trailReaper, 10000);
         trailReaper(now);
     }
-    if (enable_pf_data && !pTracks && !globeIndex) {
-        jQuery('#pf_info_container').removeClass('hidden');
-        timers.pf_data = window.setInterval(fetchPfData, RefreshInterval*10.314);
-        fetchPfData();
-    }
     if (actualOutline.enabled) {
         timers.drawOutline = window.setInterval(drawOutlineJson, actualOutline.refresh);
         setTimeout(drawOutlineJson, 50);
@@ -5441,36 +5436,6 @@ function toggleLayer(element, layer) {
             }
         });
     });
-}
-
-let fetchingPf = false;
-function fetchPfData() {
-    if (fetchingPf)
-        return;
-    fetchingPf = true;
-    for (let i in pf_data) {
-        const req = jQuery.ajax({ url: pf_data[i],
-            dataType: 'json' });
-        jQuery.when(req).done(function(data) {
-            for (let i in g.planesOrdered) {
-                const plane = g.planesOrdered[i];
-                const ac = data.aircraft[plane.icao.toUpperCase()];
-                if (!ac) {
-                    continue;
-                }
-                plane.pfRoute = ac.route;
-                plane.pfMach = ac.mach;
-                plane.pfFlightno = ac.flightno;
-                if (!plane.registration && ac.reg && ac.reg != "????" && ac.reg != "z.NO-REG")
-                    plane.registration = ac.reg;
-                if (!plane.icaoType && ac.type && ac.type != "????" && ac.type != "ZVEH") {
-                    plane.icaoType = ac.type;
-                    plane.setTypeData();
-                }
-            }
-            fetchingPf = false;
-        });
-    }
 }
 
 function solidGoldT(arg) {
