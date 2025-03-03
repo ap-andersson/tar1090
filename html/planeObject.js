@@ -844,19 +844,14 @@ PlaneObject.prototype.updateIcon = function() {
         )
     ) {
         let callsign = "";
-        if (this.flight && this.flight.trim())
+        if (this.flight && this.flight.trim() && !(this.dataSource == "ais" && !extendedLabels))
             callsign =  this.flight.trim();
         else if (this.registration)
             callsign =  'reg: ' + this.registration;
         else
             callsign =   'hex: ' + this.icao;
-        if (useRouteAPI && this.routeString)
+        if ((useRouteAPI || this.dataSource == "ais") && this.routeString)
             callsign += ' - ' + this.routeString;
-
-        if (!extendedLabels && this.dataSource == "ais") {
-            // show registration instead for ships as callsign is less useful
-            callsign = this.registration;
-        }
 
         const unknown = NBSP+NBSP+"?"+NBSP+NBSP;
 

@@ -2129,9 +2129,10 @@ function processAIS(data) {
 }
 
 function shortShiptype(typeNumber) {
+    if (typeNumber == 0) return "UNKN";
     if (typeNumber <= 19) return "RESE";
     if (typeNumber <= 28) return "WING";
-    if (typeNumber <= 29) return "SAR";
+    if (typeNumber <= 29) return "ASAR"; //Airborne SAR
     if (typeNumber <= 30) return "FISH";
     if (typeNumber <= 32) return "TUG";
     if (typeNumber <= 33) return "DRED";
@@ -2178,7 +2179,7 @@ function processBoat(feature, now, last) {
     ac.type = 'ais';
     ac.gs = pr.speed;
     ac.flight = pr.callsign;
-    ac.r = pr.shipname
+    ac.r = pr.shipname;
     ac.seen = now - pr.last_signal;
 
     ac.messages  = pr.count;
@@ -2188,6 +2189,11 @@ function processBoat(feature, now, last) {
 
     if (pr.destination) { ac.route = pr.destination; }
     if (pr.shiptype !== undefined) { ac.t = shortShiptype(pr.shiptype); }
+    // Identify Non-Ship Types
+    if (pr.mmsi_type == 6) { ac.t = "ANAV"; } // Aids to Navigation
+    if (pr.mmsi_type == 5) {ac.t = "BASE"; } // Land Base Station
+    if (pr.mmsi_type == 3) {ac.t = "COAS"; } // Coast Station
+
 
     if (feature.geometry && feature.geometry.coordinates) {
         const coords = feature.geometry.coordinates;
@@ -2490,6 +2496,10 @@ function ol_map_init() {
             if (MapType_tar1090 == lyr.get('name')) {
                 foundType = true;
                 lyr.setVisible(true);
+
+                mapTypeSettings();
+                const onVisible = lyr.get('onVisible');
+                onVisible && onVisible(lyr);
             } else {
                 lyr.setVisible(false);
             }
@@ -2498,6 +2508,8 @@ function ol_map_init() {
                 if (evt.target.getVisible()) {
                     MapType_tar1090 = loStore['MapType_tar1090'] = evt.target.get('name');
                     mapTypeSettings();
+                    const onVisible = lyr.get('onVisible');
+                    onVisible && onVisible(lyr);
                 }
             });
         } else if (lyr.get('type') === 'overlay') {
@@ -7424,6 +7436,8 @@ function drawHeatmap() {
                     alt |= -65536;
                 if (alt == -123)
                     alt = 'ground';
+                else if (alt == -124)
+                    alt = null;
                 else
                     alt *= 25;
 
@@ -7908,6 +7922,8 @@ function replayStep(arg) {
             alt |= -65536;
         if (alt == -123)
             alt = 'ground';
+        else if (alt == -124)
+            alt = null;
         else
             alt *= 25;
 
