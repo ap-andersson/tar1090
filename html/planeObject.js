@@ -730,7 +730,7 @@ PlaneObject.prototype.getMarkerColor = function(options) {
         l += ColorByAlt.mlat.l;
     }
 
-    if (uk_advisory && (this.squawk == '7700' || this.squawk == '7600' || this.squawk == '7500')) {
+    if (atcStyle && (this.squawk == '7700' || this.squawk == '7600' || this.squawk == '7500')) {
         h = 0;
         s = 100;
         l = 40;
@@ -865,7 +865,7 @@ PlaneObject.prototype.updateIcon = function() {
         let speedString = (this.speed == null) ? (NBSP+'?'+NBSP) : format_speed_brief(this.speed, DisplayUnits, showLabelUnits).padStart(3, NBSP);
 
         labelText = "";
-        if (uk_advisory) {
+        if (atcStyle) {
             labelText += callsign + '\n';
             labelText += altString + '\n';
             labelText += 'x' + this.squawk;
@@ -913,7 +913,7 @@ PlaneObject.prototype.updateIcon = function() {
                 labelText += speedString + NBSP + NNBSP + altString.padStart(6, NBSP) + '\n';
             }
         }
-        if (g.extendedLabels < 3 && !uk_advisory) {
+        if (g.extendedLabels < 3 && !atcStyle) {
             labelText += callsign;
         }
     }
@@ -1141,7 +1141,6 @@ PlaneObject.prototype.processTrace = function() {
             _now = timestamp;
 
             if (traceOpts.showTime && timestamp > traceOpts.showTime) {
-                traceOpts.showTimeEnd = timestamp;
                 if (traceOpts.replaySpeed > 0) {
                     clearTimeout(traceOpts.showTimeout);
                     traceOpts.animateRealtime = (timestamp - traceOpts.showTime) * 1000;
@@ -1153,9 +1152,12 @@ PlaneObject.prototype.processTrace = function() {
                     traceOpts.animateStepTime = traceOpts.animateRealtime / traceOpts.replaySpeed / traceOpts.animateSteps;
 
                     if (traceOpts.animateSteps < 2) {
-                        traceOpts.showTimeout = setTimeout(gotoTime, traceOpts.animateTime);
                         traceOpts.animate = false;
+                        //console.log(`animateTime: ${traceOpts.animateTime}`);
+                        traceOpts.showTime = timestamp;
+                        traceOpts.showTimeout = setTimeout(gotoTime, traceOpts.animateTime);
                     } else {
+                        traceOpts.showTimeEnd = timestamp;
                         //console.timeEnd('step');
                         //console.time('step');
                         //console.log(traceOpts.animateTime);
@@ -1534,12 +1536,7 @@ PlaneObject.prototype.updateData = function(now, last, data, init) {
     }
 
     if (data.rssi != null && data.rssi > -49.4) {
-        if (!globeIndex && this.rssi != null && RefreshInterval < 1500) {
-            let factor = Math.min(1, Math.log(2 - RefreshInterval / 1500));
-            this.rssi = this.rssi * (1 - factor) + data.rssi * factor;
-        } else {
-            this.rssi = data.rssi;
-        }
+        this.rssi = data.rssi;
     } else {
         this.rssi = null;
     }
@@ -2743,6 +2740,7 @@ PlaneObject.prototype.checkVisible = function() {
     let timeout = seenTimeout;
     if (this.dataSource == "mlat") { timeout = seenTimeoutMlat; }
     else if (this.dataSource == "adsc") { timeout = jaeroTimeout; }
+    else if (this.dataSource == 'ais') { timeout = aisTimeout; }
 
     timeout += modeSTime - tisbReduction + refresh;
 
@@ -2925,6 +2923,10 @@ function routeDoLookup(currentTime) {
                     console.log(`${currentTime}: got routes:`, routes);
                 }
                 for (var route of routes) {
+                    if (!route) {
+                        console.error(`Route API returned this invalid element in the array ${route}`);
+                        continue;
+                    }
                     // let's log just a little bit of what's happening
                     if (debugRoute) {
                         var logText = `result for ${route.callsign}: `;

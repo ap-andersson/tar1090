@@ -896,21 +896,25 @@ function earlyInitPage() {
     let value;
 
     if (uk_advisory) {
+        defaultOverlays.push('uka_airports');
+        defaultOverlays.push('uka_airspaces');
+        defaultOverlays.push('uka_runways');
+        defaultOverlays.push('uka_shoreham');
+        atcStyle = true;
+    }
 
+    if (atcStyle) {
         labels_top = true;
         tempTrails = true;
         tempTrailsTimeout = 45;
         SiteCirclesDistances = new Array(5, 10, 20);
         SiteCirclesLineDash = [5, 5];
         SiteCirclesColors = ['#2b3436', '#2b3436', '#2b3436'];
-        defaultOverlays.push('uka_airports');
-        defaultOverlays.push('uka_airspaces');
-        defaultOverlays.push('uka_runways');
-        defaultOverlays.push('uka_shoreham');
         MapType_tar1090 = 'carto_light_all';
         lineWidth=4;
         g.enableLabels=true;
     }
+
     if (usp.has('debugFetch')) {
         debugFetch = true;
     }
@@ -1212,6 +1216,7 @@ function earlyInitPage() {
 
     jQuery("#altimeter_form").submit(onAltimeterChange);
     jQuery("#altimeter_set_standard").click(onAltimeterSetStandard);
+    jQuery("#altimeter_set_selected").click(onAltimeterSetSelected);
 
     // Set up altitude filter button event handlers and validation options
     jQuery("#altitude_filter_form").submit(onFilterByAltitude);
@@ -1636,24 +1641,23 @@ jQuery('#selected_altitude_geom1')
             refreshSelected();
         }
     });
-    if (useRouteAPI) {
-        new Toggle({
-            key: "useRouteAPI",
-            display: "Lookup route",
-            container: "#settingsRight",
-            init: useRouteAPI,
-            setState: function(state) {
-                useRouteAPI = state;
-                if (useRouteAPI) {
-                    jQuery('#routeRow').show();
-                    jQuery('#routeRowHighlighted').show();
-                } else {
-                    jQuery('#routeRow').hide();
-                    jQuery('#routeRowHighlighted').hide();
-                }
+
+    new Toggle({
+        key: "useRouteAPI",
+        display: "Lookup route",
+        container: "#settingsRight",
+        init: useRouteAPI,
+        setState: function(state) {
+            useRouteAPI = state;
+            if (useRouteAPI) {
+                jQuery('#routeRow').show();
+                jQuery('#routeRowHighlighted').show();
+            } else {
+                jQuery('#routeRow').hide();
+                jQuery('#routeRowHighlighted').hide();
             }
-        });
-    }
+        }
+    });
 
 
     new Toggle({
@@ -2140,7 +2144,7 @@ function updateAIScatcher() {
         g.aiscatcher_source.setUrl("data:text/plain;base64,"+btoa(data));
         g.aiscatcher_source.refresh();
 
-        if (aiscatcher_test) {
+        if (1 || aiscatcher_test) {
             processAIS(JSON.parse(data));
         }
     });
@@ -2151,6 +2155,7 @@ function processAIS(data) {
     g.ais_now = new Date().getTime() / 1000;
 
     const features = data.features;
+    aisTimeout = data.time_span || aisTimeout;
     for (let i in features) {
         processBoat(features[i], g.ais_now, g.ais_last);
     }
@@ -2600,29 +2605,51 @@ function ol_map_init() {
         let trailTS = null;
         let planeHex = null;
 
-        let features = webgl ? webglFeatures : PlaneIconFeatures;
+        let source = webgl ? webglFeatures : PlaneIconFeatures;
         let evtCoords = evt.map.getCoordinateFromPixel(evt.pixel);
-        let feature = features.getClosestFeatureToCoordinate(evtCoords);
+        let feature = source.getClosestFeatureToCoordinate(evtCoords);
         if (feature) {
             let fPixel = evt.map.getPixelFromCoordinate(feature.getGeometry().getCoordinates());
             let a = fPixel[0] - evt.pixel[0];
             let b = fPixel[1] - evt.pixel[1];
             let c = globalScale * (onMobile ? 30 : 20);
-            if (a**2 + b**2 < c**2)
+            if (a**2 + b**2 < c**2) {
                 planeHex = feature.hex;
+            } else {
+                feature = null;
+            }
         }
 
         if (!planeHex || showTrace) {
-            let features = evt.map.getFeaturesAtPixel(
-                evt.pixel,
-                {
-                    layerFilter: function(layer) { return (layer.get('isTrail') == true); },
-                    hitTolerance: globalScale * (onMobile ? 30 : 20),
+            let features = [];
+            let trailFeature = null;
+            if (1) {
+                for (const layer of trailGroup.getArray()) {
+                    if (!layer.getVisible()) {
+                        continue;
+                    }
+                    const source = layer.getSource();
+                    trailFeature = source.getClosestFeatureToCoordinate(evtCoords);
+                    if (trailFeature) {
+                        features.push(trailFeature);
+                    }
                 }
-            );
+            } else {
+                // old variant, slower in most cases
+                features = evt.map.getFeaturesAtPixel(
+                    evt.pixel,
+                    {
+                        layerFilter: function(layer) { return (layer.get('isTrail') == true); },
+                        hitTolerance: globalScale * (onMobile ? 30 : 20),
+                    }
+                );
+            }
             if (features.length > 0) {
-                let close = 10000000000000;
-                let closest = features[0];
+                let hitTolerance = globalScale * (onMobile ? 30 : 20);
+                // just rubber band to the closest trace for showTrace
+                if (showTrace) { hitTolerance = 10000; }
+                let close2 = hitTolerance * hitTolerance;
+                let closest = null;
                 for (let j in features) {
                     let feature = features[j];
                     let coords;
@@ -2635,31 +2662,36 @@ function ol_map_init() {
                         let fPixel = evt.map.getPixelFromCoordinate(coords[k]);
                         let a = fPixel[0] - evt.pixel[0];
                         let b = fPixel[1] - evt.pixel[1];
-                        let distance = a**2 + b**2;
-                        if (distance < close) {
+                        let distance2 = a**2 + b**2;
+                        if (distance2 < close2) {
                             closest = feature;
-                            close = distance;
+                            close2 = distance2;
                         }
                     }
                 }
-                if (showTrace)
-                    trailTS = closest.timestamp;
-                else
-                    trailHex = closest.hex;
+                if (closest) {
+                    if (showTrace)
+                        trailTS = closest.timestamp;
+                    else
+                        trailHex = closest.hex;
+                }
             }
         }
 
         const dblclick = (evt.type === 'dblclick') && !showTrace;
 
         if (showTrace && trailTS) {
+            planeHex = null;
             gotoTime(trailTS);
         }
-        let hex = planeHex || trailHex;
-        if (hex) {
-            selectPlaneByHex(hex, {noDeselect: dblclick, follow: dblclick});
+        //console.log(`planeHex: ${planeHex} trailHex: ${trailHex}`);
+        if (planeHex) {
+            selectPlaneByHex(planeHex, {noDeselect: dblclick, follow: dblclick});
+        } else if (trailHex) {
+            selectPlaneByHex(trailHex, {noDeselect: true});
         }
 
-        if (!hex && !multiSelect && !showTrace) {
+        if (!planeHex && !trailHex && !multiSelect && !showTrace) {
             if (onlySelected)
                 toggleIsolation();
             deselect(SelectedPlane);
@@ -2807,6 +2839,7 @@ function initMap() {
     const dummyLayer = new ol.layer.Vector({
         name: 'dummy',
         renderOrder: null,
+        source: new ol.source.Vector(),
     });
 
     trailGroup.push(dummyLayer);
@@ -3375,6 +3408,12 @@ let somethingSelected = false;
 function refreshSelected() {
     const selected = SelectedPlane;
 
+    if (!selected || !selected.nav_qnh) {
+        jQuery('#altimeter_set_selected').prop("disabled", true);
+    } else {
+        jQuery('#altimeter_set_selected').prop("disabled", false);
+    }
+
     if (!selected) {
         if (somethingSelected) {
             adjustInfoBlock();
@@ -3929,7 +3968,7 @@ function refreshFeatures() {
         },
         html: flightawareLinks,
         text: 'Callsign' };
-    if (useRouteAPI) {
+    if (1 || useRouteAPI) {
         cols.route = {
             sort: function () { sortBy('route', compareAlpha, function(x) { return x.routeString }); },
             value: function(plane) {
@@ -5818,17 +5857,18 @@ function onPointermove(evt) {
 }
 
 function highlight(evt) {
-    const feature = evt.map.forEachFeatureAtPixel(evt.pixel,
-        function(feature, layer) {
-            return feature;
-        },
-        {
-            layerFilter: function(layer) {
-                return (layer == iconLayer || layer == webglLayer || layer == g.aiscatcherLayer);
-            },
-            hitTolerance: 5 * globalScale,
+    let evtCoords = evt.map.getCoordinateFromPixel(evt.pixel);
+    let source = webgl ? webglFeatures : PlaneIconFeatures;
+    let feature = source.getClosestFeatureToCoordinate(evtCoords);
+    if (feature) {
+        let fPixel = evt.map.getPixelFromCoordinate(feature.getGeometry().getCoordinates());
+        let a = fPixel[0] - evt.pixel[0];
+        let b = fPixel[1] - evt.pixel[1];
+        let c = globalScale * 20;
+        if (a**2 + b**2 > c**2) {
+            feature = null;
         }
-    );
+    }
     if (!feature) {
         HighlightedPlane = null;
         refreshHighlighted();
@@ -7075,6 +7115,7 @@ function drawOutlineJson() {
 }
 
 function gotoTime(timestamp) {
+    //console.log(`gotoTime(${timestamp}) animate: {${traceOpts.animate}}`);
     clearTimeout(traceOpts.showTimeout);
     if (timestamp) {
         traceOpts.showTime = timestamp;
@@ -7094,10 +7135,11 @@ function gotoTime(timestamp) {
         if (--traceOpts.animateCounter == 1) {
             traceOpts.animate = false;
             traceOpts.showTime = traceOpts.showTimeEnd;
-            console.log(traceOpts.showTime);
         }
 
         traceOpts.animateStepTime = traceOpts.animateRealtime / traceOpts.replaySpeed / traceOpts.animateSteps;
+        clearTimeout(traceOpts.showTimeout);
+        //console.log(`setTimeout(gotoTime, (${traceOpts.animateStepTime}))`);
         traceOpts.showTimeout = setTimeout(gotoTime, traceOpts.animateStepTime);
     }
 }
@@ -7576,11 +7618,23 @@ function currentExtent(factor) {
 
 function replayDefaults(ts) {
     jQuery("#replayPlay").html("Pause");
+    let playing = true;
+    let speed = 30;
+    if (usp.has("replaySpeed")) {
+        speed = usp.getFloat("replaySpeed");
+    }
+    if (speed == 0) {
+        speed = 30;
+        playing = false;
+    }
+    if (usp.has("replayPaused")) {
+        playing = false;
+    }
     return {
-        playing: true,
+        playing: playing,
         ts: ts,
         ival: 60 * 1000,
-        speed: 30,
+        speed: speed,
         dateText: zDateString(ts),
         hours: ts.getUTCHours(),
         minutes: ts.getUTCMinutes(),
@@ -8916,6 +8970,14 @@ function getn(n) {
 function onAltimeterSetStandard(e) {
     e.preventDefault();
     jQuery("#altimeter_input").val(1013.25);
+    onAltimeterChange(e);
+}
+function onAltimeterSetSelected(e) {
+    e.preventDefault();
+    if (!SelectedPlane || !SelectedPlane.nav_qnh) {
+        return;
+    }
+    jQuery("#altimeter_input").val(SelectedPlane.nav_qnh);
     onAltimeterChange(e);
 }
 function onAltimeterChange(e) {
