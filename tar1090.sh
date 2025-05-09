@@ -86,9 +86,6 @@ newChunk() {
     # construct chunks.json
     JSON='{'
 
-    if [ -f pf.json ]; then
-        JSON+=' "pf_data": "true",'
-    fi
     if [[ "$ENABLE_978" == "yes" ]]; then
         JSON+=' "enable_uat": "true",'
     fi
@@ -229,27 +226,6 @@ if [[ $ENABLE_978 == "yes" ]]; then
         if cd "$RUN_DIR" && $COMMAND_978; then
             sed -i -e 's/"now" \?:/"uat_978":"true","now":/' 978.tmp
             mv 978.tmp 978.json
-        fi
-        wait
-    done &
-fi
-
-
-if [[ -n "$PF_URL" ]] && [[ "x$PF_ENABLE" != "x0" ]]; then
-    sleep 10 & wait $!
-    while true
-    do
-        sleep 10 & wait $!
-        TMP="$RUN_DIR/tar1090-tmp.pf.json"
-        if cd "$RUN_DIR" && wget -T 5 -O "$TMP" "$PF_URL" &>/dev/null; then
-            sed -i -e 's/"user_l[a-z]*":"[0-9,.,-]*",//g' "$TMP"
-            mv "$TMP" pf.json
-            if ! grep -qs -e pf_data chunks.json; then
-                newChunk refresh
-            fi
-        else
-            rm -f "$TMP"
-            sleep 120 & wait $!
         fi
         wait
     done &
