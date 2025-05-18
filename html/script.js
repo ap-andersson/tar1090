@@ -1642,22 +1642,26 @@ jQuery('#selected_altitude_geom1')
         }
     });
 
-    new Toggle({
-        key: "useRouteAPI",
-        display: "Lookup route",
-        container: "#settingsRight",
-        init: useRouteAPI,
-        setState: function(state) {
-            useRouteAPI = state;
-            if (useRouteAPI) {
-                jQuery('#routeRow').show();
-                jQuery('#routeRowHighlighted').show();
-            } else {
-                jQuery('#routeRow').hide();
-                jQuery('#routeRowHighlighted').hide();
+    if (routeApiUrl) {
+        new Toggle({
+            key: "useRouteAPI",
+            display: "Lookup route",
+            container: "#settingsRight",
+            init: useRouteAPI,
+            setState: function(state) {
+                useRouteAPI = state;
+                if (useRouteAPI) {
+                    jQuery('#routeRow').show();
+                    jQuery('#routeRowHighlighted').show();
+                } else {
+                    jQuery('#routeRow').hide();
+                    jQuery('#routeRowHighlighted').hide();
+                }
             }
-        }
-    });
+        });
+    } else {
+        useRouteAPI = false;
+    }
 
 
     new Toggle({
@@ -3968,7 +3972,7 @@ function refreshFeatures() {
         },
         html: flightawareLinks,
         text: 'Callsign' };
-    if (1 || useRouteAPI) {
+    if (routeApiUrl) {
         cols.route = {
             sort: function () { sortBy('route', compareAlpha, function(x) { return x.routeString }); },
             value: function(plane) {
@@ -6596,7 +6600,7 @@ function legShift(offset, plane) {
     let legEnd = null;
     let count = 0;
 
-    for (let i = 1; i < trace.length; i++) {
+    for (let i = 0; i < trace.length; i++) {
         let timestamp = trace[i][0];
         if (traceOpts.startStamp != null && timestamp < traceOpts.startStamp) {
             continue;
@@ -6663,6 +6667,7 @@ function setTraceDate(options) {
     traceDate.setUTCHours(0);
     traceDate.setUTCMinutes(0);
     traceDate.setUTCSeconds(0);
+    traceDate.setUTCMilliseconds(0);
 
     let tomorrow = (new Date()).getTime() + 86400e3;
     if (traceDate.getTime() > tomorrow) {
