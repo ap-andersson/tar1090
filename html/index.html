@@ -17,6 +17,9 @@
     <link rel="stylesheet" href="libs/ol-layerswitcher-4.1.1.css" type="text/css"/>
     <link rel="stylesheet" href="style.css" type="text/css" />
 
+    <link href="/fontawesome/css/fontawesome.css" rel="stylesheet" />
+    <link href="/fontawesome/css/solid.css" rel="stylesheet" />
+
     <link rel="icon" type="image/png" href="images/tar1090-favicon.png">
 
     <title>tar1090</title>
@@ -27,7 +30,7 @@
     <div id="layout_container">
 
       <div id="highlighted_infoblock" style="pointer-events: none">
-        <div class="highlightedTitle infoBlockSection">
+        <div class="infoBlockSection highlightedTitle">
           <div>
             <span class="identLarge"><span id="highlighted_callsign">n/a</span></span>
           </div>
@@ -35,7 +38,7 @@
             <span class="identSmall"><span id="highlighted_pf_route"></span></span>
           </div>
         </div>
-        <div class="infoBlockSection">
+        <div class="infoBlockSection infoBlockSectionRoundedTop">
           <div>
             <div class="infoHeading"><span>Reg.: </span></div>
             <div class="infoData"><span id="highlighted_registration">n/a</span></div>
@@ -73,7 +76,9 @@
 
 
       <div id="selected_infoblock" style="display: none">
-        <div id="infoblock_close" class="infoblockCloseBox"></div>
+        <div id="infoblock_close" class="infoblockCloseBox">
+          <i class="fa-solid fa-circle-xmark"></i>
+        </div>
         <div id="infoblock-container">
 
           <div class="highlightedTitle infoBlockSection">
@@ -142,15 +147,8 @@
               <span><a class="link" target="_blank" href="https://en.wikipedia.org/wiki/Aviation_transponder_interrogation_modes#ICAO_24-bit_address" rel="noreferrer">What is a hex ID?</a></span>
             </div>
           </div>
-          <div id=reg_info class="infoBlockSection">
+          <div id=reg_info class="infoBlockSection infoBlockSectionRoundedTop">
             <table class="infoSectionTable">
-              <tr id=pf_info_container class=>
-                <td>
-                  <div>
-                    <span class="identMedium" id="selected_pf_info"> </span>
-                  </div>
-                </td>
-              </tr>
               <tr id=photo_container>
                 <td>
                   <div title="Aircraft Photo" id="selected_photo"></div>
@@ -718,14 +716,14 @@
               </div>
           </div>
 
-          <div class="sectionTitle">
+          <div class="sectionTitle sectionTitleNoBg">
             <div class="section-title-content">
               Export KML
             </div>
           </div>
-          <button id="export_kml_geom" onclick='exportKML("geom")'>geometric altitude (EGM96)</button>
-          <button id="export_kml_geom_avg" onclick='exportKML("geom_avg")'>baro + avg.(EGM96 - baro)</button>
-          <button id="export_kml_baro" onclick='exportKML("baro")'>uncorrected pressure alt.</button>
+          <button id="export_kml_geom" class="exportButton" onclick='exportKML("geom")'>geometric altitude (EGM96)</button>
+          <button id="export_kml_geom_avg" class="exportButton" onclick='exportKML("geom_avg")'>baro + avg.(EGM96 - baro)</button>
+          <button id="export_kml_baro" class="exportButton" onclick='exportKML("baro")'>uncorrected pressure alt.</button>
 
         </div>
       </div> <!-- selected_infoblock -->
@@ -742,7 +740,9 @@
         </div>
 
         <div id="settings_infoblock">
-          <div id="settings_close" class="settingsCloseBox"></div>
+          <div id="settings_close" class="settingsCloseBox">
+            <i class="fa-solid fa-circle-xmark"></i>
+          </div>
           <div class="settingsOptionContainer">
             <div class="settingsText">Text and Icon size:</div>
           </div>
@@ -791,14 +791,16 @@
         </div>
         <div id="header_side" class="infoHeading">
           <div class="buttonContainer">
-            <div id="toggle_sidebar_control">
-              <button id="toggle_sidebar_button" class="show_sidebar sidebar_button " title="Toggle Sidebar"></button>
+            <div id="toggle_sidebar_control" class="button button-fa">
+              <span id="toggle_sidebar_button" class="show_sidebar fa-solid fa-chevron-right" alt="Toggle Sidebar"></span>
             </div>
-            <div id="expand_sidebar_control">
-              <button id="expand_sidebar_button" class="sidebar_button" title="Expand Sidebar" style="display: none;"></button>
+            <div id="expand_sidebar_control" class="button button-fa" style="display: none;">
+              <span id="expand_sidebar_button" class="fa-solid fa-chevron-right" alt="Expand Sidebar"></span>
             </div>
             <div id="fullscreenButton" class="svgButton fullscreenButton"></div>
-            <div id="settingsCog" class="svgButton settingsCog"></div>
+            <div id="settingsCog" class="button button-fa settingsCog">
+              <span id="settingsCog" class="fa-solid fa-gear"></span>
+            </div>
             <div id="L" title="Toggle (L)abels" class="button inActiveButton" onclick="toggleLabels();"><span class="buttonText">L</span></div>
             <div id="O" title="Toggle Label Extensi(O)ns" class="button inActiveButton" onclick="toggleExtendedLabels();"><span class="buttonText">O</span></div>
             <div id="K" title="Toggle Trac(K) Labels" class="button inActiveButton" onclick="toggleTrackLabels();"><span class="buttonText">K</span></div>
@@ -841,14 +843,18 @@
       </div> <!-- map_container-->
 
       <div id="sidebar_container" style="display: none; height: 100%;">
-        <div id="splitter" class="ui-resizable-handle ui-resizable-w" style="display: none;"></div>
+        <div id="splitter" class="ui-resizable-handle ui-resizable-w">
+          <i class="fa-solid fa-left-right"></i>
+        </div>
         <div id="sidebar_canvas">
 
           <div id="sidebar-table">
             <table style="width: 100%">
               <tr>
                 <td>
-                  <button id="shrink_sidebar_button" class="shrink_sidebar hidden sidebar_button" title="Show Map"></button>
+                  <div id="shrink_sidebar_control" class="button-fa hidden buttonContainer" style="display: none;">
+                    <span id="shrink_sidebar_button" class="show_sidebar fa-solid fa-chevron-right hidden" alt="Show Map"></span>
+                  </div>
                 </td>
               </tr>
 

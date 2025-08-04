@@ -1207,8 +1207,8 @@ function earlyInitPage() {
     });
 
     // Set up event handlers for buttons
-    jQuery("#expand_sidebar_button").click(expandSidebar);
-    jQuery("#shrink_sidebar_button").click(showMap);
+    jQuery("#expand_sidebar_control").click(expandSidebar);
+    jQuery("#shrink_sidebar_control").click(showMap);
 
     jQuery("#altimeter_form").submit(onAltimeterChange);
     jQuery("#altimeter_set_standard").click(onAltimeterSetStandard);
@@ -1559,12 +1559,12 @@ jQuery('#selected_altitude_geom1')
         display: "Sidebar visible",
         container: null,
         checkbox: null,
-        button: '#toggle_sidebar_button',
+        button: '#toggle_sidebar_control',
         init: (onMobile ? false : true),
         setState: function (state) {
             if (state) {
                 jQuery("#sidebar_container").show();
-                jQuery("#expand_sidebar_button").show();
+                jQuery("#expand_sidebar_control").show();
                 jQuery("#toggle_sidebar_button").removeClass("show_sidebar");
                 jQuery("#toggle_sidebar_button").addClass("hide_sidebar");
                 if (!g.sidebar_initiated) {
@@ -1594,7 +1594,7 @@ jQuery('#selected_altitude_geom1')
             } else {
                 if (loadFinished) {
                     jQuery("#sidebar_container").hide();
-                    jQuery("#expand_sidebar_button").hide();
+                    jQuery("#expand_sidebar_control").hide();
                     jQuery("#toggle_sidebar_button").removeClass("hide_sidebar");
                     jQuery("#toggle_sidebar_button").addClass("show_sidebar");
                 }
@@ -2062,11 +2062,6 @@ function setIntervalTimers() {
     if (tempTrails) {
         timers.trailReaper = window.setInterval(trailReaper, 10000);
         trailReaper(now);
-    }
-    if (enable_pf_data && !pTracks && !globeIndex) {
-        jQuery('#pf_info_container').removeClass('hidden');
-        timers.pf_data = window.setInterval(fetchPfData, RefreshInterval*10.314);
-        fetchPfData();
     }
     if (actualOutline.enabled) {
         timers.drawOutline = window.setInterval(drawOutlineJson, actualOutline.refresh);
@@ -3309,8 +3304,21 @@ function displayPhoto() {
         adjustInfoBlock();
         return;
     }
+
     let new_html="";
-    let photoToPull = photos[0]["thumbnail"]["src"] || photos[0]["thumbnail"];
+
+    let photoToPull = "";
+    if (photos[0] && photos[0]["thumbnail_large"]) {
+        photoToPull = photos[0]["thumbnail_large"]["src"];
+    } else if(photos[0] && photos[0]["thumbnail"]) {
+        photoToPull = photos[0]["thumbnail"];
+    }
+
+    if (photoToPull === "") {
+        displaySil();
+        return;
+    }
+
     let linkToPicture = photos[0]["link"];
     //console.log(linkToPicture);
     new_html = '<a class=\"link\" href="'+linkToPicture+'" target="_blank" rel="noopener noreferrer"><img id="airplanePhoto" src=' +photoToPull+'></a>';
@@ -4706,7 +4714,7 @@ function expandSidebar(e) {
     mapIsVisible = false;
     jQuery("#toggle_sidebar_control").hide();
     jQuery("#splitter").hide();
-    jQuery("#shrink_sidebar_button").show();
+    jQuery("#shrink_sidebar_control").show();
     jQuery("#sidebar_container").width("100%");
     TAR.planeMan.redraw();
     updateMapSize();
@@ -4719,7 +4727,7 @@ function showMap() {
     mapIsVisible = true;
     jQuery("#toggle_sidebar_control").show();
     jQuery("#splitter").show();
-    jQuery("#shrink_sidebar_button").hide();
+    jQuery("#shrink_sidebar_control").hide();
     TAR.planeMan.redraw();
     updateMapSize();
 }
@@ -4731,6 +4739,12 @@ function setPhotoHtml(source) {
     if (selectedPhotoCache == source)
         return;
     //console.log(source + ' ' + selectedPhotoCache);
+
+    // If setting empty picture, put in placeholder plane icon instead
+    if(source == "") {
+        source = "<div id=\"placeholder-photo\"><i class=\"fa-solid fa-plane\"></i></div>";
+    }
+
     selectedPhotoCache = source;
     jQuery('#selected_photo').html(source);
 }
@@ -4758,7 +4772,7 @@ function adjustInfoBlock() {
             jQuery('#credits').css('bottom', '295px');
             jQuery('#credits').css('left', '5px');
         } else {
-            jQuery('#selected_infoblock').css('height', '100%');
+            jQuery('#selected_infoblock').css('height', 'calc(100% - 24px)');
             jQuery('#credits').css('bottom', '');
             jQuery('#credits').css('left', '');
         }
@@ -4778,7 +4792,7 @@ function adjustInfoBlock() {
     }
 
     let photoWidth = document.getElementById('photo_container').clientWidth;
-    let refWidth = infoBlockWidth * globalScale - 29;
+    let refWidth = infoBlockWidth * globalScale - 53;
     if (Math.abs(photoWidth / refWidth - 1) > 0.05)
         photoWidth = refWidth;
 
@@ -4787,7 +4801,7 @@ function adjustInfoBlock() {
 
     if (showPictures) {
         if (planespottersAPI || planespottingAPI) {
-            jQuery('#photo_container').css('height', photoWidth * 0.883 + 'px');
+            jQuery('#photo_container').css('height', photoWidth * 0.78 + 'px');
         } else {
             jQuery('#photo_container').css('height', '40px');
         }
@@ -5517,36 +5531,6 @@ function toggleLayer(element, layer) {
             }
         });
     });
-}
-
-let fetchingPf = false;
-function fetchPfData() {
-    if (fetchingPf)
-        return;
-    fetchingPf = true;
-    for (let i in pf_data) {
-        const req = jQuery.ajax({ url: pf_data[i],
-            dataType: 'json' });
-        jQuery.when(req).done(function(data) {
-            for (let i in g.planesOrdered) {
-                const plane = g.planesOrdered[i];
-                const ac = data.aircraft[plane.icao.toUpperCase()];
-                if (!ac) {
-                    continue;
-                }
-                plane.pfRoute = ac.route;
-                plane.pfMach = ac.mach;
-                plane.pfFlightno = ac.flightno;
-                if (!plane.registration && ac.reg && ac.reg != "????" && ac.reg != "z.NO-REG")
-                    plane.registration = ac.reg;
-                if (!plane.icaoType && ac.type && ac.type != "????" && ac.type != "ZVEH") {
-                    plane.icaoType = ac.type;
-                    plane.setTypeData();
-                }
-            }
-            fetchingPf = false;
-        });
-    }
 }
 
 function solidGoldT(arg) {
@@ -6780,7 +6764,7 @@ function setLineWidth() {
     labelFill = new ol.style.Fill({color: 'white' });
     blackFill = new ol.style.Fill({color: 'black' });
     labelStroke = new ol.style.Stroke({color: 'rgba(0,0,0,0.7', width: 4 * globalScale});
-    labelStrokeNarrow = new ol.style.Stroke({color: 'rgba(0,0,0,0.7', width: 2.5 * globalScale});
+    labelStrokeNarrow = new ol.style.Stroke({color: 'rgba(0,0,0,0.7', width: 3 * globalScale});
     bgFill = new ol.style.Stroke({color: 'rgba(0,0,0,0.25'});
 }
 let lastCallLocationChange = 0;
