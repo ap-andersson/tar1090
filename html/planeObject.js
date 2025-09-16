@@ -354,7 +354,7 @@ PlaneObject.prototype.updateTrackPrev = function() {
     this.prev_time = this.position_time;
     this.prev_track = this.track;
     this.prev_rot = this.rotation;
-    this.prev_true = this.true_head;
+    this.prev_true = this.true_heading;
     this.prev_alt = this.altitude;
     this.prev_alt_rounded = this.alt_rounded;
     this.prev_alt_geom = this.alt_geom;
@@ -1978,6 +1978,9 @@ PlaneObject.prototype.updateLines = function() {
             const historic = (showTrace || replay);
             const useLocal = ((historic && !utcTimesHistoric) || (!historic && !utcTimesLive));
             const date = new Date(seg.ts * 1000);
+            if (!date) {
+                console.log(seg);
+            }
             let refDate = showTrace ? traceDate : new Date();
             if (replay) { refDate = replay.ts };
             if (useLocal && historic) {
@@ -2928,6 +2931,7 @@ function routeDoLookup(currentTime) {
                         continue;
                     }
                     let codes = "";
+                    let cities = "";
 
                     for (let airport of route._airports) {
                         if (codes) {
@@ -2936,6 +2940,8 @@ function routeDoLookup(currentTime) {
                             } else {
                                 codes += " - "
                             }
+
+                            cities += " - ";
                         }
                         let aString = ""
                         for (let type of routeDisplay) {
@@ -2950,6 +2956,7 @@ function routeDoLookup(currentTime) {
                                 aString += airport.location;
                             }
                         }
+                        cities += airport.location;
                         codes += aString;
                     }
 
@@ -2957,6 +2964,7 @@ function routeDoLookup(currentTime) {
                         codes = '?? ' + codes;
                     }
                     g.route_cache[route.callsign] = codes;
+                    g.route_cities[route.callsign] = cities;
                 }
             })
             .fail((jqxhr, status, error) => {
@@ -3011,8 +3019,13 @@ function normalizeTraceStamps(data) {
     }
     let trace = data.trace;
     let last = 0;
+    let negOffsetWarned = 0;
     for (let i = 0; i < trace.length; i++) {
         let point = trace[i];
+        if (point[0] < 0 && !negOffsetWarned) {
+            negOffsetWarned = 1;
+            console.log('negative offset in trace');
+        }
         point[0] += data.timestamp;
         if (point[0] >= last) {
             last = point[0];

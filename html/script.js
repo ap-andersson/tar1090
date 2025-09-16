@@ -8,6 +8,7 @@
 g.planes        = {};
 g.planesOrdered = [];
 g.route_cache = [];
+g.route_cities = [];
 g.route_check_array = [];
 g.route_check_in_flight = false;
 g.route_cache_timer = new Date().getTime() / 1000 + 1; // one second from now
@@ -125,7 +126,7 @@ let labels_top = false;
 let lockDotCentered = false;
 let overrideMapType = null;
 let layerMoreContrast = false;
-let layerExtraDim = 0;
+let layerDimFactor = 0;
 let layerExtraContrast = 0;
 let shareFiltersParam = false;
 let lastRequestSize = 0;
@@ -2971,12 +2972,19 @@ function initMap() {
 
     initFilters();
 
+    ol.control.LayerSwitcher.forEachRecursive(layers_group, function(lyr) {
+        if (lyr.get('type') != 'base')
+            return;
+        lyr.dimKey = lyr.on('postrender', dim);
+    });
+
     new Toggle({
         key: "MapDim",
         display: "Dim Map",
         container: "#settingsLeft",
         init: MapDim,
         setState: function(state) {
+            /*
             if (!state) {
                 ol.control.LayerSwitcher.forEachRecursive(layers_group, function(lyr) {
                     if (lyr.get('type') != 'base')
@@ -2990,6 +2998,7 @@ function initMap() {
                     lyr.dimKey = lyr.on('postrender', dim);
                 });
             }
+            */
             if (loadFinished) {
                 OLMap.render();
             }
@@ -3544,6 +3553,7 @@ function refreshSelected() {
     if (useRouteAPI) {
         if (selected.routeString) {
             jQuery('#selected_route').updateText(selected.routeString);
+            jQuery('#selected_route').attr('title', g.route_cities[selected.name]);
         } else {
             jQuery('#selected_route').updateText('n/a');
         }
@@ -3982,8 +3992,14 @@ function refreshFeatures() {
         cols.route = {
             sort: function () { sortBy('route', compareAlpha, function(x) { return x.routeString }); },
             value: function(plane) {
-                return ((useRouteAPI && plane.routeString) || '');
+                if (!useRouteAPI) return '';
+                if (plane.routeString) {
+                    return '<span title="' + g.route_cities[plane.name] + '">' + plane.routeString + '</span>';
+                } else {
+                    return '';
+                }
             },
+            html: true,
             text: 'Route' };
     }
     cols.registration = {
@@ -4909,7 +4925,7 @@ function buttonActive(id, state) {
     }
 }
 
-function toggleIsolation(state) {
+function toggleIsolation(state, noRefresh) {
     let prevState = onlySelected;
     if (showTrace && state !== "on")
         return;
@@ -4921,7 +4937,7 @@ function toggleIsolation(state) {
 
     buttonActive('#I', onlySelected);
 
-    if (prevState != onlySelected)
+    if (prevState != onlySelected && noRefresh != "noRefresh")
         refreshFilter();
 
     fetchData({force: true});
@@ -4954,8 +4970,17 @@ function togglePersistence() {
 
 function dim(evt) {
     try {
-        const dim = mapDimPercentage * (1 + 0.25 * toggles['darkerColors'].state) + layerExtraDim;
-        const contrast = mapContrastPercentage * (1 + 0.1 * toggles['darkerColors'].state) + layerExtraContrast;
+        let currentDimPercentage = mapDimPercentage * layerDimFactor;
+        let currentContrastPercentage = mapContrastPercentage + layerExtraContrast;
+
+        if (!toggles['MapDim'].state) {
+            // slight dim even if disabled
+            currentDimPercentage /= 4;
+            currentContrastPercentage /= 4;
+        }
+
+        const dim = currentDimPercentage * (1 + 0.25 * toggles['darkerColors'].state);
+        const contrast = currentContrastPercentage * (1 + 0.1 * toggles['darkerColors'].state);
         if (dim > 0.0001) {
             evt.context.globalCompositeOperation = 'multiply';
             evt.context.fillStyle = 'rgba(0,0,0,'+dim+')';
@@ -5432,6 +5457,14 @@ function initFilters() {
         name: 'registration',
         table: 'filterTable3'
     });
+    if (routeApiUrl) {
+        new Filter({
+            key: 'route',
+            field: 'routeString',
+            name: 'route',
+            table: 'filterTable3'
+        });
+    }
     new Filter({
         key: 'country',
         field: 'country',
@@ -6545,7 +6578,7 @@ function toggleShowTrace() {
 
         toggleFollow(false);
         showTraceWasIsolation = onlySelected;
-        toggleIsolation("on");
+        toggleIsolation("on", "noRefresh");
         shiftTrace();
     } else {
         jQuery("#selected_showTrace_hide").show();
@@ -6611,8 +6644,9 @@ function legShift(offset, plane) {
         if (traceOpts.startStamp != null && timestamp < traceOpts.startStamp) {
             continue;
         }
-        if (traceOpts.endStamp != null && timestamp > traceOpts.endStamp)
+        if (traceOpts.endStamp != null && timestamp > traceOpts.endStamp) {
             break;
+        }
         if (legStart == null) {
             legStart = i;
             i++;
@@ -8869,23 +8903,8 @@ function printTrace() {
     _printTrace(SelectedPlane.recentTrace.trace);
 }
 
-
-// Create a "hidden" input
-let shareLinkInput = document.createElement("input");
-shareLinkInput.hidden = true;
-// Append it to the body
-document.body.appendChild(shareLinkInput);
-
 function copyShareLink() {
-    // Assign shareLinkInput the value we want to copy
-    shareLinkInput.setAttribute("value", shareLink);
-
-    // Highlight its content
-    shareLinkInput.select();
-    // Copy the highlighted text
-    document.execCommand("copy");
-    // deselect input field
-    shareLinkInput.blur();
+    navigator.clipboard.writeText(shareLink);
 
     copyLinkTime = new Date().getTime();
     copiedIcao = SelectedPlane.icao;
@@ -8918,15 +8937,22 @@ function setSelectedIcao() {
 
 function mapTypeSettings() {
     if (MapType_tar1090.startsWith('maptiler_sat') || MapType_tar1090.startsWith('maptiler_hybrid')) {
-        layerExtraDim = -0.30;
+        layerDimFactor = 0.25;
+    } else if (MapType_tar1090 == 'esri') {
+        layerDimFactor = 0.5;
+    } else if (MapType_tar1090 == 'gibs') {
+        layerDimFactor = 0.5;
     } else if (MapType_tar1090.startsWith('carto_raster')) {
-        layerExtraDim = -0.15;
+        layerDimFactor = 0.70;
         layerExtraContrast = 0.6;
     } else if (MapType_tar1090.startsWith('carto_light')) {
-        layerExtraDim = -0.05;
+        layerDimFactor = 0.80;
         layerExtraContrast = 0.2;
+    } else if (MapType_tar1090.startsWith('carto_dark')) {
+        layerDimFactor = 0.25;
+        layerExtraContrast = 0.05;
     } else {
-        layerExtraDim = 0;
+        layerDimFactor = 1;
         layerExtraContrast = 0;
     }
 }

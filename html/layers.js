@@ -214,6 +214,7 @@ function createBaseLayers() {
         world.push(vtlayer);
     }
 
+    /* seems defunct
     world.push(new ol.layer.Tile({
         source: new ol.source.OSM({
             url: 'https://gibs-{a-c}.earthdata.nasa.gov/wmts/epsg3857/best/BlueMarble_ShadedRelief_Bathymetry/default/EPSG3857_500m/{z}/{y}/{x}.jpeg',
@@ -222,10 +223,11 @@ function createBaseLayers() {
             maxZoom: 8,
             transition: tileTransition,
         }),
-        name: 'gibs_reliev',
+        name: 'gibs_relief',
         title: 'GIBS Relief',
         type: 'base',
     }));
+    */
 
     const date = new Date(Date.now() - 86400 * 1000);
     const yesterday = date.getUTCFullYear() + '-' + (date.getUTCMonth() + 1).toString().padStart(2, '0') + '-' + date.getUTCDate().toString().padStart(2, '0');
@@ -302,7 +304,7 @@ function createBaseLayers() {
         MapboxAPIKey = loStore['mapboxKey'];
 
     if (MapboxAPIKey) {
-        world.push(new ol.MapboxVectorLayer({
+        world.push(new ol.mapboxStyle.MapboxVectorLayer({
             styleUrl: 'mapbox://styles/mapbox/streets-v10',
             accessToken: MapboxAPIKey,
             properties: {
@@ -311,7 +313,7 @@ function createBaseLayers() {
                 type: 'base',
             },
         }));
-        world.push(new ol.MapboxVectorLayer({
+        world.push(new ol.mapboxStyle.MapboxVectorLayer({
             styleUrl: 'mapbox://styles/mapbox/light-v11',
             accessToken: MapboxAPIKey,
             properties: {
@@ -320,7 +322,7 @@ function createBaseLayers() {
                 type: 'base',
             },
         }));
-        world.push(new ol.MapboxVectorLayer({
+        world.push(new ol.mapboxStyle.MapboxVectorLayer({
             styleUrl: 'mapbox://styles/mapbox/dark-v11',
             accessToken: MapboxAPIKey,
             properties: {
@@ -329,7 +331,7 @@ function createBaseLayers() {
                 type: 'base',
             },
         }));
-        world.push(new ol.MapboxVectorLayer({
+        world.push(new ol.mapboxStyle.MapboxVectorLayer({
             styleUrl: 'mapbox://styles/mapbox/outdoors-v10',
             accessToken: MapboxAPIKey,
             properties: {
