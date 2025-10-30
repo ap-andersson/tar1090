@@ -79,6 +79,7 @@ let openAIPOpacity = 0.70;
 let tfrOpacity = 0.70;
 
 let offlineMapDetail = -1;
+let offlineMapDetailOFM = -1;
 
 // -- Marker settings -------------------------------------
 // (marker == aircraft icon)
@@ -352,6 +353,7 @@ let routeDisplay = 'iata';
 let routeApiUrl = "https://adsb.im/api/0/routeset";
 // alternative: "https://api.adsb.lol/api/0/routeset";
 // routeApiUrl = ""; // to disable route API so it can't be enabled by a website visitor
+let debugRoute = false; // bunch of debugging console output for route api
 
 // show a link to jetphotos, only works if planespottersAPI is disabled
 let jetphotoLinks = false;
