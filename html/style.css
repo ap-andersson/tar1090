@@ -929,3 +929,88 @@ input{
 #replaySpeedHint{
   grid-area: speedHint;
 }
+
+/* OpenAIP Vector Layer filter panel */
+#openaip_vector_panel {
+    position: absolute;
+    top: calc(36px * var(--SCALE));   /* tweak this to move up/down */
+    overflow: auto;
+    max-height: 90vh;
+    box-shadow: calc(4px * var(--SCALE)) calc(4px * var(--SCALE)) calc(10px * var(--SCALE)) #444444;
+    padding: calc(16px * var(--SCALE));
+    z-index: 9998;
+    background-color: var(--BGCOLOR1);
+    min-width: calc(220px * var(--SCALE));
+}
+
+.openaip-panel-title {
+    font-weight: bold;
+    font-size: calc(13px * var(--SCALE));
+    margin-bottom: calc(6px * var(--SCALE));
+    color: var(--FGCOLOR1);
+}
+
+.openaip-panel-section {
+    font-size: calc(11px * var(--SCALE));
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--FGCOLOR2, #888);
+    margin-top: calc(8px * var(--SCALE));
+    margin-bottom: calc(3px * var(--SCALE));
+    border-bottom: 1px solid var(--FGCOLOR2, #888);
+    padding-bottom: calc(2px * var(--SCALE));
+}
+
+.openaip-panel-row {
+    display: flex;
+    align-items: center;
+    gap: calc(6px * var(--SCALE));
+    padding: calc(3px * var(--SCALE)) 0;
+    cursor: pointer;
+    font-size: calc(12px * var(--SCALE));
+    color: var(--FGCOLOR1);
+    white-space: nowrap;
+}
+
+.openaip-panel-row input[type="checkbox"] {
+    cursor: pointer;
+    width: calc(13px * var(--SCALE));
+    height: calc(13px * var(--SCALE));
+    flex-shrink: 0;
+}
+
+.oaip-swatch {
+    display: inline-block;
+    width: calc(12px * var(--SCALE));
+    height: calc(12px * var(--SCALE));
+    border-radius: 2px;
+    flex-shrink: 0;
+    opacity: 0.9;
+}
+
+.openaip-opacity-row {
+    display: flex;
+    align-items: center;
+    gap: calc(5px * var(--SCALE));
+    padding: calc(4px * var(--SCALE)) 0 calc(2px * var(--SCALE)) 0;
+}
+
+.openaip-opacity-label {
+    font-size: calc(10px * var(--SCALE));
+    color: var(--FGCOLOR2, #888);
+    flex-shrink: 0;
+}
+
+.openaip-opacity-pct {
+    font-size: calc(11px * var(--SCALE));
+    color: var(--FGCOLOR1);
+    flex-shrink: 0;
+    min-width: calc(32px * var(--SCALE));
+    text-align: right;
+}
+
+#oaip_fill_opacity {
+    cursor: pointer;
+    height: calc(4px * var(--SCALE));
+}

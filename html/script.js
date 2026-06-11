@@ -1315,6 +1315,26 @@ function earlyInitPage() {
         jQuery('#settings_infoblock').hide();
     });
 
+    // OpenAIP vector layer filter panel
+    if (OpenAIPAPIKey) {
+        // Load category visibility from localStorage, falling back to defaults.
+        for (const key of Object.keys(openAIPVectorCategories)) {
+            const stored = loStore['openaip_cat_' + key];
+            if (stored === 'true')  openAIPVectorCategories[key] = true;
+            if (stored === 'false') openAIPVectorCategories[key] = false;
+            const cb = document.getElementById('oaip_' + key);
+            if (cb) cb.checked = openAIPVectorCategories[key];
+        }
+
+        // Load saved fill opacity.
+        const storedOpacity = loStore['openaip_fill_opacity'];
+        if (storedOpacity !== undefined) openAIPVectorFillOpacity = parseInt(storedOpacity, 10);
+        const opacitySlider = document.getElementById('oaip_fill_opacity');
+        if (opacitySlider) opacitySlider.value = openAIPVectorFillOpacity;
+
+        // Layer visibility wiring is done later in initMap() once layers_group exists.
+    }
+
     jQuery('#groundvehicle_filter').on('click', function() {
         filterGroundVehicles(true);
         refresh();
@@ -2618,6 +2638,49 @@ function ol_map_init() {
         });
     }
 
+    // Wire the OpenAIP vector panel to show/hide in sync with the layer switcher.
+    // These are declared at function scope so both if-blocks below can reference them.
+    let openAIPLayerVisible = false;
+    let updateOpenAIPPanelVisibility = null;
+
+    if (OpenAIPAPIKey) {
+        function positionOpenAIPPanel() {
+            // Align the panel to just left of the layer-switcher panel when it is open.
+            // To tweak the horizontal gap, adjust the + 12 below.
+            const lsPanel = document.querySelector('.layer-switcher.shown .panel');
+            const mapCanvas = document.getElementById('map_canvas');
+            const panel = document.getElementById('openaip_vector_panel');
+            if (lsPanel && mapCanvas) {
+                const lsRect = lsPanel.getBoundingClientRect();
+                const mapRect = mapCanvas.getBoundingClientRect();
+                panel.style.right = (mapRect.right - lsRect.left + 12) + 'px';
+            } else {
+                panel.style.right = 'calc(80px * var(--SCALE))';
+            }
+        }
+
+        updateOpenAIPPanelVisibility = function() {
+            const layerSwitcherOpen = !!document.querySelector('.layer-switcher.shown');
+            const panel = jQuery('#openaip_vector_panel');
+            if (openAIPLayerVisible && layerSwitcherOpen) {
+                positionOpenAIPPanel();
+                panel.show();
+            } else {
+                panel.hide();
+            }
+        };
+
+        ol.control.LayerSwitcher.forEachRecursive(layers_group, function(lyr) {
+            if (lyr.get('name') === 'openaip_vector') {
+                openAIPLayerVisible = lyr.getVisible();
+                lyr.on('change:visible', function(evt) {
+                    openAIPLayerVisible = evt.target.getVisible();
+                    updateOpenAIPPanelVisibility();
+                });
+            }
+        });
+    }
+
     OLProj = OLMap.getView().getProjection();
     OLProjExtent = OLProj.getExtent();
 
@@ -2628,6 +2691,16 @@ function ol_map_init() {
         activationMode: 'click', // click sucks in the current implementation
         target: 'map_canvas',
     }));
+
+    // After LayerSwitcher is in the DOM, watch its .shown class to sync the OpenAIP panel.
+    if (OpenAIPAPIKey && updateOpenAIPPanelVisibility) {
+        const layerSwitcherEl = document.querySelector('.layer-switcher');
+        if (layerSwitcherEl) {
+            new MutationObserver(function() {
+                updateOpenAIPPanelVisibility();
+            }).observe(layerSwitcherEl, { attributes: true, attributeFilter: ['class'] });
+        }
+    }
 
     OLMap.on('movestart', function(event) {
         if (webgl) {
@@ -5588,6 +5661,30 @@ function toggleLayer(element, layer) {
                 }
             }
         });
+    });
+}
+
+// Toggles an OpenAIP vector layer category on/off and persists the choice.
+function toggleOpenAIPCategory(category, visible) {
+    openAIPVectorCategories[category] = visible;
+    loStore['openaip_cat_' + category] = String(visible);
+    // Trigger re-render of the vector tile layer.
+    ol.control.LayerSwitcher.forEachRecursive(layers_group, function(lyr) {
+        if (lyr.get('name') === 'openaip_vector') {
+            lyr.changed();
+        }
+    });
+}
+
+// Updates the fill opacity for the OpenAIP vector layer and persists the choice.
+function setOpenAIPFillOpacity(value) {
+    openAIPVectorFillOpacity = parseInt(value, 10);
+    loStore['openaip_fill_opacity'] = String(openAIPVectorFillOpacity);
+    if (window._openAIPClearStyleCache) window._openAIPClearStyleCache();
+    ol.control.LayerSwitcher.forEachRecursive(layers_group, function(lyr) {
+        if (lyr.get('name') === 'openaip_vector') {
+            lyr.changed();
+        }
     });
 }
 
