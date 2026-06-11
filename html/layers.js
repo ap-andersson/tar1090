@@ -505,22 +505,25 @@ function createBaseLayers() {
         }
     } */
 
-    world.push(new ol.layer.Tile({
-        source: new ol.source.XYZ({
-            "url" : "https://map.adsbexchange.com/mapproxy/tiles/1.0.0/openaip/ul_grid/{z}/{x}/{y}.png",
-            "attributions" : "openAIP.net",
-            attributionsCollapsible: false,
-            maxZoom: 12,
-            transition: tileTransition,
-        }),
-        name: 'openaip',
-        title: 'openAIP TMS',
-        type: 'overlay',
-        opacity: openAIPOpacity,
-        visible: false,
-        zIndex: 99,
-        maxZoom: 13,
-    }));
+    // Only add the old raster layer if no vector API key is configured.
+    if (!OpenAIPAPIKey) {
+        world.push(new ol.layer.Tile({
+            source: new ol.source.XYZ({
+                "url" : "https://map.adsbexchange.com/mapproxy/tiles/1.0.0/openaip/ul_grid/{z}/{x}/{y}.png",
+                "attributions" : "openAIP.net",
+                attributionsCollapsible: false,
+                maxZoom: 12,
+                transition: tileTransition,
+            }),
+            name: 'openaip',
+            title: 'openAIP TMS',
+            type: 'overlay',
+            opacity: openAIPOpacity,
+            visible: false,
+            zIndex: 99,
+            maxZoom: 13,
+        }));
+    }
 
     if (OpenAIPAPIKey) {
         // Map each airspace type string to a category key used in openAIPVectorCategories.
