@@ -214,6 +214,15 @@ ColorByAlt = {
 //
 //MapboxAPIKey = null;
 
+// Provide an OpenAIP API key here to enable the advanced OpenAIP vector layer
+// with per-category filtering (show/hide gliding sectors, restricted areas, etc.)
+// Create a free account and generate a key at https://www.openaip.net/
+//
+// Be sure to quote your key:
+//   OpenAIPAPIKey = "your key here";
+//
+// OpenAIPAPIKey = "your-key-here";
+
 // This determines what is up, default is north (0 degrees)
 //mapOrientation = 0;
 

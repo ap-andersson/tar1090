@@ -836,6 +836,32 @@
             <div id="F" title="(F)ollow" class="button inActiveButton" onclick="toggleFollow();"><span class="buttonText">F</span></div>
           </div>
         </div>
+        <div id="openaip_vector_panel" style="display:none">
+          <div class="openaip-panel-title">openAIP Layer Filter</div>
+          <div class="openaip-panel-section">Fill Opacity</div>
+          <div class="openaip-opacity-row">
+            <span class="openaip-opacity-label">Low</span>
+            <input type="range" id="oaip_fill_opacity" min="1" max="10" step="1" value="8"
+                   oninput="setOpenAIPFillOpacity(this.value)" style="flex:1">
+            <span class="openaip-opacity-label">High</span>
+          </div>
+          <div class="openaip-panel-section">Airspaces</div>
+          <label class="openaip-panel-row"><input type="checkbox" id="oaip_airspaces_danger"   onchange="toggleOpenAIPCategory('airspaces_danger',   this.checked)"> <span class="oaip-swatch" style="background:#dc1e1e"></span> Restricted / Danger / Prohibited</label>
+          <label class="openaip-panel-row"><input type="checkbox" id="oaip_airspaces_alert"    onchange="toggleOpenAIPCategory('airspaces_alert',    this.checked)"> <span class="oaip-swatch" style="background:#dc6414"></span> Alert / Warning</label>
+          <label class="openaip-panel-row"><input type="checkbox" id="oaip_airspaces_ctr"      onchange="toggleOpenAIPCategory('airspaces_ctr',      this.checked)"> <span class="oaip-swatch" style="background:#1e50dc"></span> CTR / ATZ (Control Zones)</label>
+          <label class="openaip-panel-row"><input type="checkbox" id="oaip_airspaces_tma"      onchange="toggleOpenAIPCategory('airspaces_tma',      this.checked)"> <span class="oaip-swatch" style="background:#3080cc"></span> TMA / CTA (Control Areas)</label>
+          <label class="openaip-panel-row"><input type="checkbox" id="oaip_airspaces_military" onchange="toggleOpenAIPCategory('airspaces_military', this.checked)"> <span class="oaip-swatch" style="background:#b414b4"></span> Military (TRA / TSA)</label>
+          <label class="openaip-panel-row"><input type="checkbox" id="oaip_airspaces_rmz_tmz"  onchange="toggleOpenAIPCategory('airspaces_rmz_tmz',  this.checked)"> <span class="oaip-swatch" style="background:#dc8c14"></span> Radio Mandatory (RMZ / TMZ)</label>
+          <label class="openaip-panel-row"><input type="checkbox" id="oaip_airspaces_gliding"  onchange="toggleOpenAIPCategory('airspaces_gliding',  this.checked)"> <span class="oaip-swatch" style="background:#3ca03c"></span> Gliding / VFR Sectors</label>
+          <label class="openaip-panel-row"><input type="checkbox" id="oaip_airspaces_other"    onchange="toggleOpenAIPCategory('airspaces_other',    this.checked)"> <span class="oaip-swatch" style="background:#888888"></span> Other / FIR / Airways</label>
+          <div class="openaip-panel-section">Points</div>
+          <label class="openaip-panel-row"><input type="checkbox" id="oaip_airports"          onchange="toggleOpenAIPCategory('airports',          this.checked)"> <span class="oaip-swatch" style="background:#007b7b"></span> Airports</label>
+          <label class="openaip-panel-row"><input type="checkbox" id="oaip_navaids"           onchange="toggleOpenAIPCategory('navaids',           this.checked)"> <span class="oaip-swatch" style="background:#6600cc"></span> Navaids</label>
+          <label class="openaip-panel-row"><input type="checkbox" id="oaip_obstacles"         onchange="toggleOpenAIPCategory('obstacles',         this.checked)"> <span class="oaip-swatch" style="background:#cc5500"></span> Obstacles</label>
+          <label class="openaip-panel-row"><input type="checkbox" id="oaip_hotspots"          onchange="toggleOpenAIPCategory('hotspots',          this.checked)"> <span class="oaip-swatch" style="background:#007700"></span> Hotspots (Thermals)</label>
+          <label class="openaip-panel-row"><input type="checkbox" id="oaip_reporting_points"  onchange="toggleOpenAIPCategory('reporting_points',  this.checked)"> <span class="oaip-swatch" style="background:#666666"></span> Reporting Points</label>
+        </div>
+
         <div id="altitude_chart" class="ol-unselectable ol-control altitudeFeet">
           <button id="altitude_chart_button"></button>
         </div>
