@@ -739,6 +739,45 @@
         <div id="iconTestCanvas" style="background-color:#D2D2D2;display:none;">
         </div>
 
+        <div id="mobile_expanded_close" onclick="collapseMobileSheet()">
+          <i class="fa-solid fa-chevron-down"></i>
+        </div>
+        <!-- Mobile bottom sheet: shown instead of sidebar when screen is narrow -->
+        <div id="mobile_summary" style="display:none">
+          <div id="mobile_summary_handle" onclick="toggleMobileExpand()"><i class="fa-solid fa-chevron-up"></i></div>
+          <div id="mobile_summary_content">
+            <div id="mobile_summary_header">
+              <div id="mobile_summary_text">
+                <div id="mobile_summary_row1">
+                  <span id="mob_callsign" class="mob-callsign"></span>
+                  <span id="mob_type"     class="mob-badge"></span>
+                  <span id="mob_squawk"   class="mob-badge"></span>
+                  <span id="mob_icao"     class="mob-badge"></span>
+                </div>
+                <div id="mobile_summary_row1b">
+                  <span id="mob_operator" class="mob-operator"></span>
+                  <span id="mob_route"    class="mob-route"></span>
+                </div>
+              </div>
+              <img id="mob_thumbnail" class="mob-thumbnail" src="" style="display:none" alt="">
+            </div>
+            <div id="mobile_summary_row2">
+              <div class="mob-stat">
+                <span class="mob-stat-label">Altitude</span>
+                <span id="mob_altitude" class="mob-stat-value"></span>
+              </div>
+              <div class="mob-stat">
+                <span class="mob-stat-label">Speed</span>
+                <span id="mob_speed" class="mob-stat-value"></span>
+              </div>
+              <div class="mob-stat">
+                <span class="mob-stat-label">Vert. rate</span>
+                <span id="mob_vrate" class="mob-stat-value"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div id="settings_infoblock">
           <div id="settings_close" class="settingsCloseBox">
             <i class="fa-solid fa-circle-xmark"></i>

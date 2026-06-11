@@ -1040,3 +1040,228 @@ tr#photo_container {
     cursor: pointer;
     height: calc(4px * var(--SCALE));
 }
+
+/* =====================================================================
+   Mobile bottom sheet (shown instead of sidebar on small screens)
+   ===================================================================== */
+
+/* Collapsed summary bar */
+#mobile_summary {
+    display: none; /* shown via JS only on mobile */
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 2000;
+    background-color: #2b2b2b;
+    border-top: 3px solid #f5a623;
+    border-radius: calc(12px * var(--SCALE)) calc(12px * var(--SCALE)) 0 0;
+    padding: 0;
+    box-shadow: 0 -4px 16px rgba(0,0,0,0.5);
+}
+
+/* Expand handle — chevron up icon */
+#mobile_summary_handle {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: calc(8px * var(--SCALE)) 0 calc(4px * var(--SCALE));
+    cursor: pointer;
+    font-size: calc(16px * var(--SCALE));
+    color: rgba(255,255,255,0.6);
+}
+
+/* Content area of collapsed bar */
+#mobile_summary_content {
+    padding: 0 calc(12px * var(--SCALE)) calc(12px * var(--SCALE));
+}
+
+/* Header row: callsign + badges */
+#mobile_summary_row1 {
+    display: flex;
+    align-items: center;
+    gap: calc(6px * var(--SCALE));
+    margin-bottom: calc(4px * var(--SCALE));
+    flex-wrap: wrap;
+}
+
+/* Stats row */
+#mobile_summary_row2 {
+    display: flex;
+    gap: 0;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    padding-top: calc(8px * var(--SCALE));
+    margin-top: calc(2px * var(--SCALE));
+}
+
+.mob-stat {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border-right: 1px solid rgba(255,255,255,0.1);
+    padding: 0 calc(4px * var(--SCALE));
+}
+.mob-stat:last-child {
+    border-right: none;
+}
+.mob-stat-label {
+    font-size: calc(9px * var(--SCALE));
+    color: rgba(255,255,255,0.5);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: calc(2px * var(--SCALE));
+}
+.mob-stat-value {
+    font-size: calc(14px * var(--SCALE));
+    font-weight: bold;
+    color: #ffffff;
+    white-space: nowrap;
+}
+
+.mob-callsign {
+    font-size: calc(20px * var(--SCALE));
+    font-weight: bold;
+    color: #f5a623;
+}
+.mob-badge {
+    font-size: calc(11px * var(--SCALE));
+    font-weight: bold;
+    color: #ffffff;
+    background: #444;
+    border-radius: calc(4px * var(--SCALE));
+    padding: calc(2px * var(--SCALE)) calc(6px * var(--SCALE));
+    white-space: nowrap;
+}
+.mob-operator {
+    font-size: calc(13px * var(--SCALE));
+    color: rgba(255,255,255,0.65);
+}
+.mob-route {
+    font-size: calc(13px * var(--SCALE));
+    font-weight: bold;
+    color: #f5a623;
+    letter-spacing: 0.05em;
+}
+
+/* Header: text on the left, thumbnail on the right */
+#mobile_summary_header {
+    display: flex;
+    align-items: center;
+    gap: calc(8px * var(--SCALE));
+    margin-bottom: calc(4px * var(--SCALE));
+}
+#mobile_summary_text {
+    flex: 1;
+    min-width: 0;
+}
+#mobile_summary_row1b {
+    display: flex;
+    flex-wrap: wrap;
+    gap: calc(4px * var(--SCALE));
+    margin-top: calc(2px * var(--SCALE));
+}
+.mob-thumbnail {
+    width: calc(72px * var(--SCALE));
+    height: calc(48px * var(--SCALE));
+    object-fit: cover;
+    border-radius: calc(4px * var(--SCALE));
+    flex-shrink: 0;
+    border: 1px solid rgba(255,255,255,0.15);
+}
+
+/* ---- Expanded (fullscreen) state ---- */
+#mobile_summary.mobile-expanded {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    border-radius: 0;
+    border-top: none;
+    overflow-y: auto;
+    z-index: 2001;
+    background-color: var(--BGCOLOR1);
+}
+
+/* Hide summary content when expanded; infoblock takes over */
+#mobile_summary.mobile-expanded #mobile_summary_handle,
+#mobile_summary.mobile-expanded #mobile_summary_content {
+    display: none;
+}
+
+/* When expanded, make the infoblock fill the sheet properly */
+#mobile_summary.mobile-expanded #selected_infoblock {
+    display: block !important;
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 100vh;
+    border-radius: 0;
+    border: none;
+    background-color: var(--BGCOLOR2);
+    overflow: visible;
+}
+#mobile_summary.mobile-expanded #infoblock-container {
+    height: auto !important;
+    overflow: visible !important;
+    padding-top: calc(40px * var(--SCALE)); /* space for close button */
+}
+/* Hide the original infoblock close button — we use #mobile_expanded_close instead */
+#mobile_summary.mobile-expanded #infoblock_close {
+    display: none !important;
+}
+/* Constrain photo and image width so they don't overflow */
+#mobile_summary.mobile-expanded #airplanePhoto,
+#mobile_summary.mobile-expanded #selected_photo {
+    max-width: 100% !important;
+    width: 100% !important;
+    height: auto !important;
+}
+#mobile_summary.mobile-expanded tr#photo_container td {
+    max-width: 100%;
+    overflow: hidden;
+}
+
+/* Close/collapse button for expanded state — centered at top */
+#mobile_expanded_close {
+    position: sticky;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 2002;
+    width: 100%;
+    display: none;
+    text-align: center;
+    padding: calc(10px * var(--SCALE)) 0 calc(6px * var(--SCALE));
+    font-size: calc(20px * var(--SCALE));
+    cursor: pointer;
+    color: rgba(255,255,255,0.7);
+    background-color: var(--BGCOLOR2);
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+/* On mobile: hide desktop infoblock; expanded state overrides with its own rule above */
+@media screen and (max-width: 600px) {
+    #selected_infoblock {
+        display: none !important;
+    }
+
+    /* OpenAIP panel: flows inline below the layer list on mobile */
+    #openaip_vector_panel {
+        position: relative !important;
+        top: auto !important;
+        left: auto !important;
+        right: auto !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        border-radius: 0 !important;
+        border: none !important;
+        border-top: 1px solid var(--DARK_ACCENT) !important;
+        box-shadow: none !important;
+        margin-top: calc(8px * var(--SCALE));
+        z-index: auto;
+    }
+}
