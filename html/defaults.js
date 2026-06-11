@@ -234,6 +234,38 @@ let BingMapsAPIKey = null;
 //
 let MapboxAPIKey = null;
 
+// Provide an OpenAIP API key here to enable the advanced OpenAIP vector layer.
+// The vector layer supports per-category filtering (show/hide individual airspace types).
+// Create a free account and generate a key at https://www.openaip.net/
+//
+// Be sure to quote your key:
+//   OpenAIPAPIKey = "your key here";
+//
+let OpenAIPAPIKey = null;
+
+// Default visibility for each OpenAIP vector layer category.
+// Set any of these to false to hide that category by default.
+let openAIPVectorCategories = {
+    airspaces_danger:    false,  // restricted, danger, prohibited
+    airspaces_alert:     true,   // alert, warning, tfr
+    airspaces_ctr:       true,   // ctr, atz, matz, htz
+    airspaces_tma:       true,   // tma, cta, tiz, tia, trp
+    airspaces_military:  true,   // tra, tsa, mtr, mta, mrt, adiz
+    airspaces_rmz_tmz:   true,   // rmz, tmz
+    airspaces_gliding:   false,  // gliding_sector, vfr_sector
+    airspaces_other:     false,  // fir, uir, awy, lta, uta, matz, atz, and others
+    airports:            true,
+    navaids:             false,
+    obstacles:           false,
+    hotspots:            false,
+    reporting_points:    false,
+};
+
+// Fill opacity for the OpenAIP vector airspace areas (1–10).
+// Outlines scale with the slider but are always much stronger than the fill.
+let openAIPVectorFillOpacity = 8; // slider value (1–10)
+
+
 let mapOrientation = 0; // This determines what is up, normally north (0 degrees)
 
 // NO LONGER USED
