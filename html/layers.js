@@ -505,22 +505,178 @@ function createBaseLayers() {
         }
     } */
 
-    world.push(new ol.layer.Tile({
-        source: new ol.source.XYZ({
-            "url" : "https://map.adsbexchange.com/mapproxy/tiles/1.0.0/openaip/ul_grid/{z}/{x}/{y}.png",
-            "attributions" : "openAIP.net",
-            attributionsCollapsible: false,
-            maxZoom: 12,
-            transition: tileTransition,
-        }),
-        name: 'openaip',
-        title: 'openAIP TMS',
-        type: 'overlay',
-        opacity: openAIPOpacity,
-        visible: false,
-        zIndex: 99,
-        maxZoom: 13,
-    }));
+    // Only add the old raster layer if no vector API key is configured.
+    if (!OpenAIPAPIKey) {
+        world.push(new ol.layer.Tile({
+            source: new ol.source.XYZ({
+                "url" : "https://map.adsbexchange.com/mapproxy/tiles/1.0.0/openaip/ul_grid/{z}/{x}/{y}.png",
+                "attributions" : "openAIP.net",
+                attributionsCollapsible: false,
+                maxZoom: 12,
+                transition: tileTransition,
+            }),
+            name: 'openaip',
+            title: 'openAIP TMS',
+            type: 'overlay',
+            opacity: openAIPOpacity,
+            visible: false,
+            zIndex: 99,
+            maxZoom: 13,
+        }));
+    }
+
+    if (OpenAIPAPIKey) {
+        // Map each airspace type string to a category key used in openAIPVectorCategories.
+        const airspaceTypeToCategory = {
+            restricted: 'airspaces_danger', danger: 'airspaces_danger', prohibited: 'airspaces_danger',
+            alert: 'airspaces_alert', warning: 'airspaces_alert', tfr: 'airspaces_alert',
+            ctr: 'airspaces_ctr', atz: 'airspaces_ctr', matz: 'airspaces_ctr', htz: 'airspaces_ctr',
+            tma: 'airspaces_tma', cta: 'airspaces_tma', tiz: 'airspaces_tma', tia: 'airspaces_tma', trp: 'airspaces_tma',
+            tra: 'airspaces_military', tsa: 'airspaces_military', mtr: 'airspaces_military',
+            mta: 'airspaces_military', mrt: 'airspaces_military', adiz: 'airspaces_military',
+            rmz: 'airspaces_rmz_tmz', tmz: 'airspaces_rmz_tmz',
+            gliding_sector: 'airspaces_gliding', vfr_sector: 'airspaces_gliding',
+        };
+
+        // Colors per category: rgb tuple used for both fill and stroke (alpha differs).
+        const categoryStyle = {
+            airspaces_danger:   { rgb: '220,30,30',   width: 1.3 },
+            airspaces_alert:    { rgb: '220,100,20',  width: 1.3 },
+            airspaces_ctr:      { rgb: '30,80,220',   width: 1.3 },
+            airspaces_tma:      { rgb: '20,100,200',  width: 1.0 },
+            airspaces_military: { rgb: '180,20,180',  width: 1.3 },
+            airspaces_rmz_tmz:  { rgb: '220,140,20',  width: 1.0 },
+            airspaces_gliding:  { rgb: '60,160,60',   width: 1.0 },
+            airspaces_other:    { rgb: '100,100,100', width: 0.8 },
+        };
+
+        // Cache keyed by "category|fillOpacity" — cleared automatically when opacity changes
+        // because getAirspaceStyle uses the current openAIPVectorFillOpacity in the key.
+        const styleCache = {};
+        // Exposed so script.js can clear the cache when the slider moves.
+        window._openAIPClearStyleCache = function() {
+            Object.keys(styleCache).forEach(k => delete styleCache[k]);
+        };
+
+        function getAirspaceStyle(category) {
+            const alpha = (openAIPVectorFillOpacity / 100).toFixed(3);
+            // Stroke is always stronger than fill: 10× the fill alpha, capped at 1.0.
+            const strokeAlpha = Math.min(1, openAIPVectorFillOpacity / 100 * 10).toFixed(3);
+            const cacheKey = category + '|' + alpha;
+            if (styleCache[cacheKey]) return styleCache[cacheKey];
+            const s = categoryStyle[category];
+            styleCache[cacheKey] = [
+                new ol.style.Style({
+                    fill: new ol.style.Fill({ color: 'rgba(' + s.rgb + ',' + alpha + ')' }),
+                    stroke: new ol.style.Stroke({ color: 'rgba(' + s.rgb + ',' + strokeAlpha + ')', width: s.width }),
+                }),
+            ];
+            return styleCache[cacheKey];
+        }
+
+        // Point + label styles for non-airspace source-layers.
+        const pointStyleCache = {};
+        function getPointStyle(sourceLayer, labelProp) {
+            const cacheKey = sourceLayer + (labelProp || '');
+            if (pointStyleCache[cacheKey]) return pointStyleCache[cacheKey];
+            const colors = {
+                airports:         '#007b7b',
+                navaids:          '#6600cc',
+                obstacles:        '#cc5500',
+                hotspots:         '#007700',
+                reporting_points: '#444488',
+            };
+            const color = colors[sourceLayer] || '#444444';
+            pointStyleCache[cacheKey] = new ol.style.Style({
+                image: new ol.style.Circle({
+                    radius: 4,
+                    fill: new ol.style.Fill({ color: color }),
+                    stroke: new ol.style.Stroke({ color: '#ffffff', width: 1 }),
+                }),
+            });
+            return pointStyleCache[cacheKey];
+        }
+
+        function getLabelStyle(text, color) {
+            return new ol.style.Style({
+                text: new ol.style.Text({
+                    text: text,
+                    font: '11px sans-serif',
+                    fill: new ol.style.Fill({ color: color || '#333333' }),
+                    stroke: new ol.style.Stroke({ color: 'rgba(0,0,0,0.7)', width: 2 }),
+                    offsetY: -10,
+                    overflow: true,
+                }),
+            });
+        }
+
+        const openAIPVectorStyleFn = function(feature, resolution) {
+            const sourceLayer = feature.get('layer');
+
+            if (sourceLayer === 'airspaces') {
+                const type = feature.get('type') || 'other';
+                const category = airspaceTypeToCategory[type] || 'airspaces_other';
+                if (!openAIPVectorCategories[category]) return null;
+                return getAirspaceStyle(category);
+            }
+
+            if (sourceLayer === 'airports' || sourceLayer === 'hang_glidings' || sourceLayer === 'rc_airfields') {
+                if (!openAIPVectorCategories['airports']) return null;
+                const styles = [getPointStyle('airports')];
+                const name = feature.get('name') || feature.get('icao_code');
+                if (name && resolution < 600) styles.push(getLabelStyle(name, '#007b7b'));
+                return styles;
+            }
+
+            if (sourceLayer === 'navaids') {
+                if (!openAIPVectorCategories['navaids']) return null;
+                const styles = [getPointStyle('navaids')];
+                const label = feature.get('identifier') || feature.get('name');
+                if (label && resolution < 1200) styles.push(getLabelStyle(label, '#6600cc'));
+                return styles;
+            }
+
+            if (sourceLayer === 'obstacles') {
+                if (!openAIPVectorCategories['obstacles']) return null;
+                return getPointStyle('obstacles');
+            }
+
+            if (sourceLayer === 'hotspots') {
+                if (!openAIPVectorCategories['hotspots']) return null;
+                const styles = [getPointStyle('hotspots')];
+                const name = feature.get('name');
+                if (name && resolution < 300) styles.push(getLabelStyle(name, '#007700'));
+                return styles;
+            }
+
+            if (sourceLayer === 'reporting_points') {
+                if (!openAIPVectorCategories['reporting_points']) return null;
+                const styles = [getPointStyle('reporting_points')];
+                const name = feature.get('name') || feature.get('identifier');
+                if (name && resolution < 300) styles.push(getLabelStyle(name, '#444488'));
+                return styles;
+            }
+
+            return null;
+        };
+
+        world.push(new ol.layer.VectorTile({
+            source: new ol.source.VectorTile({
+                url: 'https://api.tiles.openaip.net/api/data/openaip/{z}/{x}/{y}.pbf?apiKey=' + OpenAIPAPIKey,
+                format: new ol.format.MVT(),
+                attributions: '<a href="https://www.openaip.net/">openAIP.net</a>',
+                attributionsCollapsible: false,
+                maxZoom: 14,
+            }),
+            name: 'openaip_vector',
+            title: 'openAIP (Vector)',
+            type: 'overlay',
+            opacity: 1,
+            visible: false,
+            zIndex: 99,
+            style: openAIPVectorStyleFn,
+        }));
+    }
 
     if (true) {
         let tfrLayer = new ol.layer.Vector({
