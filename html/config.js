@@ -222,6 +222,7 @@ ColorByAlt = {
 //   OpenAIPAPIKey = "your key here";
 //
 // OpenAIPAPIKey = "your-key-here";
+// docker-ultrafeeder users: set TAR1090_CONFIGJS_APPEND=OpenAIPAPIKey = "your-key-here";
 
 // This determines what is up, default is north (0 degrees)
 //mapOrientation = 0;
