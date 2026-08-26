@@ -1274,6 +1274,7 @@ function earlyInitPage() {
     if (loStore['enableLabels'] == 'true' || usp.has('enableLabels')) {
         toggleLabels();
     }
+    initInfoblockGroups();
     initLabelPicker();
     loadLabelFields();
     if (loStore['trackLabels'] == "true" || usp.has('trackLabels')) {
@@ -5810,6 +5811,33 @@ function toggleLabelPicker(show) {
     } else {
         panel.hide();
     }
+}
+
+// Remember which infoblock detail groups are left open. Native <details>
+// handles the interaction; this only persists the state.
+function initInfoblockGroups() {
+    let stored = {};
+    if (loStore['infoblockGroups']) {
+        try {
+            stored = JSON.parse(loStore['infoblockGroups']) || {};
+        } catch (e) {
+            console.log('ignoring unreadable stored infoblockGroups: ' + e);
+        }
+    }
+
+    jQuery('.ib-group').each(function() {
+        const key = jQuery(this).attr('data-group');
+        if (stored[key] != undefined)
+            this.open = !!stored[key];
+    });
+
+    jQuery('#infoblock-container').on('toggle', '.ib-group', function() {
+        const state = {};
+        jQuery('.ib-group').each(function() {
+            state[jQuery(this).attr('data-group')] = this.open;
+        });
+        loStore['infoblockGroups'] = JSON.stringify(state);
+    });
 }
 
 function initLabelPicker() {

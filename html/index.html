@@ -299,12 +299,9 @@
               Click on the trace line to start playback!
             </div>
           </div>
-          <div class="sectionTitle">
-            <div class="section-title-content">
-              SPATIAL
-            </div>
-          </div>
-          <div id=spatial_block class="infoBlockSection">
+          <details class="ib-group" data-group="position" open>
+            <summary class="ib-group-summary">Position</summary>
+            <div id=spatial_block class="infoBlockSection">
             <table class="infoSectionTable">
               <tr id=receiver_id_div class="infoBlockSection hidden">
                 <td>
@@ -353,14 +350,13 @@
 
             </table>
           </div>
+          </details>
+
               <!-- SPATIAL -->
 
-          <div class="sectionTitle">
-            <div class="section-title-content">
-              Signal
-            </div>
-          </div>
-          <div class="infoBlockSection">
+          <details class="ib-group" data-group="signal">
+            <summary class="ib-group-summary">Signal</summary>
+            <div class="infoBlockSection">
 
             <div>
               <div class="infoHeading">
@@ -415,14 +411,13 @@
                 </div>
               </div>
             </div>
-          </div> <!-- Signal -->
-
-          <div class="sectionTitle">
-            <div class="section-title-content">
-              FMS SEL
-            </div>
           </div>
-          <div class="infoBlockSection">
+          </details>
+ <!-- Signal -->
+
+          <details class="ib-group" data-group="fms">
+            <summary class="ib-group-summary">Autopilot / FMS</summary>
+            <div class="infoBlockSection">
             <div>
               <div class="infoHeading">
                 <span title="The selected altitude in the aircraft's flight management system">Sel. Alt.</span>:
@@ -439,14 +434,13 @@
                 <span id="selected_nav_heading">n/a</span>
               </div>
             </div>
-          </div> <!-- FMS SEL -->
-
-          <div class="sectionTitle">
-            <div class="section-title-content">
-              Wind
-            </div>
           </div>
-          <div class="infoBlockSection">
+          </details>
+ <!-- FMS SEL -->
+
+          <details class="ib-group" data-group="wind">
+            <summary class="ib-group-summary">Wind &amp; air</summary>
+            <div class="infoBlockSection">
             <div>
               <div class="infoHeading">
                 <span title="Calculated Wind speed">Speed</span>:
@@ -471,13 +465,12 @@
                 <span id="selected_temp">n/a</span>
               </div>
             </div>
-          </div> <!-- Wind -->
-          <div class="sectionTitle">
-            <div class="section-title-content">
-              Speed
-            </div>
           </div>
-          <div class="infoBlockSection">
+          </details>
+ <!-- Wind -->
+          <details class="ib-group" data-group="speed">
+            <summary class="ib-group-summary">Speed</summary>
+            <div class="infoBlockSection">
             <div>
               <div class="infoHeading">
                 <span title="The speed of the aircraft over the ground">Ground:</span>
@@ -511,13 +504,12 @@
               </div>
             </div>
           </div>
+          </details>
 
-          <div class="sectionTitle">
-            <div class="section-title-content">
-              Altitude
-            </div>
-          </div>
-          <div class="infoBlockSection">
+
+          <details class="ib-group" data-group="altitude">
+            <summary class="ib-group-summary">Altitude</summary>
+            <div class="infoBlockSection">
             <div>
               <div class="infoHeading">
                 <span id="selected_altitude2_title" title="The uncorrected pressure-derived height of the aircraft above mean sea level (based on barometric pressure)">Barometric</span>:
@@ -559,13 +551,12 @@
               </div>
             </div>
           </div>
+          </details>
 
-          <div class="sectionTitle">
-            <div class="section-title-content">
-              Direction
-            </div>
-          </div>
-          <div class="infoBlockSection">
+
+          <details class="ib-group" data-group="direction">
+            <summary class="ib-group-summary">Heading &amp; track</summary>
+            <div class="infoBlockSection">
             <div>
               <div class="infoHeading">
                 <span title="Direction the aircraft is traveling over the ground">Ground Track</span>:
@@ -615,13 +606,12 @@
               </div>
             </div>
           </div>
+          </details>
 
-          <div class="sectionTitle">
-            <div class="section-title-content">
-              Stuff
-            </div>
-          </div>
-          <div class="infoBlockSection">
+
+          <details class="ib-group" data-group="other">
+            <summary class="ib-group-summary">Other</summary>
+            <div class="infoBlockSection">
             <div>
               <div class="infoHeading">
                 <span title="The enabled navigation modes as reported by the aircraft (i.e., auto-pilot, Traffic Collision Avoidance System, altitude hold, approach, LNAV approach, and/or VNAV approach)">Nav. Modes</span>:
@@ -652,13 +642,12 @@
               </div>
             </div>
           </div>
+          </details>
 
-          <div class="sectionTitle">
-            <div class="section-title-content">
-              Accuracy
-            </div>
-          </div>
-          <div class="infoBlockSection">
+
+          <details class="ib-group" data-group="accuracy">
+            <summary class="ib-group-summary">Accuracy</summary>
+            <div class="infoBlockSection">
             <div>
               <div class="infoHeading">
                 <span title="Navigation accuracy category of the position (95% bound on positions)">NAC<sub>P</sub></span>:
@@ -702,6 +691,8 @@
 
 
           </div>
+          </details>
+
 
           <div class="bottom-info-container">
             <div class="bottom-info-text"> Learn more about Mode S data type by hovering over each data label.</div>

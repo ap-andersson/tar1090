@@ -667,3 +667,64 @@
     color: var(--ui-text-1);
     white-space: nowrap;
 }
+
+/* ---- collapsible detail groups -----------------------------------------
+   Native <details>, so keyboard and touch work without any JS. The open
+   state is remembered per group (see initInfoblockGroups in script.js). */
+.ib-group {
+    border-top: 1px solid var(--ui-border);
+}
+
+.ib-group-summary {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-s3);
+    min-height: var(--ui-control-h);
+    padding: var(--ui-s3) var(--ui-s5);
+    font-size: var(--ui-fs-xs);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--ui-text-2);
+    cursor: pointer;
+    user-select: none;
+    list-style: none;
+}
+
+/* the default disclosure triangle, replaced by our own chevron below */
+.ib-group-summary::-webkit-details-marker {
+    display: none;
+}
+
+.ib-group-summary::marker {
+    content: "";
+}
+
+.ib-group-summary::after {
+    content: "";
+    width: calc(6px * var(--SCALE));
+    height: calc(6px * var(--SCALE));
+    border: solid var(--ui-text-3);
+    border-width: 0 calc(1.5px * var(--SCALE)) calc(1.5px * var(--SCALE)) 0;
+    transform: rotate(45deg);
+    transition: transform var(--ui-dur-fast) var(--ui-ease);
+}
+
+.ib-group[open] > .ib-group-summary::after {
+    transform: rotate(-135deg);
+}
+
+.ib-group-summary:hover {
+    color: var(--ui-text-1);
+    background-color: var(--ui-surface-2);
+}
+
+.ib-group-summary:focus-visible {
+    outline: none;
+    box-shadow: var(--ui-focus-ring);
+}
+
+/* the original section wrapper inside a group no longer draws its own frame */
+.ib-group > .infoBlockSection {
+    padding: 0 var(--ui-s5) var(--ui-s4);
+}
