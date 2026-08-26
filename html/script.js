@@ -907,20 +907,14 @@ function initPage() {
 
     if (globeIndex) {
         function setGlobeTableLimit() {
-            let mult = 1 + 4 * toggles['moreTableLines1'].state + 16 * (toggles['moreTableLines2'] && toggles['moreTableLines2'].state);
+            // one table density now; moreTableLines1/2 were removed as settings
+            let mult = 1 + 16 * (toggles['moreTableLines2'] && toggles['moreTableLines2'].state);
             globeTableLimit = globeTableLimitBase * mult;
             if (toggles['allTableLines'] && toggles['allTableLines'].state)
                 globeTableLimit = 1e9;
             if (onMobile)
                 globeTableLimit /= 2;
         };
-        new Toggle({
-            key: "moreTableLines1",
-            display: "More Table Lines",
-            container: "#sidebar-table",
-            init: false,
-            setState: setGlobeTableLimit,
-        });
         new Toggle({
             key: "moreTableLines2",
             display: "Even More Table Lines",
@@ -1025,6 +1019,12 @@ function earlyInitPage() {
         g.enableLabels=true;
     }
 
+    if (usp.has('debugTracks')) {
+        debugTracks = true;
+    }
+    if (usp.has('debugAll')) {
+        debugAll = true;
+    }
     if (usp.has('debugFetch')) {
         debugFetch = true;
     }
@@ -1547,39 +1547,6 @@ jQuery('#selected_altitude_geom1')
         }
     });
 
-    new Toggle({
-        key: "windLabelsSlim",
-        display: "Smaller wind labels",
-        container: "#settingsLeft",
-        init: windLabelsSlim,
-        setState: function(state) {
-            windLabelsSlim = state;
-            if (!loadFinished)
-                return;
-            for (let key in g.planesOrdered) {
-                g.planesOrdered[key].updateMarker();
-            }
-        }
-    });
-
-    new Toggle({
-        key: "showLabelUnits",
-        display: "Label units",
-        container: "#settingsLeft",
-        init: showLabelUnits,
-        setState: function(state) {
-            showLabelUnits = state;
-            if (!loadFinished)
-                return;
-            for (let key in g.planesOrdered) {
-                g.planesOrdered[key].updateMarker();
-            }
-            remakeTrails();
-            refreshSelected();
-        }
-    });
-
-
     jQuery('#tStop').on('click', function() { traceOpts.replaySpeed = 0; gotoTime(traceOpts.showTime); });
     jQuery('#t1x').on('click', function() { replaySpeedChange(1); });
     jQuery('#t5x').on('click', function() { replaySpeedChange(5); });
@@ -1594,30 +1561,6 @@ jQuery('#selected_altitude_geom1')
         init: false,
         setState: function(state) {
             updateAddressBar();
-        }
-    });
-
-    new Toggle({
-        key: "debugTracks",
-        display: "Debug Tracks",
-        container: "#settingsRight",
-        init: false,
-        setState: function(state) {
-            debugTracks = state;
-            remakeTrails();
-        }
-    });
-
-    new Toggle({
-        key: "debugAll",
-        display: "Debug show all",
-        container: "#settingsRight",
-        init: false,
-        setState: function(state) {
-            if (state)
-                debugAll = true;
-            else
-                debugAll = false;
         }
     });
 
@@ -1750,35 +1693,6 @@ jQuery('#selected_altitude_geom1')
         planespottingAPI = false;
         planespottersAPI = false;
     }
-    new Toggle({
-        key: "planespottingAPI",
-        display: "Pictures planespotting.be",
-        container: "#settingsRight",
-        init: planespottingAPI,
-        setState: function(state) {
-            planespottingAPI = state;
-            if (state) {
-                toggles['planespottersAPI'] && toggles['planespottersAPI'].toggle(false);
-            }
-            setPictureVisibility();
-            refreshSelected();
-        }
-    });
-    new Toggle({
-        key: "planespottersAPI",
-        display: "Pictures planespotters.net",
-        container: "#settingsRight",
-        init: planespottersAPI,
-        setState: function(state) {
-            planespottersAPI = state;
-            if (state) {
-                toggles['planespottingAPI'] && toggles['planespottingAPI'].toggle(false);
-            }
-            setPictureVisibility();
-            refreshSelected();
-        }
-    });
-
     if (routeApiUrl) {
         if (location.protocol == 'http:' && routeApiUrl == "https://adsb.im/api/0/routeset") {
             // adsb.im API provider kindly asks that tar1090 uses http for the route API if possible
@@ -1818,17 +1732,6 @@ jQuery('#selected_altitude_geom1')
         container: "#settingsRight",
         init: true,
         setState: function(state) {
-            adjustInfoBlock();
-        }
-    });
-
-    new Toggle({
-        key: "wideInfoblock",
-        display: "Wide Infoblock",
-        container: "#settingsRight",
-        init: wideInfoBlock,
-        setState: function(state) {
-            wideInfoBlock = state;
             adjustInfoBlock();
         }
     });
@@ -5294,11 +5197,7 @@ function collapseMobileSheet() {
 // ---- end mobile bottom sheet -------------------------------------------
 
 function adjustInfoBlock() {
-    if (wideInfoBlock ) {
-        infoBlockWidth = baseInfoBlockWidth + 40;
-    } else {
-        infoBlockWidth = baseInfoBlockWidth;
-    }
+    infoBlockWidth = baseInfoBlockWidth;
     jQuery('#selected_infoblock').css("width", infoBlockWidth * globalScale + 'px');
 
     jQuery('.ol-scale-line').css('left', (infoBlockWidth * globalScale + 8) + 'px');
