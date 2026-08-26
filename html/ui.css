@@ -591,3 +591,79 @@
     border-radius: var(--ui-r-lg) var(--ui-r-lg) 0 0;
     padding-bottom: env(safe-area-inset-bottom);
 }
+
+/* ==========================================================================
+   Selected aircraft infoblock - summary header
+   The detail below is still the original label/value sections; this is the
+   part you read first: who it is, where it's going, and the three numbers
+   that matter.
+   ========================================================================== */
+
+.ib-summary {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--ui-s2) var(--ui-s4);
+    padding: var(--ui-s4) var(--ui-s5) var(--ui-s3);
+}
+
+.ib-callsign {
+    font-size: var(--ui-fs-xl);
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    color: var(--ui-text-1);
+    line-height: var(--ui-lh-tight);
+}
+
+.ib-hex {
+    font-size: var(--ui-fs-sm);
+    color: var(--ui-text-3);
+}
+
+/* route gets its own line, full width, since it is the second thing read */
+.ib-route {
+    flex: 1 0 100%;
+    font-size: var(--ui-fs-md);
+    color: var(--ui-text-2);
+}
+
+/* ---- the three numbers ------------------------------------------------- */
+.ib-stats {
+    /* auto-fit rather than three fixed columns: the values are wide enough
+       ("-2560 ft/min") that a narrow panel has to fall back to two */
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(calc(84px * var(--SCALE)), 1fr));
+    gap: 1px;
+    margin: 0 var(--ui-s5) var(--ui-s4);
+    border-radius: var(--ui-r-sm);
+    overflow: hidden;
+    /* an odd stat count leaves an empty cell; matching the tile colour makes
+       the block read as one surface rather than as a hole */
+    background-color: var(--ui-surface-2);
+}
+
+.ib-stat {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--ui-s1);
+    padding: var(--ui-s3);
+    background-color: var(--ui-surface-2);
+}
+
+.ib-stat-label {
+    font-size: var(--ui-fs-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--ui-text-3);
+    /* labels wrap rather than truncate - "Baro. altitude" is set from JS and
+       truncating it to "BARO. ..." tells the reader nothing */
+    line-height: var(--ui-lh-tight);
+}
+
+.ib-stat-value {
+    font-size: var(--ui-fs-md);
+    font-weight: 600;
+    color: var(--ui-text-1);
+    white-space: nowrap;
+}
