@@ -2924,6 +2924,7 @@ function ol_map_init() {
                 toggleIsolation();
             deselect(SelectedPlane);
             refreshFilter();
+            resumeTempTrails();
         }
         evt.stopPropagation();
     });
@@ -3117,6 +3118,7 @@ function initMap() {
 
         deselect(SelectedPlane);
         refreshFilter();
+        resumeTempTrails();
     });
 
 
@@ -4879,6 +4881,9 @@ function selectPlaneByHex(hex, options) {
 
     pTracks || TAR.planeMan.refresh();
 
+    if (!newPlane)
+        resumeTempTrails();
+
     return newPlane !== undefined;
 }
 
@@ -4915,6 +4920,16 @@ function selectAllPlanes() {
     pTracks || TAR.planeMan.refresh();
 }
 
+// with tempTrails enabled, showing all trails is the default state:
+// resume it once the user is done looking at an individual aircraft
+function resumeTempTrails() {
+    if (!tempTrails || SelectedAllPlanes || SelectedPlane || SelPlanes.length > 0)
+        return;
+    if (showTrace || onlySelected || multiSelect)
+        return;
+    selectAllPlanes();
+}
+
 // deselect all the planes
 function deselectAllPlanes(keepMain) {
     if (isMobile()) {
@@ -4948,6 +4963,7 @@ function deselectAllPlanes(keepMain) {
     }
     refreshFilter();
     updateAddressBar();
+    resumeTempTrails();
 }
 
 function toggleFollow(override) {
