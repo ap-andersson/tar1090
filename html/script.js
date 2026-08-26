@@ -2434,10 +2434,7 @@ function startPage() {
 
     loadFinished = true;
 
-    // On mobile, always start with sidebar hidden regardless of saved localStorage state
-    if (isMobile() && toggles['sidebar_visible'] && toggles['sidebar_visible'].state) {
-        toggles['sidebar_visible'].toggle(false);
-    }
+    initLayoutMode();
 
     setIntervalTimers();
 
@@ -5172,6 +5169,66 @@ function isMobile() {
     return window.innerWidth <= 600;
 }
 
+// Layout mode is re-evaluated on resize and rotation, not just at load.
+// It also drives .is-mobile-layout on <html> so ui.css follows the same
+// decision instead of re-deriving the breakpoint.
+let layoutMode = null;
+let layoutModeTimeout = null;
+
+function applyLayoutMode(force) {
+    const mode = isMobile() ? 'mobile' : 'desktop';
+    if (mode == layoutMode && !force)
+        return;
+    layoutMode = mode;
+
+    document.documentElement.classList.toggle('is-mobile-layout', mode == 'mobile');
+
+    if (mode == 'desktop') {
+        // leaving phone width: collapse the "more" tray so it can't strand
+        // buttons in a hidden state on a wide screen
+        jQuery('#header_side').removeClass('is-expanded');
+    }
+
+    const sidebar = toggles['sidebar_visible'];
+    let sidebarWanted = true;
+    if (sidebar && loadFinished) {
+        // A phone hides the sidebar, but that is a consequence of the window
+        // size, not a preference - pass init so it isn't written to loStore
+        // and the desktop preference survives.
+        sidebarWanted = (mode == 'mobile') ? false : (loStore['sidebar_visible'] != 'false');
+        if (sidebar.state != sidebarWanted)
+            sidebar.toggle(sidebarWanted, 'noSave');
+    }
+
+    if (mode == 'desktop' && sidebarWanted && !mapIsVisible && loadFinished) {
+        // the phone opens the sidebar fullscreen; a wide screen wants the split
+        // view back rather than a table covering the whole window
+        showMap();
+    }
+
+    if (loadFinished) {
+        refreshSelected();
+        updateMapSize();
+        TAR.altitudeChart.render();
+    }
+}
+
+function toggleChromeMore() {
+    jQuery('#header_side').toggleClass('is-expanded');
+}
+
+function initLayoutMode() {
+    applyLayoutMode(true);
+    window.addEventListener('resize', function() {
+        clearTimeout(layoutModeTimeout);
+        layoutModeTimeout = setTimeout(applyLayoutMode, 150);
+    });
+    window.addEventListener('orientationchange', function() {
+        clearTimeout(layoutModeTimeout);
+        layoutModeTimeout = setTimeout(function() { applyLayoutMode(true); }, 150);
+    });
+}
+
 function updateMobileSummary(selected) {
     if (!selected) {
         jQuery('#mobile_summary').hide();
@@ -5539,7 +5596,9 @@ function invertMap(evt){
     }
 
     altitudeChart.render = function () {
-        if (toggles['altitudeChart'].state) {
+        // the legend is a fixed-aspect image with numeric ticks; below phone
+        // width the ticks collapse into noise, so don't show it there
+        if (toggles['altitudeChart'].state && !isMobile()) {
             runAfterLoad(loadLegend);
         } else {
             jQuery('#altitude_chart').hide();

@@ -403,3 +403,92 @@
 .ui-btn.is-on {
     color: var(--ui-on-accent);
 }
+
+/* ==========================================================================
+   Responsive layout
+   The breakpoint lives in two places by necessity - the media queries here
+   and isMobile() in script.js. Both are 600px. script.js also puts
+   .is-mobile-layout on <html> so CSS can follow the same decision the JS
+   made rather than re-deriving it.
+   ========================================================================== */
+
+/* ---- safe areas -------------------------------------------------------
+   The viewport is viewport-fit=cover, so chrome must inset itself out from
+   under notches and home indicators. Zero on everything without them. */
+#header_top {
+    padding-top: env(safe-area-inset-top);
+    padding-right: env(safe-area-inset-right);
+}
+
+#header_side {
+    padding-top: env(safe-area-inset-top);
+    padding-right: env(safe-area-inset-right);
+}
+
+#mobile_summary {
+    padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* ---- collapsible side chrome ------------------------------------------
+   A phone can't carry twelve buttons down its edge. Show the ones needed to
+   get anywhere - sidebar, settings, follow - and put the rest behind "more".
+   Desktop is unaffected: .chrome-more is hidden and nothing collapses. */
+.chrome-more {
+    display: none;
+}
+
+.is-mobile-layout .chrome-more {
+    display: inline-flex;
+}
+
+.is-mobile-layout #header_side .chrome-secondary {
+    display: none;
+}
+
+.is-mobile-layout #header_side.is-expanded .chrome-secondary {
+    display: inline-flex;
+}
+
+.is-mobile-layout #header_side.is-expanded .chrome-more {
+    background-color: var(--ui-accent);
+    border-color: var(--ui-accent);
+    color: var(--ui-on-accent);
+}
+
+/* the spacers only make sense when the full column is showing */
+.is-mobile-layout #header_side .buttonSpacer {
+    display: none;
+}
+
+.is-mobile-layout #header_side.is-expanded .buttonSpacer {
+    display: block;
+}
+
+/* ---- altitude colour legend -------------------------------------------
+   It's a fixed-aspect image with numeric ticks; below ~600px the ticks
+   collapse into noise, so it's dropped rather than shown illegibly. */
+.is-mobile-layout #altitude_chart {
+    display: none;
+}
+
+/* ---- sidebar as an overlay --------------------------------------------
+   Under 900px the side-by-side split leaves the map uselessly narrow. The
+   sidebar becomes a full-bleed overlay instead, and the map keeps its size
+   underneath. */
+@media (max-width: 900px) {
+    #sidebar_container {
+        position: absolute;
+        inset: 0;
+        width: 100% !important;
+        max-width: none !important;
+        z-index: var(--ui-z-panel);
+        background-color: var(--ui-surface-1);
+        padding-top: env(safe-area-inset-top);
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    /* dragging the split makes no sense when there is no split */
+    #splitter {
+        display: none !important;
+    }
+}

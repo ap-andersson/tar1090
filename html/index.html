@@ -7,7 +7,7 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
 
-    <meta name="viewport" content="user-scalable=no, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, minimal-ui" />
+    <meta name="viewport" content="user-scalable=no, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, minimal-ui, viewport-fit=cover" />
 
     <!-- HEAD_ANCHOR -->
 
@@ -857,28 +857,29 @@
             <div id="expand_sidebar_control" class="ui-btn ui-btn-square" style="display: none;">
               <span id="expand_sidebar_button" class="fa-solid fa-chevron-right" alt="Expand Sidebar"></span>
             </div>
-            <div id="fullscreenButton" class="svgButton fullscreenButton"></div>
+            <div id="fullscreenButton" class="chrome-secondary svgButton fullscreenButton"></div>
             <div id="settingsCog" class="ui-btn ui-btn-square settingsCog">
               <span id="settingsCog" class="fa-solid fa-gear"></span>
             </div>
-            <div id="L" title="Toggle (L)abels" class="ui-btn ui-btn-square inActiveButton" onclick="toggleLabels();"><span class="buttonText">L</span></div>
-            <div id="O" title="Toggle Label Extensi(O)ns" class="ui-btn ui-btn-square inActiveButton" onclick="toggleExtendedLabels();"><span class="buttonText">O</span></div>
-            <div id="K" title="Toggle Trac(K) Labels" class="ui-btn ui-btn-square inActiveButton" onclick="toggleTrackLabels();"><span class="buttonText">K</span></div>
+            <div id="L" title="Toggle (L)abels" class="chrome-secondary ui-btn ui-btn-square inActiveButton" onclick="toggleLabels();"><span class="buttonText">L</span></div>
+            <div id="O" title="Toggle Label Extensi(O)ns" class="chrome-secondary ui-btn ui-btn-square inActiveButton" onclick="toggleExtendedLabels();"><span class="buttonText">O</span></div>
+            <div id="K" title="Toggle Trac(K) Labels" class="chrome-secondary ui-btn ui-btn-square inActiveButton" onclick="toggleTrackLabels();"><span class="buttonText">K</span></div>
             <div class="buttonSpacer">
             </div>
-            <div style="display: none" id="B" title="Toggle Map (B)rightness" class="ui-btn ui-btn-square inActiveButton" onclick="toggles['MapDim'].toggle();"><span class="buttonText">B</span></div>
+            <div style="display: none" id="B" title="Toggle Map (B)rightness" class="chrome-secondary ui-btn ui-btn-square inActiveButton" onclick="toggles['MapDim'].toggle();"><span class="buttonText">B</span></div>
             <div class="buttonSpacer">
             </div>
-            <div style="display: none" id="V" title="Table: only show aircraft in current (V)iew" class="ui-btn ui-btn-square inActiveButton" onclick="toggleTableInView();"><span class="buttonText">V</span></div>
-            <div id="M" title="Toggle (M)ultiSelect" class="ui-btn ui-btn-square inActiveButton" onclick="toggleMultiSelect();"><span class="buttonText">M</span></div>
+            <div style="display: none" id="V" title="Table: only show aircraft in current (V)iew" class="chrome-secondary ui-btn ui-btn-square inActiveButton" onclick="toggleTableInView();"><span class="buttonText">V</span></div>
+            <div id="M" title="Toggle (M)ultiSelect" class="chrome-secondary ui-btn ui-btn-square inActiveButton" onclick="toggleMultiSelect();"><span class="buttonText">M</span></div>
             <div class="buttonSpacer">
             </div>
-            <div id="P" title="(P)ersistence mode" class="ui-btn ui-btn-square inActiveButton" onclick="togglePersistence();"><span class="buttonText">P</span></div>
-            <div id="I" title="(I)solate: only show selected aircraft" class="ui-btn ui-btn-square inActiveButton" onclick="toggleIsolation();"><span class="buttonText">I</span></div>
+            <div id="P" title="(P)ersistence mode" class="chrome-secondary ui-btn ui-btn-square inActiveButton" onclick="togglePersistence();"><span class="buttonText">P</span></div>
+            <div id="I" title="(I)solate: only show selected aircraft" class="chrome-secondary ui-btn ui-btn-square inActiveButton" onclick="toggleIsolation();"><span class="buttonText">I</span></div>
             <div class="buttonSpacer">
             </div>
-            <div id="R" title="Follow a (R)andom plane!" class="ui-btn ui-btn-square inActiveButton" onclick="followRandomPlane();"><span class="buttonText">R</span></div>
+            <div id="R" title="Follow a (R)andom plane!" class="chrome-secondary ui-btn ui-btn-square inActiveButton" onclick="followRandomPlane();"><span class="buttonText">R</span></div>
             <div id="F" title="(F)ollow" class="ui-btn ui-btn-square inActiveButton" onclick="toggleFollow();"><span class="buttonText">F</span></div>
+            <div id="chrome_more" class="ui-btn ui-btn-square chrome-more" title="More controls" onclick="toggleChromeMore();"><span class="fa-solid fa-ellipsis"></span></div>
           </div>
         </div>
         <div id="openaip_vector_panel" style="display:none">
