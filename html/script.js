@@ -1093,6 +1093,13 @@ function earlyInitPage() {
         let tmp = parseInt(usp.get('tempTrails'));
         if (tmp > 0)
             tempTrailsTimeout = tmp;
+    } else {
+        // no URL parameter: fall back to the saved "trail seconds" setting
+        const stored = parseInt(loStore['tempTrailsTimeout']);
+        if (stored > 0) {
+            tempTrails = true;
+            tempTrailsTimeout = Math.min(stored, tempTrailsMax);
+        }
     }
     if (usp.has('squareMania')) {
         squareMania = true;
@@ -1856,6 +1863,17 @@ jQuery('#selected_altitude_geom1')
         }
     })
 
+    jQuery('#tempTrailsInput').val(tempTrails ? tempTrailsTimeout : 0);
+    jQuery('#tempTrailsApply').on('click', tempTrailsBarApply);
+    jQuery('#tempTrailsInput').on('keydown', function(e) {
+        if (e.key == 'Enter') {
+            tempTrailsBarApply();
+            jQuery('#tempTrailsInput').blur();
+        }
+        // don't let the map keyboard shortcuts eat what we're typing
+        e.stopPropagation();
+    });
+
     // Force map to redraw if sidebar container is resized - use a timer to debounce
     jQuery("#sidebar_container").on("resize", function() {
         clearTimeout(mapResizeTimeout);
@@ -2200,8 +2218,7 @@ function setIntervalTimers() {
     //timers.reaper = setInterval(reaper, 40000);
 
     if (tempTrails) {
-        timers.trailReaper = window.setInterval(trailReaper, 10000);
-        trailReaper(now);
+        setTempTrails(tempTrailsTimeout, {init: true});
     }
     if (actualOutline.enabled) {
         timers.drawOutline = window.setInterval(drawOutlineJson, actualOutline.refresh);
@@ -2424,8 +2441,11 @@ function startPage() {
 
     setIntervalTimers();
 
-    if (tempTrails)
+    if (tempTrails || SelectedAllPlanes) {
+        // let selectAllPlanes() do the whole setup (it toggles off if already set)
+        SelectedAllPlanes = false;
         selectAllPlanes();
+    }
 
     if (replay) {
         showReplayBar();
@@ -4896,6 +4916,7 @@ function selectAllPlanes() {
         return;
     }
     buttonActive('#T', true);
+    showTempTrailsBar(true);
     // If SelectedPlane has something in it, clear out the selected
     if (SelectedPlane)
         deselect(SelectedPlane);
@@ -4918,6 +4939,74 @@ function selectAllPlanes() {
     refreshSelected();
     refreshHighlighted();
     pTracks || TAR.planeMan.refresh();
+}
+
+// "Trail seconds": 0 means keep the full track (classic all-tracks mode),
+// any other value only keeps the last X seconds of each track.
+function setTempTrails(seconds, options) {
+    options = options || {};
+    seconds = parseInt(seconds);
+    if (isNaN(seconds) || seconds < 0)
+        seconds = 0;
+    if (seconds > tempTrailsMax)
+        seconds = tempTrailsMax;
+
+    const previous = tempTrails ? tempTrailsTimeout : 0;
+
+    // Trails we already reaped are gone from the client, so asking for more
+    // history than we have can only be served by reloading (startup backfills
+    // from history_*.json). 0 means "keep everything", so it needs it too.
+    // Shortening just trims what we have, no reload needed.
+    const wantsMore = (seconds == 0) ? (previous != 0) : (seconds > previous);
+    if (!options.init && wantsMore) {
+        loStore['tempTrailsTimeout'] = seconds;
+        const params = new URLSearchParams(window.location.search);
+        if (seconds == 0) {
+            params.delete('tempTrails');
+            // keep showing all tracks after the reload
+            params.set('allTracks', '');
+        } else {
+            params.set('tempTrails', seconds);
+        }
+        window.location.search = params.toString();
+        return;
+    }
+
+    tempTrails = (seconds > 0);
+    if (tempTrails)
+        tempTrailsTimeout = seconds;
+
+    loStore['tempTrailsTimeout'] = seconds;
+    jQuery('#tempTrailsInput').val(seconds);
+
+    if (timers.trailReaper) {
+        clearInterval(timers.trailReaper);
+        timers.trailReaper = null;
+    }
+    if (tempTrails) {
+        timers.trailReaper = window.setInterval(trailReaper, 10000);
+        trailReaper();
+    }
+
+    if (!options.init) {
+        // going back to 0 can't bring already reaped positions back,
+        // but from here on the full track is kept again
+        refreshFeatures();
+        updateAddressBar();
+    }
+}
+
+function tempTrailsBarApply() {
+    setTempTrails(jQuery('#tempTrailsInput').val());
+}
+
+function showTempTrailsBar(show) {
+    if (show) {
+        jQuery('#tempTrailsInput').val(tempTrails ? tempTrailsTimeout : 0);
+        jQuery('#tempTrailsBar').css('display', 'flex');
+    } else {
+        jQuery('#tempTrailsBar').hide();
+    }
 }
 
 // with tempTrails enabled, showing all trails is the default state:
@@ -4945,6 +5034,7 @@ function deselectAllPlanes(keepMain) {
 
     if (SelectedAllPlanes) {
         buttonActive('#T', false);
+        showTempTrailsBar(false);
         jQuery('#selectall_checkbox').removeClass('settingsCheckboxChecked');
         SelectedAllPlanes = false;
         refreshFilter();
@@ -6909,6 +6999,11 @@ function updateAddressBar() {
     if (icaoFilter && !showTrace) {
         string += (string ? '&' : '?');
         string += 'icaoFilter=' + icaoFilter.join(',')
+    }
+
+    if (tempTrails && !showTrace && !replay) {
+        string += (string ? '&' : '?');
+        string += 'tempTrails=' + tempTrailsTimeout;
     }
 
     if (shareBaseUrl) {

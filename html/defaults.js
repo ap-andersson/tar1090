@@ -337,6 +337,8 @@ let enableMouseover = true;
 // enable/disable temporary aircraft trails
 let tempTrails = false;
 let tempTrailsTimeout = 90;
+// upper limit for the "Trail seconds" input in the UI
+let tempTrailsMax = 1200;
 let squareMania = false;
 
 // Columns that have a // in front of them are shown.
