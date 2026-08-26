@@ -882,6 +882,24 @@
             <div id="chrome_more" class="ui-btn ui-btn-square chrome-more" title="More controls" onclick="toggleChromeMore();"><span class="fa-solid fa-ellipsis"></span></div>
           </div>
         </div>
+        <div id="label_picker" class="ui-panel" style="display: none">
+          <div class="ui-panel-header">
+            <span class="ui-panel-title">Map labels</span>
+            <button id="label_picker_close" class="ui-btn ui-btn-square ui-btn-quiet" type="button" title="Close labels panel"><span class="fa-solid fa-xmark"></span></button>
+          </div>
+          <div class="ui-panel-body ui-scroll">
+            <div class="ui-section">Presets</div>
+            <div id="label_picker_presets" class="label-picker-presets">
+              <button type="button" class="ui-btn" data-preset="minimal">Minimal</button>
+              <button type="button" class="ui-btn" data-preset="standard">Standard</button>
+              <button type="button" class="ui-btn" data-preset="compact">Compact</button>
+              <button type="button" class="ui-btn" data-preset="detailed">Detailed</button>
+              <button type="button" class="ui-btn" data-preset="wind">Wind</button>
+            </div>
+            <div class="ui-section">Fields, top to bottom as drawn</div>
+            <div id="label_picker_body"></div>
+          </div>
+        </div>
         <div id="openaip_vector_panel" style="display:none">
           <div class="openaip-panel-title">openAIP Layer Filter</div>
           <div class="openaip-panel-section">Fill Opacity</div>

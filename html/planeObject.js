@@ -835,6 +835,105 @@ PlaneObject.prototype.setMarkerRgb = function() {
     this.glMarker.set('b', rgb[2]);
 };
 
+// Map label fields.
+//
+// Each entry renders one line of an aircraft's map label. The user picks which
+// fields appear and in what order (the label picker in script.js); the order of
+// g.labelFields is the order of the lines. `title` is what the picker shows.
+// render() returns the line, or null to leave that line out entirely.
+//
+// ctx carries the values shared between fields, computed once per label.
+const labelFieldDefs = {
+    callsign: {
+        title: 'Callsign',
+        render: (p, ctx) => ctx.callsign,
+    },
+    route: {
+        title: 'Route',
+        render: (p, ctx) => (useRouteAPI && p.dataSource != 'ais' && p.routeString) ? p.routeString : null,
+    },
+    registration: {
+        title: 'Registration',
+        render: (p, ctx) => p.registration || ctx.unknown,
+    },
+    type: {
+        title: 'Aircraft type',
+        render: (p, ctx) => p.icaoType || ctx.unknown,
+    },
+    regtype: {
+        title: 'Registration + type',
+        render: (p, ctx) => (p.registration || ctx.unknown) + NBSP + (p.icaoType || ctx.unknown),
+    },
+    speedalt: {
+        title: 'Speed + altitude',
+        render: (p, ctx) => ctx.movingOrSelected
+            ? ctx.speedString + NBSP + NNBSP + ctx.altString.padStart(6, NBSP)
+            : null,
+    },
+    altitude: {
+        title: 'Altitude',
+        render: (p, ctx) => ctx.altString,
+    },
+    speed: {
+        title: 'Speed',
+        render: (p, ctx) => ctx.movingOrSelected ? ctx.speedString.trim() : null,
+    },
+    squawk: {
+        title: 'Squawk',
+        render: (p, ctx) => p.squawk ? ('x' + p.squawk) : null,
+    },
+    vrate: {
+        title: 'Vertical rate',
+        render: (p, ctx) => (p.vert_rate == null || Math.abs(p.vert_rate) < 100)
+            ? null
+            : format_vert_rate_brief(p.vert_rate, DisplayUnits),
+    },
+    track: {
+        title: 'Track',
+        render: (p, ctx) => (p.track == null)
+            ? null
+            : format_track_arrow(p.track) + NBSP + Math.round(p.track) + '\u00b0',
+    },
+    distance: {
+        title: 'Distance',
+        render: (p, ctx) => p.sitedist ? format_distance_brief(p.sitedist, DisplayUnits) : null,
+    },
+    wind: {
+        title: 'Wind',
+        render: (p, ctx) => {
+            if (p.wd == null || p.ws == null)
+                return null;
+            let out = windLabelsSlim ? '' : ('Wind' + NBSP);
+            out += format_track_arrow((p.wd + 180 % 360)) + NBSP + p.wd;
+            if (showLabelUnits) {
+                out += '\u00b0' + NBSP + format_speed_long(p.ws, DisplayUnits);
+            } else {
+                out += NBSP + format_speed_brief(p.ws, DisplayUnits);
+            }
+            return out;
+        },
+    },
+    emergency: {
+        title: 'Emergency (only when squawked)',
+        render: (p, ctx) => {
+            if (p.squawk == '7700') return 'EMERGENCY';
+            if (p.squawk == '7600') return 'NORDO';
+            if (p.squawk == '7500') return 'HIJACK';
+            return null;
+        },
+    },
+};
+
+// Named starting points offered by the picker. The first four reproduce the
+// states the O button used to cycle through, so nothing is lost.
+const labelFieldPresets = {
+    minimal:  ['callsign'],
+    standard: ['callsign', 'route'],
+    compact:  ['speedalt', 'callsign', 'route'],
+    detailed: ['regtype', 'speedalt', 'callsign', 'route'],
+    wind:     ['wind', 'speedalt', 'callsign', 'route'],
+};
+
 PlaneObject.prototype.updateIcon = function() {
 
     let fillColor = hslToRgb(this.getMarkerColor());
@@ -858,13 +957,6 @@ PlaneObject.prototype.updateIcon = function() {
             callsign =  'reg: ' + this.registration;
         else
             callsign =   'hex: ' + this.icao;
-        if (useRouteAPI && this.dataSource != "ais" && this.routeString) {
-            if (0 && g.extendedLabels) {
-                callsign += ' - ' + this.routeString;
-            } else {
-                callsign += '\n' + this.routeString;
-            }
-        }
 
         const unknown = NBSP+NBSP+"?"+NBSP+NBSP;
 
@@ -877,57 +969,36 @@ PlaneObject.prototype.updateIcon = function() {
         let altString = (alt == null) ? unknown : format_altitude_brief(alt, this.vert_rate, DisplayUnits, showLabelUnits);
         let speedString = (this.speed == null) ? (NBSP+'?'+NBSP) : format_speed_brief(this.speed, DisplayUnits, showLabelUnits).padStart(3, NBSP);
 
-        labelText = "";
         if (atcStyle) {
-            labelText += callsign + '\n';
-            labelText += altString + '\n';
-            labelText += 'x' + this.squawk;
-            if (this.squawk == '7700' || this.squawk == '7600' || this.squawk == '7500') {
-                if (this.squawk == '7700') {
-                    labelText += '\nEMERGENCY';
-                } else if (this.squawk == '7600') {
-                    labelText += '\nNORDO';
-                } else if (this.squawk == '7500') {
-                    labelText += '\nHIJACK';
-                }
+            // ATC style is its own fixed layout, not a user-ordered field list
+            labelText = callsign;
+            const route = labelFieldDefs.route.render(this, {});
+            if (route)
+                labelText += '\n' + route;
+            labelText += '\n' + altString + '\n' + 'x' + this.squawk;
+            const emerg = labelFieldDefs.emergency.render(this, {});
+            if (emerg)
+                labelText += '\n' + emerg;
+        } else {
+            const ctx = {
+                callsign: callsign,
+                altString: altString,
+                speedString: speedString,
+                unknown: unknown,
+                movingOrSelected: (!this.onGround
+                    || (this.speed && this.speed > 18)
+                    || (this.selected && !SelectedAllPlanes)),
+            };
+            const lines = [];
+            for (let i = 0; i < g.labelFields.length; i++) {
+                const def = labelFieldDefs[g.labelFields[i]];
+                if (!def)
+                    continue;
+                const line = def.render(this, ctx);
+                if (line != null && line !== '')
+                    lines.push(line);
             }
-        } else if (g.extendedLabels == 3) {
-            if (!windLabelsSlim) {
-                labelText += 'Wind' + NBSP;
-            }
-            if (this.wd != null) {
-                if (showLabelUnits) {
-                    labelText += format_track_arrow((this.wd + 180 % 360)) + NBSP + this.wd + '°' + NBSP;
-                    labelText += format_speed_long(this.ws, DisplayUnits);
-                } else {
-                    labelText += format_track_arrow((this.wd + 180 % 360)) + NBSP + this.wd + NBSP;
-                    labelText += format_speed_brief(this.ws, DisplayUnits);
-                }
-            } else {
-                labelText += 'n/a';
-            }
-            if (windLabelsSlim) {
-                labelText += '\n' + altString;
-            } else {
-                if ((!this.onGround || (this.speed && this.speed > 18) || (this.selected && !SelectedAllPlanes))) {
-                    labelText += '\n' + speedString + NBSP + NNBSP + altString.padStart(6, NBSP);
-                }
-                labelText += '\n' + callsign;
-            }
-
-            if (windLabelsSlim && this.wd == null) {
-                labelText = '';
-            }
-        } else if (g.extendedLabels == 2) {
-            labelText += (this.registration ? this.registration : unknown) + NBSP + (this.icaoType ? this.icaoType : unknown) + '\n';
-        }
-        if (g.extendedLabels == 1 || g.extendedLabels == 2) {
-            if ((!this.onGround || (this.speed && this.speed > 18) || (this.selected && !SelectedAllPlanes))) {
-                labelText += speedString + NBSP + NNBSP + altString.padStart(6, NBSP) + '\n';
-            }
-        }
-        if (g.extendedLabels < 3 && !atcStyle) {
-            labelText += callsign;
+            labelText = lines.join('\n');
         }
     }
     if (!webgl && (this.markerStyle == null || this.markerIcon == null || (this.markerSvgKey != svgKey))) {

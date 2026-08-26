@@ -492,3 +492,99 @@
         display: none !important;
     }
 }
+
+/* ---- checkbox ----------------------------------------------------------
+   A box that reads as checked or not. Driven by .is-on like the buttons, so
+   there is one active-state convention across the whole UI. */
+.ui-checkbox {
+    flex: none;
+    width: calc(16px * var(--SCALE));
+    height: calc(16px * var(--SCALE));
+    box-sizing: border-box;
+    border: 1px solid var(--ui-border-strong);
+    border-radius: var(--ui-r-sm);
+    background-color: var(--ui-surface-0);
+    cursor: pointer;
+    position: relative;
+}
+
+.ui-checkbox:focus-visible {
+    outline: none;
+    box-shadow: var(--ui-focus-ring);
+}
+
+.ui-checkbox.is-on {
+    background-color: var(--ui-accent);
+    border-color: var(--ui-accent);
+}
+
+/* the tick, drawn rather than shipped as a glyph so it scales cleanly */
+.ui-checkbox.is-on::after {
+    content: "";
+    position: absolute;
+    left: 25%;
+    top: 12%;
+    width: 34%;
+    height: 60%;
+    border: solid var(--ui-on-accent);
+    border-width: 0 calc(2px * var(--SCALE)) calc(2px * var(--SCALE)) 0;
+    transform: rotate(40deg);
+}
+
+.ui-btn:disabled {
+    opacity: 0.35;
+    cursor: default;
+}
+
+.ui-btn:disabled:hover {
+    background-color: transparent;
+    border-color: transparent;
+}
+
+/* ==========================================================================
+   Map label picker
+   ========================================================================== */
+
+#label_picker {
+    position: absolute;
+    top: calc(4px * var(--SCALE));
+    right: calc(52px * var(--SCALE));
+    z-index: var(--ui-z-panel);
+    display: flex;
+    flex-direction: column;
+    width: calc(300px * var(--SCALE));
+    max-width: calc(100vw - calc(64px * var(--SCALE)));
+    max-height: calc(100vh - calc(16px * var(--SCALE)));
+}
+
+#label_picker .ui-panel-body {
+    min-height: 0;
+}
+
+.label-picker-presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--ui-s2);
+}
+
+.label-picker-presets .ui-btn {
+    font-weight: 400;
+    font-size: var(--ui-fs-sm);
+}
+
+.label-picker-row {
+    gap: var(--ui-s4);
+}
+
+/* on a phone the picker is a bottom sheet rather than a floating panel */
+.is-mobile-layout #label_picker {
+    top: auto;
+    right: 0;
+    left: 0;
+    bottom: 0;
+    width: auto;
+    max-width: none;
+    max-height: 75vh;
+    border-radius: var(--ui-r-lg) var(--ui-r-lg) 0 0;
+    padding-bottom: env(safe-area-inset-bottom);
+}

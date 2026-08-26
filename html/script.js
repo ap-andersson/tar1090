@@ -60,6 +60,8 @@ let multiSelect = false;
 let uat_data = null;
 g.enableLabels = false;
 g.extendedLabels = 0;
+// ordered list of map label field ids, see labelFieldDefs in planeObject.js
+g.labelFields = ['callsign', 'route'];
 let mapIsVisible = true;
 let onlyMilitary = false;
 let onlySelected = false;
@@ -1272,13 +1274,8 @@ function earlyInitPage() {
     if (loStore['enableLabels'] == 'true' || usp.has('enableLabels')) {
         toggleLabels();
     }
-    if (usp.has('extendedLabels')) {
-        g.extendedLabels = parseInt(usp.getFloat('extendedLabels'));
-        toggleExtendedLabels({ noIncrement: true });
-    } else if (loStore['extendedLabels']) {
-        g.extendedLabels = parseInt(loStore['extendedLabels']);
-        toggleExtendedLabels({ noIncrement: true });
-    }
+    initLabelPicker();
+    loadLabelFields();
     if (loStore['trackLabels'] == "true" || usp.has('trackLabels')) {
         toggleTrackLabels();
     }
@@ -5673,21 +5670,177 @@ function toggleLabels() {
         remakeTrails();
 }
 
-function toggleExtendedLabels(options) {
-    if (isNaN(g.extendedLabels))
-        g.extendedLabels = 0;
+// ---- map label fields ---------------------------------------------------
+//
+// Which fields appear on an aircraft's map label, and in what order. Replaces
+// the old O button that cycled through four hardcoded layouts; those layouts
+// survive as presets in the picker.
 
-    options = options || {};
-    if (!options.noIncrement) {
-        g.extendedLabels++;
+// The modes the old extendedLabels setting could hold, so existing bookmarks
+// and stored settings keep working.
+const extendedLabelsPresets = ['standard', 'compact', 'detailed', 'wind'];
+
+function validLabelFields(list) {
+    if (!Array.isArray(list))
+        return null;
+    const clean = list.filter(id => labelFieldDefs[id]);
+    return clean.length ? clean : null;
+}
+
+function loadLabelFields() {
+    let fields = null;
+
+    if (usp.has('labelFields')) {
+        fields = validLabelFields(usp.get('labelFields').split(','));
+    } else if (loStore['labelFields']) {
+        try {
+            fields = validLabelFields(JSON.parse(loStore['labelFields']));
+        } catch (e) {
+            console.log('ignoring unreadable stored labelFields: ' + e);
+        }
     }
-    g.extendedLabels %= 4;
-    //console.log(extendedLabels);
-    loStore['extendedLabels'] = g.extendedLabels;
+
+    // no field list yet: fall back to the old extendedLabels mode if there is one
+    if (!fields) {
+        let mode = null;
+        if (usp.has('extendedLabels'))
+            mode = parseInt(usp.getFloat('extendedLabels'));
+        else if (loStore['extendedLabels'])
+            mode = parseInt(loStore['extendedLabels']);
+        if (mode > 0 && extendedLabelsPresets[mode])
+            fields = labelFieldPresets[extendedLabelsPresets[mode]].slice();
+    }
+
+    if (fields)
+        g.labelFields = fields;
+
+    refreshLabels();
+}
+
+function saveLabelFields() {
+    loStore['labelFields'] = JSON.stringify(g.labelFields);
+    refreshLabels();
+}
+
+function refreshLabels() {
     for (let key in g.planesOrdered) {
         g.planesOrdered[key].updateMarker();
     }
-    buttonActive('#O', g.extendedLabels);
+    // O reads as active whenever the label carries more than just the callsign,
+    // which is what it meant before
+    buttonActive('#O', g.labelFields.length > 1 || g.labelFields[0] != 'callsign');
+    renderLabelPicker();
+}
+
+function applyLabelPreset(name) {
+    const preset = labelFieldPresets[name];
+    if (!preset)
+        return;
+    g.labelFields = preset.slice();
+    saveLabelFields();
+}
+
+function toggleLabelField(id) {
+    if (!labelFieldDefs[id])
+        return;
+    const at = g.labelFields.indexOf(id);
+    if (at == -1) {
+        g.labelFields.push(id);
+    } else {
+        g.labelFields.splice(at, 1);
+    }
+    saveLabelFields();
+}
+
+function moveLabelField(id, delta) {
+    const at = g.labelFields.indexOf(id);
+    const to = at + delta;
+    if (at == -1 || to < 0 || to >= g.labelFields.length)
+        return;
+    g.labelFields.splice(to, 0, g.labelFields.splice(at, 1)[0]);
+    saveLabelFields();
+}
+
+// Selected fields first, in the order they are drawn, then the rest.
+function labelPickerRows() {
+    const rows = g.labelFields.map((id, i) => ({ id: id, on: true, index: i }));
+    for (const id in labelFieldDefs) {
+        if (g.labelFields.indexOf(id) == -1)
+            rows.push({ id: id, on: false, index: -1 });
+    }
+    return rows;
+}
+
+function renderLabelPicker() {
+    const body = jQuery('#label_picker_body');
+    if (!body.length)
+        return;
+
+    const last = g.labelFields.length - 1;
+    let html = '';
+
+    for (const row of labelPickerRows()) {
+        const def = labelFieldDefs[row.id];
+        const atTop = row.on && row.index == 0;
+        const atBottom = row.on && row.index == last;
+        html += '<div class="ui-row label-picker-row">';
+        html += '<span class="ui-checkbox' + (row.on ? ' is-on' : '') + '"'
+             + ' role="checkbox" tabindex="0" aria-checked="' + (row.on ? 'true' : 'false') + '"'
+             + ' data-field="' + row.id + '"></span>';
+        html += '<span class="ui-row-label">' + def.title + '</span>';
+        html += '<span class="ui-btn-group">';
+        html += '<button type="button" class="ui-btn ui-btn-square ui-btn-quiet" data-move="-1"'
+             + ' data-field="' + row.id + '" title="Move up"'
+             + ((!row.on || atTop) ? ' disabled' : '') + '>↑</button>';
+        html += '<button type="button" class="ui-btn ui-btn-square ui-btn-quiet" data-move="1"'
+             + ' data-field="' + row.id + '" title="Move down"'
+             + ((!row.on || atBottom) ? ' disabled' : '') + '>↓</button>';
+        html += '</span>';
+        html += '</div>';
+    }
+    body.html(html);
+}
+
+function toggleLabelPicker(show) {
+    const panel = jQuery('#label_picker');
+    const open = (show == undefined) ? !panel.is(':visible') : show;
+    if (open) {
+        renderLabelPicker();
+        panel.css('display', 'flex');
+    } else {
+        panel.hide();
+    }
+}
+
+function initLabelPicker() {
+    // delegated, because the rows are rebuilt on every change
+    jQuery('#label_picker_body')
+        .on('click', '[data-move]', function() {
+            moveLabelField(jQuery(this).attr('data-field'),
+                parseInt(jQuery(this).attr('data-move')));
+        })
+        .on('click', '.ui-checkbox', function() {
+            toggleLabelField(jQuery(this).attr('data-field'));
+        })
+        .on('keydown', '.ui-checkbox', function(e) {
+            if (e.key == ' ' || e.key == 'Enter') {
+                e.preventDefault();
+                toggleLabelField(jQuery(this).attr('data-field'));
+            }
+        });
+
+    jQuery('#label_picker_presets').on('click', '[data-preset]', function() {
+        applyLabelPreset(jQuery(this).attr('data-preset'));
+    });
+
+    jQuery('#label_picker_close').on('click', function() {
+        toggleLabelPicker(false);
+    });
+}
+
+// the name the O button and the keyboard shortcut already call
+function toggleExtendedLabels() {
+    toggleLabelPicker();
 }
 
 function toggleTrackLabels() {
