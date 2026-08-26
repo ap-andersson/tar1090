@@ -5407,13 +5407,11 @@ function filterBlockedMLAT(switchFilter) {
 }
 
 function buttonActive(id, state) {
-    if (state) {
-        jQuery(id).addClass('activeButton');
-        jQuery(id).removeClass('inActiveButton');
-    } else {
-        jQuery(id).addClass('inActiveButton');
-        jQuery(id).removeClass('activeButton');
-    }
+    // activeButton/inActiveButton are the pre-refresh classes, is-on is the
+    // ui.css primitive state. Both are set while surfaces are being migrated.
+    jQuery(id).toggleClass('activeButton', !!state);
+    jQuery(id).toggleClass('inActiveButton', !state);
+    jQuery(id).toggleClass('is-on', !!state);
 }
 
 function toggleIsolation(state, noRefresh) {

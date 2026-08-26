@@ -16,6 +16,7 @@
     <link rel="stylesheet" href="libs/ol-8.2.0.css" type="text/css" />
     <link rel="stylesheet" href="libs/ol-layerswitcher-4.1.1.css" type="text/css"/>
     <link rel="stylesheet" href="style.css" type="text/css" />
+    <link rel="stylesheet" href="ui.css" type="text/css" />
 
     <link href="/fontawesome/css/fontawesome.css" rel="stylesheet" />
     <link href="/fontawesome/css/solid.css" rel="stylesheet" />
@@ -837,47 +838,47 @@
         </div>
         <div id="header_top" class="infoHeading">
           <div class="buttonContainer">
-            <span id="U" title="only show the U2 and other military planes" class="button inActiveButton" onclick="toggleMilitary();"><span class="buttonText">U</span></span>
-            <span id="H" title="(H)ome / Reset Map" class="button inActiveButton" onclick="resetMap();"><span class="buttonText">H</span></span>
-            <span id="T" title="All (T)racks" class="button inActiveButton" onclick="selectAllPlanes();"><span class="buttonText">T</span></span>
-            <span id="RP" title="Repla(Y)" class="button inActiveButton replayButton" onclick="showReplayBar();" style="display: none"><span class="buttonText"></span></span>
+            <span id="U" title="only show the U2 and other military planes" class="ui-btn ui-btn-square inActiveButton" onclick="toggleMilitary();"><span class="buttonText">U</span></span>
+            <span id="H" title="(H)ome / Reset Map" class="ui-btn ui-btn-square inActiveButton" onclick="resetMap();"><span class="buttonText">H</span></span>
+            <span id="T" title="All (T)racks" class="ui-btn ui-btn-square inActiveButton" onclick="selectAllPlanes();"><span class="buttonText">T</span></span>
+            <span id="RP" title="Repla(Y)" class="ui-btn ui-btn-square inActiveButton replayButton" onclick="showReplayBar();" style="display: none"><span class="buttonText"></span></span>
           </div>
-          <div id="tempTrailsBar" style="display: none">
-            <span class="tempTrailsLabel">Trail seconds</span>
-            <input id="tempTrailsInput" class="tempTrailsInput" type="number" min="0" max="1200" step="5" value="0" title="0 = full tracks, otherwise only show the last X seconds of each track">
-            <span id="tempTrailsApply" class="tempTrailsApply" title="Apply trail length"><span class="fa-solid fa-check"></span></span>
+          <div id="tempTrailsBar" class="ui-panel ui-strip" style="display: none">
+            <label class="ui-strip-label" for="tempTrailsInput">Trail seconds</label>
+            <input id="tempTrailsInput" class="ui-input ui-input-num" type="number" min="0" max="1200" step="5" value="0" title="0 = full tracks, otherwise only show the last X seconds of each track">
+            <button id="tempTrailsApply" class="ui-btn ui-btn-square" type="button" title="Apply trail length"><span class="fa-solid fa-check"></span></button>
           </div>
         </div>
         <div id="header_side" class="infoHeading">
           <div class="buttonContainer">
-            <div id="toggle_sidebar_control" class="button button-fa">
+            <div id="toggle_sidebar_control" class="ui-btn ui-btn-square">
               <span id="toggle_sidebar_button" class="show_sidebar fa-solid fa-chevron-right" alt="Toggle Sidebar"></span>
             </div>
-            <div id="expand_sidebar_control" class="button button-fa" style="display: none;">
+            <div id="expand_sidebar_control" class="ui-btn ui-btn-square" style="display: none;">
               <span id="expand_sidebar_button" class="fa-solid fa-chevron-right" alt="Expand Sidebar"></span>
             </div>
             <div id="fullscreenButton" class="svgButton fullscreenButton"></div>
-            <div id="settingsCog" class="button button-fa settingsCog">
+            <div id="settingsCog" class="ui-btn ui-btn-square settingsCog">
               <span id="settingsCog" class="fa-solid fa-gear"></span>
             </div>
-            <div id="L" title="Toggle (L)abels" class="button inActiveButton" onclick="toggleLabels();"><span class="buttonText">L</span></div>
-            <div id="O" title="Toggle Label Extensi(O)ns" class="button inActiveButton" onclick="toggleExtendedLabels();"><span class="buttonText">O</span></div>
-            <div id="K" title="Toggle Trac(K) Labels" class="button inActiveButton" onclick="toggleTrackLabels();"><span class="buttonText">K</span></div>
+            <div id="L" title="Toggle (L)abels" class="ui-btn ui-btn-square inActiveButton" onclick="toggleLabels();"><span class="buttonText">L</span></div>
+            <div id="O" title="Toggle Label Extensi(O)ns" class="ui-btn ui-btn-square inActiveButton" onclick="toggleExtendedLabels();"><span class="buttonText">O</span></div>
+            <div id="K" title="Toggle Trac(K) Labels" class="ui-btn ui-btn-square inActiveButton" onclick="toggleTrackLabels();"><span class="buttonText">K</span></div>
             <div class="buttonSpacer">
             </div>
-            <div style="display: none" id="B" title="Toggle Map (B)rightness" class="button inActiveButton" onclick="toggles['MapDim'].toggle();"><span class="buttonText">B</span></div>
+            <div style="display: none" id="B" title="Toggle Map (B)rightness" class="ui-btn ui-btn-square inActiveButton" onclick="toggles['MapDim'].toggle();"><span class="buttonText">B</span></div>
             <div class="buttonSpacer">
             </div>
-            <div style="display: none" id="V" title="Table: only show aircraft in current (V)iew" class="button inActiveButton" onclick="toggleTableInView();"><span class="buttonText">V</span></div>
-            <div id="M" title="Toggle (M)ultiSelect" class="button inActiveButton" onclick="toggleMultiSelect();"><span class="buttonText">M</span></div>
+            <div style="display: none" id="V" title="Table: only show aircraft in current (V)iew" class="ui-btn ui-btn-square inActiveButton" onclick="toggleTableInView();"><span class="buttonText">V</span></div>
+            <div id="M" title="Toggle (M)ultiSelect" class="ui-btn ui-btn-square inActiveButton" onclick="toggleMultiSelect();"><span class="buttonText">M</span></div>
             <div class="buttonSpacer">
             </div>
-            <div id="P" title="(P)ersistence mode" class="button inActiveButton" onclick="togglePersistence();"><span class="buttonText">P</span></div>
-            <div id="I" title="(I)solate: only show selected aircraft" class="button inActiveButton" onclick="toggleIsolation();"><span class="buttonText">I</span></div>
+            <div id="P" title="(P)ersistence mode" class="ui-btn ui-btn-square inActiveButton" onclick="togglePersistence();"><span class="buttonText">P</span></div>
+            <div id="I" title="(I)solate: only show selected aircraft" class="ui-btn ui-btn-square inActiveButton" onclick="toggleIsolation();"><span class="buttonText">I</span></div>
             <div class="buttonSpacer">
             </div>
-            <div id="R" title="Follow a (R)andom plane!" class="button inActiveButton" onclick="followRandomPlane();"><span class="buttonText">R</span></div>
-            <div id="F" title="(F)ollow" class="button inActiveButton" onclick="toggleFollow();"><span class="buttonText">F</span></div>
+            <div id="R" title="Follow a (R)andom plane!" class="ui-btn ui-btn-square inActiveButton" onclick="followRandomPlane();"><span class="buttonText">R</span></div>
+            <div id="F" title="(F)ollow" class="ui-btn ui-btn-square inActiveButton" onclick="toggleFollow();"><span class="buttonText">F</span></div>
           </div>
         </div>
         <div id="openaip_vector_panel" style="display:none">

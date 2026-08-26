@@ -431,7 +431,8 @@ select.error, textarea.error, input.error {
     position: absolute;
     right: calc( 0px * var(--SCALE));
     top:  calc( 0px * var(--SCALE));
-    width: calc( 38px * var(--SCALE));
+    /* sized by its buttons, which grow for touch - a fixed width clipped them */
+    width: max-content;
     z-index: 9;
 }
 #header_top {
@@ -494,6 +495,20 @@ select.error, textarea.error, input.error {
     display: block;
     margin: calc( 1px * var(--SCALE));
     text-align: center;
+}
+
+/* the side chrome is a single column; without this its inline-block buttons
+   wrap into a block as soon as the container is content-sized */
+#header_side .buttonContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--ui-s2);
+}
+
+#header_side .buttonSpacer {
+    margin: 0;
+    height: var(--ui-s5);
 }
 .buttonSpacer {
     margin: calc( 9px * var(--SCALE));
@@ -1267,60 +1282,10 @@ tr#photo_container {
     }
 }
 
-/* one-line "trail seconds" bar under the U/H/T button row */
+/* trail-seconds bar: positioned here, styled by ui.css primitives.
+   Absolute so showing it doesn't widen #header_top and shift the buttons. */
 #tempTrailsBar {
-    /* absolute so showing it doesn't widen #header_top and shift the buttons */
     position: absolute;
     top: 100%;
-    right: calc( 4px * var(--SCALE));
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: calc( 4px * var(--SCALE));
-    padding: calc( 3px * var(--SCALE)) calc( 6px * var(--SCALE));
-    background-color: var(--BGCOLOR1);
-    border: 2px solid var(--DARK_ACCENT);
-    border-radius: calc( 4px * var(--SCALE));
-    white-space: nowrap;
-}
-
-.tempTrailsLabel {
-    font-size: calc( 12px * var(--SCALE));
-    color: var(--FGCOLOR1);
-}
-
-input.tempTrailsInput {
-    width: calc( 48px * var(--SCALE));
-    font-size: calc( 12px * var(--SCALE));
-    background-color: var(--BGCOLOR2, var(--BGCOLOR1));
-    color: var(--TXTCOLOR1);
-    border: 1px solid var(--DARK_ACCENT);
-    border-radius: calc( 3px * var(--SCALE));
-    padding: calc( 1px * var(--SCALE)) calc( 3px * var(--SCALE));
-    text-align: right;
-    /* no browser spinner buttons */
-    -moz-appearance: textfield;
-    appearance: textfield;
-}
-
-input.tempTrailsInput::-webkit-outer-spin-button,
-input.tempTrailsInput::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-    appearance: none;
-    margin: 0;
-}
-
-.tempTrailsApply {
-    /* flex centering: line-height alone leaves the glyph sitting too high */
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    background-color: var(--ACCENT);
-    color: #fff;
-    cursor: pointer;
-    border-radius: calc( 3px * var(--SCALE));
-    font-size: calc( 12px * var(--SCALE));
-    line-height: 1;
-    width: calc( 22px * var(--SCALE));
-    height: calc( 20px * var(--SCALE));
+    right: var(--ui-s2);
 }

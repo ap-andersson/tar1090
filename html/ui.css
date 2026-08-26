@@ -1,0 +1,405 @@
+/* ==========================================================================
+   ui.css - design tokens and UI primitives for the refreshed interface.
+   Loaded after style.css so it can take over surfaces one at a time.
+
+   Rules of the road:
+     - Every colour, size and duration comes from a token below. No literals
+       in component rules.
+     - Everything that should grow with the user scale slider multiplies by
+       var(--SCALE), which script.js sets from globalScale.
+     - Dark only. There is no light theme and no theme switching.
+     - Class-based, single specificity. No ids in selectors, no !important.
+   ========================================================================== */
+
+:root {
+    /* ---- surfaces -------------------------------------------------------
+       0 is the deepest (sheets, full-bleed panels), rising to 3 (hover).
+       The map is the real background, so panels sit on translucent fills
+       and let terrain read through. */
+    --ui-surface-0: #0e1216;
+    --ui-surface-1: #171c21;
+    --ui-surface-2: #212830;
+    --ui-surface-3: #2c343d;
+
+    --ui-panel-bg: rgba(23, 28, 33, 0.92);
+    --ui-panel-blur: blur(calc(12px * var(--SCALE)));
+
+    --ui-border: #333c45;
+    --ui-border-strong: #46525d;
+
+    /* ---- text ---------------------------------------------------------- */
+    --ui-text-1: #e6ebef;   /* primary values, headings */
+    --ui-text-2: #a3aeb8;   /* labels, secondary data */
+    --ui-text-3: #6f7c87;   /* units, captions, disabled */
+
+    /* ---- accent ---------------------------------------------------------
+       Teal, continuing tar1090's existing #00596b identity rather than
+       inventing a new hue. Reads against both terrain green and water blue. */
+    --ui-accent: #2f9fb5;
+    --ui-accent-hover: #3cb4cc;
+    --ui-accent-quiet: rgba(47, 159, 181, 0.16);
+    --ui-on-accent: #06131a;
+
+    --ui-warn: #e0a33a;
+    --ui-danger: #e05c4b;
+
+    /* ---- focus ----------------------------------------------------------
+       One visible focus treatment everywhere. Never removed. */
+    --ui-focus: #7ad4e6;
+    --ui-focus-ring: 0 0 0 calc(2px * var(--SCALE)) var(--ui-focus);
+
+    /* ---- type ----------------------------------------------------------- */
+    --ui-font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
+               Helvetica, Arial, sans-serif;
+    --ui-font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas,
+                    monospace;
+
+    --ui-fs-xs: calc(11px * var(--SCALE));
+    --ui-fs-sm: calc(12px * var(--SCALE));
+    --ui-fs-md: calc(13px * var(--SCALE));
+    --ui-fs-lg: calc(16px * var(--SCALE));
+    --ui-fs-xl: calc(22px * var(--SCALE));
+    --ui-fs-2xl: calc(28px * var(--SCALE));
+
+    --ui-lh-tight: 1.15;
+    --ui-lh: 1.4;
+
+    /* ---- space ----------------------------------------------------------
+       4px base grid. Use these, not arbitrary calc() values. */
+    --ui-s1: calc(2px * var(--SCALE));
+    --ui-s2: calc(4px * var(--SCALE));
+    --ui-s3: calc(6px * var(--SCALE));
+    --ui-s4: calc(8px * var(--SCALE));
+    --ui-s5: calc(12px * var(--SCALE));
+    --ui-s6: calc(16px * var(--SCALE));
+    --ui-s7: calc(24px * var(--SCALE));
+    --ui-s8: calc(32px * var(--SCALE));
+
+    /* ---- radius --------------------------------------------------------- */
+    --ui-r-sm: calc(4px * var(--SCALE));
+    --ui-r-md: calc(8px * var(--SCALE));
+    --ui-r-lg: calc(14px * var(--SCALE));
+    --ui-r-pill: 999px;
+
+    /* ---- control sizing -------------------------------------------------
+       ui-hit is the minimum touch target. Pointer-coarse devices get 44px;
+       mouse users get something tighter. Both scale with --SCALE. */
+    --ui-hit: calc(30px * var(--SCALE));
+    --ui-control-h: calc(28px * var(--SCALE));
+
+    /* ---- elevation ------------------------------------------------------ */
+    --ui-shadow-1: 0 calc(1px * var(--SCALE)) calc(3px * var(--SCALE)) rgba(0, 0, 0, 0.45);
+    --ui-shadow-2: 0 calc(4px * var(--SCALE)) calc(16px * var(--SCALE)) rgba(0, 0, 0, 0.55);
+
+    /* ---- motion --------------------------------------------------------- */
+    --ui-dur-fast: 120ms;
+    --ui-dur: 200ms;
+    --ui-ease: cubic-bezier(0.2, 0, 0.2, 1);
+
+    /* ---- stacking -------------------------------------------------------
+       Named layers so z-index stops being a guessing game. */
+    --ui-z-map-chrome: 10;
+    --ui-z-panel: 20;
+    --ui-z-sheet: 30;
+    --ui-z-modal: 40;
+    --ui-z-toast: 50;
+}
+
+/* Bigger targets for touch, and for any viewport narrow enough to be a phone.
+   The width query also makes this testable by resizing a desktop window,
+   which pointer:coarse alone is not. */
+@media (pointer: coarse), (max-width: 600px) {
+    :root {
+        --ui-hit: calc(44px * var(--SCALE));
+        --ui-control-h: calc(40px * var(--SCALE));
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    :root {
+        --ui-dur-fast: 0ms;
+        --ui-dur: 0ms;
+    }
+}
+
+/* ==========================================================================
+   Primitives
+   ========================================================================== */
+
+/* ---- panel: any floating chrome over the map --------------------------- */
+.ui-panel {
+    background-color: var(--ui-panel-bg);
+    -webkit-backdrop-filter: var(--ui-panel-blur);
+    backdrop-filter: var(--ui-panel-blur);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-r-md);
+    box-shadow: var(--ui-shadow-2);
+    color: var(--ui-text-1);
+    font-family: var(--ui-font);
+    font-size: var(--ui-fs-md);
+    line-height: var(--ui-lh);
+}
+
+.ui-panel-header {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-s4);
+    padding: var(--ui-s4) var(--ui-s5);
+    border-bottom: 1px solid var(--ui-border);
+}
+
+.ui-panel-title {
+    flex: 1;
+    font-size: var(--ui-fs-md);
+    font-weight: 600;
+    color: var(--ui-text-1);
+}
+
+.ui-panel-body {
+    padding: var(--ui-s4) var(--ui-s5);
+}
+
+/* section label inside a panel: quiet, uppercase, above a rule */
+.ui-section {
+    font-size: var(--ui-fs-xs);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--ui-text-3);
+    padding-bottom: var(--ui-s2);
+    margin: var(--ui-s5) 0 var(--ui-s3);
+    border-bottom: 1px solid var(--ui-border);
+}
+
+.ui-section:first-child {
+    margin-top: 0;
+}
+
+/* ---- row: label on the left, value or control on the right ------------- */
+.ui-row {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-s4);
+    min-height: var(--ui-control-h);
+    padding: var(--ui-s1) 0;
+}
+
+.ui-row-label {
+    flex: 1;
+    color: var(--ui-text-2);
+    font-size: var(--ui-fs-sm);
+}
+
+.ui-row-value {
+    color: var(--ui-text-1);
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+}
+
+/* ---- inline strip: a single-line control cluster ----------------------- */
+.ui-strip {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-s3);
+    padding: var(--ui-s3) var(--ui-s4);
+}
+
+.ui-strip-label {
+    font-size: var(--ui-fs-sm);
+    color: var(--ui-text-2);
+    white-space: nowrap;
+}
+
+/* ---- buttons ----------------------------------------------------------- */
+.ui-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--ui-s2);
+    min-width: var(--ui-hit);
+    min-height: var(--ui-hit);
+    padding: 0 var(--ui-s3);
+    box-sizing: border-box;
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-r-sm);
+    background-color: var(--ui-surface-2);
+    color: var(--ui-text-1);
+    font-family: var(--ui-font);
+    font-size: var(--ui-fs-md);
+    font-weight: 600;
+    line-height: 1;
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    transition: background-color var(--ui-dur-fast) var(--ui-ease),
+                border-color var(--ui-dur-fast) var(--ui-ease),
+                color var(--ui-dur-fast) var(--ui-ease);
+}
+
+.ui-btn:hover {
+    background-color: var(--ui-surface-3);
+    border-color: var(--ui-border-strong);
+}
+
+.ui-btn:focus-visible {
+    outline: none;
+    box-shadow: var(--ui-focus-ring);
+}
+
+/* on = this mode is currently active */
+.ui-btn.is-on {
+    background-color: var(--ui-accent);
+    border-color: var(--ui-accent);
+    color: var(--ui-on-accent);
+}
+
+.ui-btn.is-on:hover {
+    background-color: var(--ui-accent-hover);
+    border-color: var(--ui-accent-hover);
+}
+
+/* square icon/letter button, the map chrome workhorse */
+.ui-btn-square {
+    width: var(--ui-hit);
+    padding: 0;
+}
+
+/* quiet button: no chrome until interacted with */
+.ui-btn-quiet {
+    background-color: transparent;
+    border-color: transparent;
+}
+
+.ui-btn-quiet:hover {
+    background-color: var(--ui-surface-2);
+    border-color: var(--ui-border);
+}
+
+/* ---- button group: buttons that read as one control ------------------- */
+.ui-btn-group {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-s2);
+}
+
+.ui-btn-group-tight {
+    gap: 1px;
+}
+
+.ui-btn-group-tight .ui-btn {
+    border-radius: 0;
+}
+
+.ui-btn-group-tight .ui-btn:first-child {
+    border-radius: var(--ui-r-sm) 0 0 var(--ui-r-sm);
+}
+
+.ui-btn-group-tight .ui-btn:last-child {
+    border-radius: 0 var(--ui-r-sm) var(--ui-r-sm) 0;
+}
+
+/* ---- inputs ------------------------------------------------------------ */
+.ui-input {
+    height: var(--ui-control-h);
+    box-sizing: border-box;
+    padding: 0 var(--ui-s3);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-r-sm);
+    background-color: var(--ui-surface-0);
+    color: var(--ui-text-1);
+    font-family: var(--ui-font);
+    font-size: var(--ui-fs-md);
+    font-variant-numeric: tabular-nums;
+}
+
+.ui-input:focus-visible {
+    outline: none;
+    border-color: var(--ui-accent);
+    box-shadow: var(--ui-focus-ring);
+}
+
+.ui-input::placeholder {
+    color: var(--ui-text-3);
+}
+
+/* numeric input without the browser stepper */
+.ui-input-num {
+    width: calc(56px * var(--SCALE));
+    text-align: right;
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+
+.ui-input-num::-webkit-outer-spin-button,
+.ui-input-num::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    appearance: none;
+    margin: 0;
+}
+
+/* ---- data presentation ------------------------------------------------- */
+.ui-num {
+    font-variant-numeric: tabular-nums;
+}
+
+.ui-mono {
+    font-family: var(--ui-font-mono);
+    font-variant-numeric: tabular-nums;
+}
+
+.ui-unit {
+    color: var(--ui-text-3);
+    font-size: 0.85em;
+    margin-left: 0.15em;
+}
+
+/* ---- misc -------------------------------------------------------------- */
+.ui-divider {
+    height: 1px;
+    background-color: var(--ui-border);
+    border: 0;
+    margin: var(--ui-s4) 0;
+}
+
+.ui-scroll {
+    overflow: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: var(--ui-border-strong) transparent;
+}
+
+.ui-visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* ==========================================================================
+   Migration compatibility
+   Temporary bridges while surfaces move onto the primitives above. Each of
+   these should disappear as its surface is rebuilt.
+   ========================================================================== */
+
+/* Letter buttons still wrap their glyph in .buttonText, which carries its own
+   margin and line-height from style.css. Flex centring handles it now. */
+.ui-btn .buttonText {
+    margin: 0;
+    font-size: inherit;
+    line-height: 1;
+}
+
+/* style.css sets colour on these; the primitive owns colour now. */
+.ui-btn.activeButton,
+.ui-btn.inActiveButton {
+    color: inherit;
+}
+
+.ui-btn.is-on {
+    color: var(--ui-on-accent);
+}
