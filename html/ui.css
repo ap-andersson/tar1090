@@ -547,14 +547,17 @@
 
 #label_picker {
     position: absolute;
-    top: calc(4px * var(--SCALE));
-    right: calc(52px * var(--SCALE));
+    /* below the top button row and the layer switcher (both end at 40px), and
+       left of the side button column (32px wide) - covering either of those
+       hides the controls you need while adjusting labels */
+    top: calc(46px * var(--SCALE));
+    right: calc(40px * var(--SCALE));
     z-index: var(--ui-z-panel);
     display: flex;
     flex-direction: column;
     width: calc(300px * var(--SCALE));
-    max-width: calc(100vw - calc(64px * var(--SCALE)));
-    max-height: calc(100vh - calc(16px * var(--SCALE)));
+    max-width: calc(100vw - calc(52px * var(--SCALE)));
+    max-height: calc(100vh - calc(58px * var(--SCALE)));
 }
 
 #label_picker .ui-panel-body {
