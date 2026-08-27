@@ -202,27 +202,9 @@ select {
     z-index: 999;
 }
 
-.ol-zoom-in {
-    background-image: url("images/zoom-in.png");
-    background-size: cover;
-    color:transparent !important;
-    width: calc( 25px * var(--SCALE)) !important;
-    height: calc( 25px * var(--SCALE)) !important;
-    background-color: transparent !important;
-    margin-bottom: calc( 5px * var(--SCALE)) !important;
-}
-
-.ol-zoom-out {
-    background-image: url("images/zoom-out.png");
-    background-size: cover;
-    color:transparent !important;
-    width: calc( 25px * var(--SCALE)) !important;
-    height: calc( 25px * var(--SCALE)) !important;
-    background-color: transparent !important;
-}
-
+/* the zoom buttons themselves are styled in ui.css; only their position on
+   the map belongs here */
 .ol-zoom {
-    background-color: transparent !important;
     left: calc(100% - calc( 65px * var(--SCALE)));
     top: calc(100% - calc( 85px * var(--SCALE)));
 }
