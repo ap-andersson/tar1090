@@ -4993,16 +4993,15 @@ function adjustInfoBlock() {
             jQuery("#sidebar_container").css('margin-left', '140pt');
         //jQuery('#sidebar_canvas').css('margin-bottom', jQuery('#selected_infoblock').height() + 'px');
         //
-        if (mapIsVisible && document.getElementById('map_canvas').clientWidth < parseFloat(jQuery('#selected_infoblock').css('width')) * 3) {
-            jQuery('#selected_infoblock').css('height', '290px');
-            jQuery('#selected_typedesc').parent().parent().hide();
-            jQuery('#credits').css('bottom', '295px');
-            jQuery('#credits').css('left', '5px');
-        } else {
-            jQuery('#selected_infoblock').css('height', '100%');
-            jQuery('#credits').css('bottom', '');
-            jQuery('#credits').css('left', '');
-        }
+        // There used to be a compact mode here that cut the block to 290px and
+        // hid the type description whenever the map was narrower than three
+        // panel widths. That suited a box floating over the map; the block is
+        // a docked full-height column now, and shrinking it just left the
+        // panel truncated mid-content. Widening the panel to 330px was enough
+        // to trip it on an ordinary window.
+        jQuery('#selected_infoblock').css('height', '100%');
+        jQuery('#credits').css('bottom', '');
+        jQuery('#credits').css('left', '');
 
         jQuery('#selected_infoblock').show();
     } else {
@@ -5018,21 +5017,11 @@ function adjustInfoBlock() {
         jQuery('#selected_infoblock').hide();
     }
 
-    let photoWidth = document.getElementById('photo_container').clientWidth;
-    let refWidth = infoBlockWidth * globalScale - 53;
-    if (Math.abs(photoWidth / refWidth - 1) > 0.05)
-        photoWidth = refWidth;
-
-    jQuery('#airplanePhoto').css("width", photoWidth + 'px');
-    jQuery('#selected_photo').css("width", photoWidth + 'px');
-
-    if (showPictures) {
-        if (planespottersAPI || planespottingAPI) {
-            jQuery('#photo_container').css('height', photoWidth * 0.78 + 'px');
-        } else {
-            jQuery('#photo_container').css('height', '40px');
-        }
-    }
+    // The photo used to be sized here in pixels, derived from the panel width,
+    // with the container given a fixed 0.78 aspect. CSS sizes it now - full
+    // container width, height from the image's own aspect - so a photo that
+    // isn't 0.78 is no longer letterboxed, and the inline width no longer
+    // beats the stylesheet.
 }
 
 function initializeUnitsSelector() {

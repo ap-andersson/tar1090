@@ -102,42 +102,44 @@
               <span><a class="link" target="_blank" href="https://en.wikipedia.org/wiki/Aviation_transponder_interrogation_modes#ICAO_24-bit_address" rel="noreferrer">What is a hex ID?</a></span>
             </div>
           </div>
+          <div id="photo_block">
+            <div id="photo_container">
+              <div title="Aircraft Photo" id="selected_photo"></div>
+              <div id="copyrightInfo"></div>
+            </div>
+          </div>
           <div class="ib-stats">
             <div class="ib-stat">
               <span class="ib-stat-label" id="selected_altitude1_title" title="The uncorrected pressure-derived height of the aircraft above mean sea level (based on barometric pressure)">Baro. alt</span>
               <span class="ib-stat-value ui-num" id="selected_altitude1"></span>
             </div>
             <div class="ib-stat">
+              <span class="ib-stat-label" title="Rate of climb or descent">V/S</span>
+              <span class="ib-stat-value ui-num" id="selected_vert_rate">n/a</span>
+            </div>
+            <div class="ib-stat">
               <span class="ib-stat-label" title="The speed of the aircraft over the ground.">Speed</span>
               <span class="ib-stat-value ui-num" id="selected_speed1">n/a</span>
             </div>
+          </div>
+          <div class="ib-stats ib-stats-two">
             <div class="ib-stat">
-              <span class="ib-stat-label" title="Rate of climb or descent">V/S</span>
-              <span class="ib-stat-value ui-num" id="selected_vert_rate">n/a</span>
+              <span class="ib-stat-label" title="Full model name">Model</span>
+              <span class="ib-stat-value" title="Year of Manufacture / Full Type" id="selected_typelong"></span>
+            </div>
+            <div class="ib-stat">
+              <span class="ib-stat-label" title="Country of registration">Country</span>
+              <span class="ib-stat-value" title="Country of registration" id="selected_country">n/a</span>
             </div>
           </div>
           <div id=reg_info class="infoBlockSection infoBlockSectionRoundedTop">
             <table class="infoSectionTable">
-              <tr id=photo_container>
-                <td>
-                  <div title="Aircraft Photo" id="selected_photo"></div>
-                  <div id="copyrightInfo"></div>
-                </td>
-              </tr>
               <tr>
                 <td>
                   <div class="infoHeading">
                     <span title="Registration: The alphanumeric registration code assigned by the country in which the aircraft is registered.">Reg.: </span>
                   </div>
                   <div class="infoData"><span id="selected_registration">n/a</span></div>
-                </td>
-              </tr>
-              <tr>
-                <td>
-                  <div class="infoHeading"><span title="Country of registration">Country</span></div>
-                  <div class="infoData">
-                    <span title="Country of registration" id="selected_country">n/a</span>
-                  </div>
                 </td>
               </tr>
               <tr id="selected_airline_row" class="hidden">
@@ -160,12 +162,6 @@
                 <td>
                   <span class="infoHeading" title="ICAO type code (A320/B738)">Type: </span>
                   <span class="infoData" id="selected_icaotype"></span>
-                </td>
-              </tr>
-              <tr>
-                <td>
-                  <div class="infoHeading"><span title="Full model name">Model</span></div>
-                  <span class="infoData" title="Year of Manufacture / Full Type" id="selected_typelong"></span>
                 </td>
               </tr>
               <tr>

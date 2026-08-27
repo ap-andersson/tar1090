@@ -819,7 +819,13 @@
    the summary header, the stat tiles and the photo. Listing what to hide
    missed the parts of the infoblock that aren't inside a group (History, the
    colour legend, Pos. epoch) and would miss anything added later. */
-#mobile_summary:not(.mobile-expanded) #infoblock-container > *:not(.ib-summary):not(.ib-stats):not(#reg_info) {
+#mobile_summary:not(.mobile-expanded) #infoblock-container > *:not(.ib-summary):not(.ib-stats):not(#photo_block) {
+    display: none;
+}
+
+/* the model/country band belongs to the expanded view; the collapsed bar
+   stays to callsign, route, the three numbers and the thumbnail */
+#mobile_summary:not(.mobile-expanded) .ib-stats-two {
     display: none;
 }
 
@@ -842,17 +848,15 @@
     grid-area: stats;
 }
 
-#mobile_summary:not(.mobile-expanded) #reg_info {
+#mobile_summary:not(.mobile-expanded) #photo_block {
     grid-area: photo;
     display: block;
-    padding: 0;
     margin: var(--ui-s4) var(--ui-s5) 0 0;
 }
 
-/* only the picture from that block, not the registration rows under it */
-#mobile_summary:not(.mobile-expanded) #reg_info tr:not(#photo_container),
-#mobile_summary:not(.mobile-expanded) #reg_info #copyrightInfo,
-#mobile_summary:not(.mobile-expanded) #reg_info #placeholder-photo {
+/* just the picture: no credit line or placeholder in a collapsed bar */
+#mobile_summary:not(.mobile-expanded) #copyrightInfo,
+#mobile_summary:not(.mobile-expanded) #placeholder-photo {
     display: none;
 }
 
@@ -1476,8 +1480,9 @@ select:focus-visible {
    ========================================================================== */
 
 .ib-summary {
-    padding: var(--ui-s5) var(--ui-s5) var(--ui-s3);
-    gap: var(--ui-s1) var(--ui-s3);
+    padding: var(--ui-s5);
+    /* callsign, hex chip and route each on their own line, with room between */
+    gap: var(--ui-s3) var(--ui-s3);
 }
 
 .ib-callsign {
@@ -1569,13 +1574,12 @@ select:focus-visible {
 
 /* ---- photo: full width, credit over the image -------------------------- */
 #selected_infoblock #photo_container {
-    /* spans both columns; not bled to the panel edge because the container
-       padding and the scroll gutter are not symmetric, which made a
-       full-bleed photo visibly off-centre */
-    grid-column: 1 / -1;
     position: relative;
+    /* the desktop path sets a pixel height from the panel width; the image's
+       own aspect ratio should decide it so nothing is letterboxed */
     height: auto !important;
     margin: 0;
+    line-height: 0;
 }
 
 #selected_infoblock #selected_photo {
@@ -1683,15 +1687,10 @@ select:focus-visible {
     padding: var(--ui-s4) var(--ui-s5);
 }
 
-#selected_infoblock #photo_container ~ tr,
-#selected_infoblock #reg_info .infoSectionTable > tbody {
-    /* the identity grid sits inside reg_info's inset; the photo row above it
-       is the one thing that reaches the edges */
-    min-width: 0;
-}
 
-#selected_infoblock #reg_info #photo_container {
-    margin: calc(-1 * var(--ui-s4)) calc(-1 * var(--ui-s5)) var(--ui-s3);
+
+#selected_infoblock #photo_block {
+    margin-bottom: var(--ui-s4);
 }
 
 /* the History toggle is a collapsible header like the groups; it was a
@@ -1734,4 +1733,27 @@ select:focus-visible {
 #selected_infoblock .greyButton.active::after {
     content: "\f078";
     transform: rotate(180deg);
+}
+
+/* second stat band: two fields wide instead of three */
+.ib-stats-two {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+/* these two carry prose rather than numbers, so they wrap instead of
+   overflowing the tile */
+.ib-stats-two .ib-stat-value {
+    font-size: var(--ui-fs-md);
+    font-weight: 600;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
+/* the layer switcher's own stylesheet lightens the button on hover while the
+   panel is open, which flipped the icon against the accent fill */
+.layer-switcher.shown button:hover,
+.layer-switcher.shown button:focus {
+    background-color: var(--ui-accent-hover);
+    border-color: var(--ui-accent-hover);
+    color: var(--ui-on-accent);
 }
