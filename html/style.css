@@ -797,11 +797,6 @@ table.infoSectionTable tr td {
     width: calc( 240px * var(--SCALE));
     cursor: pointer;
 }
-
-.ui-widget-content .ui-selectable .ui-selected {
-    border-color: #cc6600;
-}
-
 .buttonFilter li {
     border-width: 2px;
     border-color: var(--BGCOLOR2);
@@ -822,14 +817,6 @@ table.infoSectionTable tr td {
     max-width: calc( 2 * 130px * var(--SCALE));
 }
 
-#sortableColumns li {
-    margin: 3px 3px 3px 3px;
-    padding: calc( 0px * var(--SCALE));
-    float: left;
-    width: calc( 120px * var(--SCALE));
-    border-color: var(--ACCENT);
-    background-color: var(--BGCOLOR2);
-}
 #copyrightInfo {
   position: Relative;
   font-size: var(--FS1);
@@ -846,37 +833,6 @@ div#reg_info {
 #airplanePhoto {
     border-radius: calc(8px*var(--SCALE)) calc(8px*var(--SCALE)) calc(8px*var(--SCALE)) calc(8px*var(--SCALE));
 }
-.ui-widget-content .ui-state-default, .ui-widget-header .ui-state-default, .ui-button, html .ui-button.ui-state-disabled:hover, html .ui-button.ui-state-disabled:active {
-  background: var(--BGCOLOR1);
-  border: none;
-}
-.ui-state-active, .ui-widget-content .ui-state-active, .ui-widget-header .ui-state-active, a.ui-button:active, .ui-button:active, .ui-button.ui-state-active:hover{
-  background: #3d7382;
-}
-.ui-state-default a, .ui-state-default a:link, .ui-state-default a:visited, a.ui-button, a:link.ui-button, a:visited.ui-button, .ui-button {
-  color:var(--TXTCOLOR2);
-}
- .ui-widget-header .ui-state-default, .ui-button, html .ui-button.ui-state-disabled:hover, html .ui-button.ui-state-disabled:active {
-  color:var(--TXTCOLOR2);
-}
-.ui-widget-header, .ui-widget.ui-widget-content {
-    border: none;
-}
-.ui-state-default, .ui-widget-content .ui-state-default, .ui-widget-header .ui-state-default, .ui-button, html .ui-button.ui-state-disabled:hover, html .ui-button.ui-state-disabled:active {
-    color:var(--TXTCOLOR2);
-}
-.ui-widget-content {
-  color:var(--TXTCOLOR2);
-}
-
-.ui-slider {
-    background-color: var(--BGCOLOR2);
-}
-.ui-slider .ui-slider-handle {
-    background-color: rgb(0, 115, 222);
-}
-
-
 input{
   color:var(--TXTCOLOR1);
 }

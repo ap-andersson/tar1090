@@ -1175,7 +1175,7 @@ function earlyInitPage() {
     }
 
     const slideBase = 0.6;
-    jQuery('#iconScaleSlider').slider({
+    initRange('#iconScaleSlider', {
         value: Math.pow(iconScale, 1 / slideBase),
         step: 0.02,
         min: 0.1,
@@ -1188,7 +1188,7 @@ function earlyInitPage() {
         },
     });
 
-    jQuery('#userScaleSlider').slider({
+    initRange('#userScaleSlider', {
         value: Math.pow(userScale, 1 / slideBase),
         step: 0.02,
         min: 0.5,
@@ -1317,13 +1317,7 @@ function earlyInitPage() {
         buttonActive('#P', noVanish);
     }
 
-    jQuery('#tabs').tabs({
-        active: loStore['active_tab'],
-        activate: function (event, ui) {
-            loStore['active_tab'] = jQuery("#tabs").tabs("option", "active");
-        },
-        collapsible: true
-    });
+    initTabs('#tabs', 'active_tab');
 
     // Set page basics
     document.title = PageName;
@@ -1375,21 +1369,10 @@ function earlyInitPage() {
     jQuery("#trace_back_1d").click(function() {shiftTrace(-1)});
     jQuery("#trace_jump_1d").click(function() {shiftTrace(1)});
 
-    jQuery("#histDatePicker").datepicker({
-        maxDate: '+1d',
-        dateFormat: "yy-mm-dd",
-        onSelect: function(date){
-            setTraceDate({string: date});
-            shiftTrace();
-            jQuery("#histDatePicker").blur();
-        },
-        autoSize: true,
-        onClose: !onMobile ? null : function(dateText, inst){
-            jQuery("#histDatePicker").attr("disabled", false);
-        },
-        beforeShow: !onMobile ? null : function(input, inst){
-            jQuery("#histDatePicker").attr("disabled", true);
-        },
+    initDatePicker("#histDatePicker", function(date) {
+        setTraceDate({string: date});
+        shiftTrace();
+        jQuery("#histDatePicker").blur();
     });
 
     jQuery("#replayPlay").click(function(){
@@ -1664,13 +1647,7 @@ jQuery('#selected_altitude_geom1')
                 if (!g.sidebar_initiated) {
                     g.sidebar_initiated = true;
                     // Set up map/sidebar splitter
-                    jQuery("#sidebar_container").resizable({
-                        handles: {
-                            w: '#splitter'
-                        },
-                        minWidth: 150,
-                        maxWidth: (jQuery(window).innerWidth() *0.8),
-                    });
+                    initSidebarResize();
 
                     jQuery("#splitter").dblclick(function() {
                         jQuery('#legend').hide();
@@ -1835,7 +1812,7 @@ function initLegend(colors) {
 
 function initSourceFilter(colors) {
     const createFilter = function (color, text, key) {
-        return '<li class="ui-widget-content" style="background-color:' + color + ';" id="source-filter-' + key + '">' + text + '</li>';
+        return '<li class="filterItem" style="background-color:' + color + ';" id="source-filter-' + key + '">' + text + '</li>';
     };
 
     let html = '';
@@ -1854,27 +1831,14 @@ function initSourceFilter(colors) {
 
     document.getElementById('sourceFilter').innerHTML = html;
 
-    jQuery("#sourceFilter").selectable({
-        stop: function () {
-            sourcesFilter = [];
-            jQuery(".ui-selected", this).each(function () {
-                const index = jQuery("#sourceFilter li").index(this);
-                if (Array.isArray(sources[index]))
-                    sources[index].forEach(member => { sourcesFilter.push(member); });
-                else
-                    sourcesFilter.push(sources[index]);
-            });
-        }
-    });
-
-    jQuery("#sourceFilter").on("selectablestart", function (event, ui) {
-        event.originalEvent.ctrlKey = true;
+    initFilterChips("#sourceFilter", sources, function (picked) {
+        sourcesFilter = picked;
     });
 }
 
 function initFlagFilter(colors) {
     const createFilter = function (color, text, key) {
-        return '<li class="ui-widget-content" style="background-color:' + color + ';" id="flag-filter-' + key + '">' + text + '</li>';
+        return '<li class="filterItem" style="background-color:' + color + ';" id="flag-filter-' + key + '">' + text + '</li>';
     };
 
     let html = '';
@@ -1885,21 +1849,8 @@ function initFlagFilter(colors) {
 
     document.getElementById('flagFilter').innerHTML = html;
 
-    jQuery("#flagFilter").selectable({
-        stop: function () {
-            flagFilter = [];
-            jQuery(".ui-selected", this).each(function () {
-                const index = jQuery("#flagFilter li").index(this);
-                if (Array.isArray(flagFilterValues[index]))
-                    flagFilterValues[index].forEach(member => { flagFilter.push(member); });
-                else
-                    flagFilter.push(flagFilterValues[index]);
-            });
-        }
-    });
-
-    jQuery("#flagFilter").on("selectablestart", function (event, ui) {
-        event.originalEvent.ctrlKey = true;
+    initFilterChips("#flagFilter", flagFilterValues, function (picked) {
+        flagFilter = picked;
     });
 }
 
@@ -4449,35 +4400,56 @@ function refreshFeatures() {
     // ---- table sorting end ----
     //
 
+    // Column order and visibility. Reordering is up/down buttons rather than
+    // jQuery UI sortable's drag: it matches the label picker, and dragging a
+    // list item inside a scrolling panel is unreliable on touch.
+    const COL_PREFIX = 'dd_';
+
+    function moveColumn(id, delta) {
+        const order = columns.map(c => c.id);
+        const at = order.indexOf(id);
+        const to = at + delta;
+        if (at == -1 || to < 0 || to >= order.length)
+            return;
+        order.splice(to, 0, order.splice(at, 1)[0]);
+        loStore['columnOrder'] = JSON.stringify(order);
+        columns = createOrderedColumns();
+        planeMan.redraw();
+        createColumnToggles();
+    }
+
     function createColumnToggles() {
-        const prefix = 'dd_';
-        const sortableColumns = jQuery('#sortableColumns').sortable({
-            update: function (event, ui) {
-                const order = [];
-                jQuery('#sortableColumns li').each(function (e) {
-                    order.push(jQuery(this).attr('id').replace(prefix, ''));
-                });
+        const list = jQuery('#sortableColumns');
+        if (!list.length)
+            return;
 
-                loStore['columnOrder'] = JSON.stringify(order);
-                columns = createOrderedColumns();
+        // rebuilt in place on every reorder, so start from empty
+        list.addClass('ui-reorder-list').empty().off('click', '[data-move]');
 
-                planeMan.redraw();
-            }
-        });
-
-        for (let col of columns) {
-            sortableColumns.append(`<li class="ui-state-default" id="${prefix + col.id}"></li>`);
+        const last = columns.length - 1;
+        columns.forEach(function (col, index) {
+            list.append(`<li class="ui-reorder-item" id="${COL_PREFIX + col.id}"></li>`);
 
             new Toggle({
                 key: col.toggleKey,
                 display: col.text,
-                container: jQuery(`#${prefix + col.id}`),
+                container: jQuery(`#${COL_PREFIX + col.id}`),
                 init: col.visible,
                 setState: function (state) {
                     planeMan.setColumnVis(col.id, state);
                 }
             });
-        }
+
+            jQuery(`#${COL_PREFIX + col.id}`).append(
+                '<span class="ui-btn-group">'
+                + `<button type="button" class="ui-btn ui-btn-square ui-btn-quiet" data-col="${col.id}" data-move="-1" title="Move up"${index == 0 ? ' disabled' : ''}>\u2191</button>`
+                + `<button type="button" class="ui-btn ui-btn-square ui-btn-quiet" data-col="${col.id}" data-move="1" title="Move down"${index == last ? ' disabled' : ''}>\u2193</button>`
+                + '</span>');
+        });
+
+        list.on('click', '[data-move]', function () {
+            moveColumn(jQuery(this).attr('data-col'), parseInt(jQuery(this).attr('data-move')));
+        });
     }
 
     function createOrderedColumns() {
@@ -5148,6 +5120,181 @@ function filterBlockedMLAT(switchFilter) {
     PlaneFilter.blockedMLAT = blockedMLATFilter;
 }
 
+// Toggle chips, replacing jQuery UI selectable. That widget is a lasso
+// selector, and both call sites coerced it into toggle behaviour by forcing
+// ctrlKey true on every selectablestart - so treat them as what they are.
+// Like the old stop handler, this only records the selection; a separate
+// Apply control pushes it into PlaneFilter.
+function initFilterChips(selector, values, assign) {
+    const list = jQuery(selector);
+    if (!list.length)
+        return;
+
+    list.off('click', 'li').on('click', 'li', function() {
+        jQuery(this).toggleClass('is-on');
+
+        const picked = [];
+        list.find('li').each(function(index) {
+            if (!jQuery(this).hasClass('is-on'))
+                return;
+            const value = values[index];
+            if (Array.isArray(value))
+                value.forEach(member => picked.push(member));
+            else
+                picked.push(value);
+        });
+        assign(picked);
+    });
+}
+
+// Drag the splitter to resize the sidebar, replacing jQuery UI resizable.
+// Pointer events cover mouse and touch in one path, and pointer capture keeps
+// the drag alive when the cursor leaves the 8px handle.
+function initSidebarResize() {
+    const splitter = document.getElementById('splitter');
+    const sidebar = document.getElementById('sidebar_container');
+    if (!splitter || !sidebar)
+        return;
+
+    const MIN_WIDTH = 150;
+    let dragging = false;
+    let startX = 0;
+    let startWidth = 0;
+
+    splitter.addEventListener('pointerdown', function(e) {
+        dragging = true;
+        startX = e.clientX;
+        startWidth = sidebar.getBoundingClientRect().width;
+        splitter.setPointerCapture(e.pointerId);
+        e.preventDefault();
+    });
+
+    splitter.addEventListener('pointermove', function(e) {
+        if (!dragging)
+            return;
+        // it is the west edge, so dragging left makes the sidebar wider
+        const maxWidth = window.innerWidth * 0.8;
+        const width = Math.max(MIN_WIDTH, Math.min(maxWidth, startWidth - (e.clientX - startX)));
+        sidebar.style.width = width + 'px';
+        updateMapSize();
+    });
+
+    function endDrag(e) {
+        if (!dragging)
+            return;
+        dragging = false;
+        try {
+            splitter.releasePointerCapture(e.pointerId);
+        } catch (err) { /* capture already gone */ }
+        loStore['sidebar_width'] = Math.round(sidebar.getBoundingClientRect().width);
+        updateMapSize();
+    }
+
+    splitter.addEventListener('pointerup', endDrag);
+    splitter.addEventListener('pointercancel', endDrag);
+}
+
+// Native <input type="date"> in place of the jQuery UI datepicker. Both call
+// sites used dateFormat "yy-mm-dd", which is the value format a date input
+// already uses, so nothing needs converting. The onMobile disable/enable
+// dance existed to stop the jQuery popup fighting the on-screen keyboard and
+// has no equivalent need here.
+function initDatePicker(selector, onSelect) {
+    const el = jQuery(selector);
+    if (!el.length)
+        return;
+    // maxDate: '+1d'
+    el.attr('max', zDateString(new Date(Date.now() + 24 * 3600 * 1000)));
+    el.on('change', function() {
+        if (this.value)
+            onSelect(this.value);
+    });
+}
+
+function setDatePickerValue(selector, dateString) {
+    jQuery(selector).val(dateString);
+}
+
+// Tabs, replacing jQuery UI's. Keeps its markup shape - a <ul> of links whose
+// href names the panel - so the HTML did not have to change. Collapsible like
+// the old widget: clicking the open tab closes it, which stores index -1.
+function initTabs(selector, storeKey) {
+    const root = jQuery(selector);
+    if (!root.length)
+        return;
+
+    const links = root.find('> ul > li > a');
+    const panels = links.map(function() {
+        return jQuery(this.getAttribute('href'));
+    }).get();
+
+    root.find('> ul').addClass('ui-tablist').attr('role', 'tablist');
+    links.addClass('ui-tab').attr('role', 'tab');
+
+    function show(index, save) {
+        links.each(function(i) {
+            const on = (i == index);
+            jQuery(this).toggleClass('is-on', on).attr('aria-selected', on ? 'true' : 'false');
+        });
+        panels.forEach(function(panel, i) {
+            panel.toggle(i == index);
+        });
+        if (save && storeKey)
+            loStore[storeKey] = index;
+    }
+
+    let active = 0;
+    if (storeKey && loStore[storeKey] != undefined) {
+        const stored = parseInt(loStore[storeKey]);
+        if (!isNaN(stored) && stored >= -1 && stored < links.length)
+            active = stored;
+    }
+    show(active, false);
+
+    links.on('click', function(e) {
+        e.preventDefault();
+        const i = links.index(this);
+        show(jQuery(this).hasClass('is-on') ? -1 : i, true);
+    });
+
+    links.on('keydown', function(e) {
+        const delta = (e.key == 'ArrowRight') ? 1 : (e.key == 'ArrowLeft') ? -1 : 0;
+        if (!delta)
+            return;
+        e.preventDefault();
+        const next = (links.index(this) + delta + links.length) % links.length;
+        links.eq(next).trigger('focus');
+        show(next, true);
+    });
+}
+
+// Native <input type="range"> in place of the jQuery UI slider. The option
+// names match what the old widget took, so call sites read the same:
+//   slide  -> the input event, continuous while dragging
+//   change -> the change event, on release
+// Unlike jQuery UI, setting the value programmatically fires nothing, which
+// is what the replayJumpEnabled guard existed to fake.
+function initRange(selector, opts) {
+    const el = jQuery(selector);
+    if (!el.length)
+        return;
+    el.attr({
+        min: opts.min,
+        max: opts.max,
+        step: (opts.step != undefined) ? opts.step : 'any',
+    });
+    if (opts.value != undefined)
+        el.val(opts.value);
+    if (opts.slide)
+        el.on('input', function() { opts.slide(null, {value: parseFloat(this.value)}); });
+    if (opts.change)
+        el.on('change', function() { opts.change(null, {value: parseFloat(this.value)}); });
+}
+
+function setRangeValue(selector, value) {
+    jQuery(selector).val(value);
+}
+
 function buttonActive(id, state) {
     // activeButton/inActiveButton are the pre-refresh classes, is-on is the
     // ui.css primitive state. Both are set while surfaces are being migrated.
@@ -5718,7 +5865,7 @@ function getFlightAwareIdentLink(ident, linkText) {
 }
 
 function onResetSourceFilter(e) {
-    jQuery('#sourceFilter .ui-selected').removeClass('ui-selected');
+    jQuery('#sourceFilter li').removeClass('is-on');
 
     sourcesFilter = null;
 
@@ -5735,7 +5882,7 @@ function updateSourceFilter(e) {
 }
 
 function onResetFlagFilter(e) {
-    jQuery('#flagFilter .ui-selected').removeClass('ui-selected');
+    jQuery('#flagFilter li').removeClass('is-on');
 
     flagFilter = null;
 
@@ -5902,12 +6049,12 @@ function initFilters() {
 
         if (PlaneFilter.sources) {
             sourcesFilter = PlaneFilter.sources
-            sourcesFilter.map((f) => jQuery('#source-filter-' + f).addClass('ui-selected'))
+            sourcesFilter.map((f) => jQuery('#source-filter-' + f).addClass('is-on'))
         }
 
         if (PlaneFilter.flagFilter) {
             flagFilter = PlaneFilter.flagFilter
-            flagFilter.map((f) => jQuery('#flag-filter-' + f).addClass('ui-selected'))
+            flagFilter.map((f) => jQuery('#flag-filter-' + f).addClass('is-on'))
         }
     }
 }
@@ -7150,7 +7297,7 @@ function shiftTrace(offset) {
     }
 
     //jQuery('#trace_date').text('UTC day:\n' + traceDateString);
-    jQuery("#histDatePicker").datepicker('setDate', traceDateString);
+    setDatePickerValue("#histDatePicker", traceDateString);
 
     for (let i in SelPlanes) {
         selectPlaneByHex(SelPlanes[i].icao, {noDeselect: true, zoom: g.zoomLvl});
@@ -8312,15 +8459,15 @@ function replaySetTimeHint(arg) {
 
     if (replay.datepickerDate != dateString) {
         replay.datepickerDate = dateString;
-        jQuery("#replayDatepicker").datepicker('setDate', dateString);
+        setDatePickerValue("#replayDatepicker", dateString);
     }
 
 
     let hours = replay.ts.getUTCHours();
-    jQuery('#hourSelect').slider("option", "value", hours);
+    setRangeValue('#hourSelect', hours);
 
     let minutes = replay.ts.getUTCMinutes();
-    jQuery('#minuteSelect').slider("option", "value", minutes);
+    setRangeValue('#minuteSelect', minutes);
     replayJumpEnabled = true;
 }
 
@@ -8662,29 +8809,12 @@ function showReplayBar(){
             replay = replayDefaults(new Date());
         }
         //ts.setUTCMinutes((parseInt((ts.getUTCMinutes() + 7.5)/15) * 15) % 60);
-        let datepickerOptions = {
-            maxDate: '+1d',
-            dateFormat: "yy-mm-dd",
-            autoSize: true,
-            onSelect: function(dateText) {
-                replay.dateText = dateText;
-                replayJump();
-            },
-        };
-        if (onMobile) {
-            datepickerOptions.onClose = function(dateText, inst){
-                jQuery("replayDatepicker").attr("disabled", false);
-            };
-            datepickerOptions.beforeShow = function(input, inst){
-                jQuery("replayDatepicker").attr("disabled", true);
-            };
-        } else {
-            //
-        }
+        initDatePicker("#replayDatepicker", function(dateText) {
+            replay.dateText = dateText;
+            replayJump();
+        });
 
-        jQuery("#replayDatepicker").datepicker(datepickerOptions);
-
-        jQuery('#hourSelect').slider({
+        initRange('#hourSelect', {
             step: 1,
             min: 0,
             max: 23,
@@ -8696,7 +8826,7 @@ function showReplayBar(){
                 replayJump();
             }
         });
-        jQuery('#minuteSelect').slider({
+        initRange('#minuteSelect', {
             step: 1,
             min: 0,
             max: 59,
@@ -8709,7 +8839,7 @@ function showReplayBar(){
             }
         });
         const slideBase = 3.0;
-        jQuery('#replaySpeedSelect').slider({
+        initRange('#replaySpeedSelect', {
             value: Math.pow(replay.speed, 1 / slideBase),
             step: 0.07,
             min: Math.pow(1, 1 / slideBase),

@@ -1045,3 +1045,152 @@
 .icaoCodeColumn {
     font-family: var(--ui-font-mono);
 }
+
+/* ---- range input -------------------------------------------------------
+   Replaces the jQuery UI slider. Track and thumb need per-engine pseudo
+   elements; there is no shorthand that covers both. */
+.ui-range {
+    -webkit-appearance: none;
+    appearance: none;
+    display: block;
+    width: 100%;
+    height: var(--ui-hit);
+    margin: 0;
+    background: transparent;
+    cursor: pointer;
+}
+
+.ui-range:focus-visible {
+    outline: none;
+}
+
+/* track */
+.ui-range::-webkit-slider-runnable-track {
+    height: calc(4px * var(--SCALE));
+    border-radius: var(--ui-r-pill);
+    background-color: var(--ui-surface-3);
+}
+
+.ui-range::-moz-range-track {
+    height: calc(4px * var(--SCALE));
+    border-radius: var(--ui-r-pill);
+    background-color: var(--ui-surface-3);
+}
+
+/* thumb - big enough to grab with a thumb, hence the hit token */
+.ui-range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: calc(16px * var(--SCALE));
+    height: calc(16px * var(--SCALE));
+    margin-top: calc(-6px * var(--SCALE));
+    border: 0;
+    border-radius: 50%;
+    background-color: var(--ui-accent);
+}
+
+.ui-range::-moz-range-thumb {
+    width: calc(16px * var(--SCALE));
+    height: calc(16px * var(--SCALE));
+    border: 0;
+    border-radius: 50%;
+    background-color: var(--ui-accent);
+}
+
+.ui-range:hover::-webkit-slider-thumb {
+    background-color: var(--ui-accent-hover);
+}
+
+.ui-range:hover::-moz-range-thumb {
+    background-color: var(--ui-accent-hover);
+}
+
+.ui-range:focus-visible::-webkit-slider-thumb {
+    box-shadow: var(--ui-focus-ring);
+}
+
+.ui-range:focus-visible::-moz-range-thumb {
+    box-shadow: var(--ui-focus-ring);
+}
+
+/* ---- tabs --------------------------------------------------------------
+   Replaces jQuery UI tabs. The markup is still a <ul> of links, so these
+   rules undo the list formatting and make the links read as a button row. */
+.ui-tablist {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--ui-s2);
+    margin: 0 0 var(--ui-s3);
+    padding: 0;
+    list-style: none;
+}
+
+.ui-tablist > li {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.ui-tab {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--ui-control-h);
+    padding: 0 var(--ui-s4);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-r-sm);
+    background-color: var(--ui-surface-2);
+    color: var(--ui-text-2);
+    font-size: var(--ui-fs-sm);
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.ui-tab:hover {
+    background-color: var(--ui-surface-3);
+    color: var(--ui-text-1);
+}
+
+.ui-tab:focus-visible {
+    outline: none;
+    box-shadow: var(--ui-focus-ring);
+}
+
+.ui-tab.is-on {
+    background-color: var(--ui-accent);
+    border-color: var(--ui-accent);
+    color: var(--ui-on-accent);
+}
+
+/* ---- reorderable list (table columns) ---------------------------------- */
+.ui-reorder-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.ui-reorder-item {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-s3);
+    list-style: none;
+}
+
+.ui-reorder-item > .settingsOptionContainer {
+    flex: 1;
+    min-width: 0;
+}
+
+/* source and flag filter chips; these <li>s carry an inline background colour
+   from the altitude palette, so only the text colour is set here */
+.filterItem {
+    color: var(--ui-text-1);
+}
+
+/* a chip's inline background is its data colour, so selection is shown with
+   a ring and weight rather than by changing the fill */
+.filterItem.is-on {
+    outline: calc(2px * var(--SCALE)) solid var(--ui-focus);
+    outline-offset: calc(-2px * var(--SCALE));
+    font-weight: 700;
+}
