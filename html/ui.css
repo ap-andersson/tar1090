@@ -21,11 +21,7 @@
     --ui-surface-2: #212830;
     --ui-surface-3: #2c343d;
 
-    /* 0.92 let bright aircraft markers show through as faint coloured shapes
-       inside panels - the blur spreads them rather than hiding them. At 0.97
-       the frosted feel comes from the blur, not the alpha, and nothing on the
-       map reads through a list of text. */
-    --ui-panel-bg: rgba(23, 28, 33, 0.97);
+    --ui-panel-bg: rgba(23, 28, 33, 0.92);
     --ui-panel-blur: blur(calc(12px * var(--SCALE)));
 
     --ui-border: #333c45;
@@ -1497,7 +1493,7 @@ select:focus-visible {
     border-radius: var(--ui-r-sm);
 }
 
-.layer-switcher button {
+.layer-switcher > button {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1517,15 +1513,15 @@ select:focus-visible {
                 border-color var(--ui-dur-fast) var(--ui-ease);
 }
 
-.layer-switcher button::before {
+.layer-switcher > button::before {
     font-family: "Font Awesome 6 Free";
     font-weight: 900;
     content: "\f5fd";       /* layer-group */
     font-size: calc(15px * var(--SCALE));
 }
 
-.layer-switcher button:hover,
-.layer-switcher button:focus {
+.layer-switcher > button:hover,
+.layer-switcher > button:focus {
     background-color: var(--ui-surface-3);
     border-color: var(--ui-border-strong);
     /* ol.css sets both a colour and an outline on .ol-control button:hover,
@@ -1534,7 +1530,10 @@ select:focus-visible {
     outline: none;
 }
 
-.layer-switcher.shown button {
+/* .ol-control included to match the specificity of the library's own
+   .layer-switcher.shown.layer-switcher-activation-mode-click > button, which
+   otherwise wins and paints the open toggle #eee */
+.layer-switcher.shown.ol-control > button {
     background-color: var(--ui-accent);
     border-color: var(--ui-accent);
     color: var(--ui-on-accent);
@@ -1839,8 +1838,8 @@ select:focus-visible {
 
 /* the layer switcher's own stylesheet lightens the button on hover while the
    panel is open, which flipped the icon against the accent fill */
-.layer-switcher.shown button:hover,
-.layer-switcher.shown button:focus {
+.layer-switcher.shown.ol-control > button:hover,
+.layer-switcher.shown.ol-control > button:focus {
     background-color: var(--ui-accent-hover);
     border-color: var(--ui-accent-hover);
     color: var(--ui-on-accent);
@@ -2331,4 +2330,46 @@ select:focus-visible {
     backdrop-filter: none;
     box-shadow: none;
     border-radius: 0;
+}
+
+
+/* ---- group fold arrows -------------------------------------------------
+   Each collapsible group in the layer list has its own small button. The
+   library gives it a dark PNG chevron, invisible on a dark panel, and the
+   rules for the switcher's own toggle were catching it too - which is what
+   turned them into little accent-coloured squares. Its own glyph, quiet, and
+   in the row rather than absolutely positioned over the heading. */
+.layer-switcher .group > button {
+    position: static;
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: calc(14px * var(--SCALE));
+    height: calc(14px * var(--SCALE));
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background-color: transparent;
+    background-image: none;
+    color: var(--ui-text-3);
+    font-size: calc(9px * var(--SCALE));
+    cursor: pointer;
+}
+
+.layer-switcher .group > button::before {
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    content: "\f078";      /* chevron-down; the library rotates it when closed */
+}
+
+.layer-switcher .group > button:hover {
+    color: var(--ui-text-1);
+    background-color: transparent;
+}
+
+/* with the arrow in the row, the heading takes the rest of it rather than a
+   line of its own */
+.layer-switcher li.group.layer-switcher-fold > label {
+    flex: 1;
 }
