@@ -764,6 +764,22 @@
     grid-column: 1 / -1;
 }
 
+/* Two things left blank cells in the grid, which read as holes beside the
+   pair that followed them.
+
+   .rSpacer is an empty 6px div that added vertical breathing room in the old
+   single-column layout. As a grid item it takes a whole cell; the grid's gap
+   does that job now. */
+.ib-group .infoBlockSection .rSpacer {
+    display: none;
+}
+
+/* And a pair whose label is filled from JS - the aircraft category label -
+   renders as an empty cell whenever there is nothing to put in it. */
+.ib-group .infoBlockSection > div:has(> .infoHeading:only-child > span:empty) {
+    display: none;
+}
+
 /* a primitive row used inside the (not yet migrated) settings columns:
    keep the label on one line and let the control wrap under it when the
    column is too narrow, rather than squeezing both */
