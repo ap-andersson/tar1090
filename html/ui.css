@@ -728,3 +728,16 @@
 .ib-group > .infoBlockSection {
     padding: 0 var(--ui-s5) var(--ui-s4);
 }
+
+/* a primitive row used inside the (not yet migrated) settings columns:
+   keep the label on one line and let the control wrap under it when the
+   column is too narrow, rather than squeezing both */
+.settingsOptionContainer.ui-row {
+    flex-wrap: wrap;
+    margin-bottom: var(--ui-s2);
+}
+
+.settingsOptionContainer.ui-row > .ui-row-label {
+    flex: 1 0 auto;
+    white-space: nowrap;
+}

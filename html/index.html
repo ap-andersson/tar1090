@@ -784,6 +784,15 @@
             <hr />
           </div>
           <div id="settingsLeft" class="settingsColumn">
+            <div class="settingsOptionContainer ui-row">
+              <span class="ui-row-label">Map dimming</span>
+              <span id="mapdim_levels" class="ui-btn-group ui-btn-group-tight">
+                <button type="button" class="ui-btn" data-dim="0">Off</button>
+                <button type="button" class="ui-btn" data-dim="1">Low</button>
+                <button type="button" class="ui-btn" data-dim="2">Med</button>
+                <button type="button" class="ui-btn" data-dim="3">High</button>
+              </span>
+            </div>
             <div class="settingsOptionContainer">
               <label for="units_selector"><span class="infoBlockTitleText">Units:&nbsp;&nbsp;</span></label>
               <select name="units_selector" id="units_selector">
@@ -841,7 +850,7 @@
             <div id="K" title="Toggle Trac(K) Labels" class="chrome-secondary ui-btn ui-btn-square inActiveButton" onclick="toggleTrackLabels();"><span class="buttonText">K</span></div>
             <div class="buttonSpacer">
             </div>
-            <div style="display: none" id="B" title="Toggle Map (B)rightness" class="chrome-secondary ui-btn ui-btn-square inActiveButton" onclick="toggles['MapDim'].toggle();"><span class="buttonText">B</span></div>
+            <div style="display: none" id="B" title="Toggle Map (B)rightness" class="chrome-secondary ui-btn ui-btn-square inActiveButton" onclick="cycleMapDim();"><span class="buttonText">B</span></div>
             <div class="buttonSpacer">
             </div>
             <div style="display: none" id="V" title="Table: only show aircraft in current (V)iew" class="chrome-secondary ui-btn ui-btn-square inActiveButton" onclick="toggleTableInView();"><span class="buttonText">V</span></div>

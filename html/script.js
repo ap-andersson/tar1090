@@ -62,6 +62,28 @@ g.enableLabels = false;
 g.extendedLabels = 0;
 // ordered list of map label field ids, see labelFieldDefs in planeObject.js
 g.labelFields = ['callsign', 'route'];
+// map dimming level, 0-3
+g.mapDimLevel = 1;
+
+// ---- map dimming levels -------------------------------------------------
+//
+// Replaces the MapDim + darkerColors pair of checkboxes. The multipliers
+// reproduce what those two produced in combination, plus one darker step:
+//
+//   0 off     quarter dim   (what unchecked MapDim did - never fully off)
+//   1 low     full dim      (MapDim on, darkerColors off)
+//   2 medium  1.25x dim     (MapDim on, darkerColors on)
+//   3 high    1.5x dim
+//
+// Level 2 and up also darkens the aircraft colours, which is what
+// darkerColors did in planeObject.
+const mapDimLevels = [
+    { key: 0, label: 'Off',  dim: 0.25, contrast: 0.25, darkerMarkers: false },
+    { key: 1, label: 'Low',  dim: 1.0,  contrast: 1.0,  darkerMarkers: false },
+    { key: 2, label: 'Med',  dim: 1.25, contrast: 1.1,  darkerMarkers: true },
+    { key: 3, label: 'High', dim: 1.5,  contrast: 1.2,  darkerMarkers: true },
+];
+
 let mapIsVisible = true;
 let onlyMilitary = false;
 let onlySelected = false;
@@ -1274,6 +1296,7 @@ function earlyInitPage() {
     if (loStore['enableLabels'] == 'true' || usp.has('enableLabels')) {
         toggleLabels();
     }
+    initMapDim();
     initInfoblockGroups();
     initLabelPicker();
     loadLabelFields();
@@ -3041,20 +3064,6 @@ function initMap() {
 
 
 
-    new Toggle({
-        key: "darkerColors",
-        display: "Darker Colors",
-        container: "#settingsLeft",
-        init: darkerColors,
-        setState: function(state) {
-            darkerColors = state;
-            if (loadFinished) {
-                refreshFeatures();
-                remakeTrails();
-            }
-        }
-    });
-
     tableColorsDark = JSON.parse(JSON.stringify(tableColors));
     let darkVals = Object.values(tableColorsDark);
     for (let i in ['selected', 'unselected']) {
@@ -3078,34 +3087,6 @@ function initMap() {
         if (lyr.get('type') != 'base')
             return;
         lyr.dimKey = lyr.on('postrender', dim);
-    });
-
-    new Toggle({
-        key: "MapDim",
-        display: "Dim Map",
-        container: "#settingsLeft",
-        init: MapDim,
-        setState: function(state) {
-            /*
-            if (!state) {
-                ol.control.LayerSwitcher.forEachRecursive(layers_group, function(lyr) {
-                    if (lyr.get('type') != 'base')
-                        return;
-                    ol.Observable.unByKey(lyr.dimKey);
-                });
-            } else {
-                ol.control.LayerSwitcher.forEachRecursive(layers_group, function(lyr) {
-                    if (lyr.get('type') != 'base')
-                        return;
-                    lyr.dimKey = lyr.on('postrender', dim);
-                });
-            }
-            */
-            if (loadFinished) {
-                OLMap.render();
-            }
-            buttonActive('#B', state);
-        }
     });
 
     window.addEventListener('keydown', function(e) {
@@ -3175,7 +3156,7 @@ function initMap() {
                 break;
                 // misc
             case "b":
-                toggles['MapDim'].toggle();
+                cycleMapDim();
                 break;
             case "m":
                 toggleMultiSelect();
@@ -5370,17 +5351,9 @@ function togglePersistence() {
 
 function dim(evt) {
     try {
-        let currentDimPercentage = mapDimPercentage * layerDimFactor;
-        let currentContrastPercentage = mapContrastPercentage + layerExtraContrast;
-
-        if (!toggles['MapDim'].state) {
-            // slight dim even if disabled
-            currentDimPercentage /= 4;
-            currentContrastPercentage /= 4;
-        }
-
-        const dim = currentDimPercentage * (1 + 0.25 * toggles['darkerColors'].state);
-        const contrast = currentContrastPercentage * (1 + 0.1 * toggles['darkerColors'].state);
+        const level = currentMapDim();
+        const dim = mapDimPercentage * layerDimFactor * level.dim;
+        const contrast = (mapContrastPercentage + layerExtraContrast) * level.contrast;
         if (dim > 0.0001) {
             evt.context.globalCompositeOperation = 'multiply';
             evt.context.fillStyle = 'rgba(0,0,0,'+dim+')';
@@ -9744,3 +9717,58 @@ globeRateUpdate();
 
 parseURLIcaos();
 initialize();
+
+
+function currentMapDim() {
+    return mapDimLevels[g.mapDimLevel] || mapDimLevels[1];
+}
+
+function setMapDimLevel(level, options) {
+    options = options || {};
+    level = parseInt(level);
+    if (isNaN(level) || level < 0 || level >= mapDimLevels.length)
+        level = 1;
+
+    g.mapDimLevel = level;
+    darkerColors = currentMapDim().darkerMarkers;
+
+    if (!options.noSave)
+        loStore['mapDimLevel'] = level;
+
+    jQuery('#mapdim_levels .ui-btn').each(function() {
+        jQuery(this).toggleClass('is-on', parseInt(jQuery(this).attr('data-dim')) == level);
+    });
+    buttonActive('#B', level > 0);
+
+    if (loadFinished) {
+        OLMap.render();
+        TAR.planeMan.redraw();
+        for (let key in g.planesOrdered) {
+            g.planesOrdered[key].updateMarker();
+        }
+    }
+}
+
+// the B button and the b shortcut step through the levels
+function cycleMapDim() {
+    setMapDimLevel((g.mapDimLevel + 1) % mapDimLevels.length);
+}
+
+function initMapDim() {
+    jQuery('#mapdim_levels').on('click', '.ui-btn', function() {
+        setMapDimLevel(jQuery(this).attr('data-dim'));
+    });
+
+    let level = null;
+    if (usp.has('mapDimLevel')) {
+        level = parseInt(usp.get('mapDimLevel'));
+    } else if (loStore['mapDimLevel'] != undefined) {
+        level = parseInt(loStore['mapDimLevel']);
+    } else {
+        // carry over the two settings this replaced
+        level = MapDim ? 1 : 0;
+        if (usp.has('darkerColors') || loStore['darkerColors'] == 'true')
+            level = 2;
+    }
+    setMapDimLevel(level, {noSave: true});
+}
