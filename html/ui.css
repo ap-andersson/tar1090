@@ -625,6 +625,7 @@
 /* route gets its own line, full width, since it is the second thing read */
 .ib-route {
     flex: 1 0 100%;
+    order: 2;
     font-size: var(--ui-fs-md);
     color: var(--ui-text-2);
 }
@@ -1480,14 +1481,19 @@ select:focus-visible {
 }
 
 .ib-callsign {
+    /* takes the whole line so the hex drops beneath it */
+    flex: 1 0 100%;
     font-size: var(--ui-fs-2xl);
     font-weight: 700;
     letter-spacing: -0.01em;
+    line-height: var(--ui-lh-tight);
 }
 
-/* the hex as a quiet bordered chip, not a second heading */
+/* the hex as a quiet bordered chip, on its own line under the callsign */
 .ib-hex {
-    align-self: center;
+    flex: 0 0 auto;
+    order: 1;
+    margin-right: auto;
     padding: calc(1px * var(--SCALE)) var(--ui-s2);
     border: 1px solid var(--ui-border);
     border-radius: var(--ui-r-sm);
@@ -1628,4 +1634,104 @@ select:focus-visible {
 
 #selected_infoblock .sectionTitleNoBg {
     background-color: transparent;
+}
+
+/* ==========================================================================
+   Infoblock: fill the space, no inner gutters
+   The panel floated 10px off the map edges with rounded corners, and its
+   content was inset twice - once by #infoblock-container's padding and again
+   by each section's own. Now the panel is flush against the map area and the
+   inset is applied once, so bands (the stat row, the photo, header bars)
+   reach the panel's full width while text keeps a single 12px inset.
+   ========================================================================== */
+
+#selected_infoblock {
+    left: 0;
+    top: 0;
+    bottom: 0;
+    height: 100%;
+    border-radius: 0;
+    /* only the edge facing the map needs a border now */
+    border-width: 0 1px 0 0;
+    border-color: var(--ui-border);
+    background-color: var(--ui-panel-bg);
+    -webkit-backdrop-filter: var(--ui-panel-blur);
+    backdrop-filter: var(--ui-panel-blur);
+    z-index: var(--ui-z-panel);
+}
+
+#selected_infoblock #infoblock-container {
+    padding-left: 0;
+    padding-right: 0;
+    /* keeps the scroll gutter from shifting content as groups open and close */
+    scrollbar-gutter: stable;
+    scrollbar-color: var(--ui-border-strong) transparent;
+}
+
+/* bands span the whole panel */
+.ib-stats {
+    margin: 0 0 var(--ui-s4);
+    border-radius: 0;
+}
+
+#selected_infoblock #photo_container {
+    margin: 0;
+}
+
+/* text keeps one inset */
+#selected_infoblock #reg_info {
+    padding: var(--ui-s4) var(--ui-s5);
+}
+
+#selected_infoblock #photo_container ~ tr,
+#selected_infoblock #reg_info .infoSectionTable > tbody {
+    /* the identity grid sits inside reg_info's inset; the photo row above it
+       is the one thing that reaches the edges */
+    min-width: 0;
+}
+
+#selected_infoblock #reg_info #photo_container {
+    margin: calc(-1 * var(--ui-s4)) calc(-1 * var(--ui-s5)) var(--ui-s3);
+}
+
+/* the History toggle is a collapsible header like the groups; it was a
+   full-width grey button with an emoji plus/minus */
+#selected_infoblock .greyButton {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--ui-s3);
+    min-height: var(--ui-control-h);
+    padding: var(--ui-s3) var(--ui-s5);
+    border: 0;
+    border-top: 1px solid var(--ui-border);
+    background-color: var(--ui-surface-2);
+    color: var(--ui-text-2);
+    font-family: var(--ui-font);
+    font-size: var(--ui-fs-xs);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+#selected_infoblock .greyButton:hover {
+    color: var(--ui-text-1);
+    background-color: var(--ui-surface-3);
+}
+
+#selected_infoblock .greyButton::after {
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    content: "\f078";       /* chevron-down, matching the groups */
+    float: none;
+    margin: 0;
+    font-size: calc(10px * var(--SCALE));
+    line-height: 1;
+    color: var(--ui-text-3);
+    transition: transform var(--ui-dur-fast) var(--ui-ease);
+}
+
+#selected_infoblock .greyButton.active::after {
+    content: "\f078";
+    transform: rotate(180deg);
 }

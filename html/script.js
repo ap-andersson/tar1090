@@ -4999,7 +4999,7 @@ function adjustInfoBlock() {
             jQuery('#credits').css('bottom', '295px');
             jQuery('#credits').css('left', '5px');
         } else {
-            jQuery('#selected_infoblock').css('height', 'calc(100% - 24px)');
+            jQuery('#selected_infoblock').css('height', '100%');
             jQuery('#credits').css('bottom', '');
             jQuery('#credits').css('left', '');
         }
