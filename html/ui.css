@@ -865,6 +865,17 @@
    ========================================================================== */
 
 #settings_infoblock {
+    /* Anchored under the cog that opens it, on the right, rather than at the
+       far left. It is a child of #map_container, so absolute positioning here
+       measures from the map edge and clears the side button column - the same
+       anchoring the label picker uses. */
+    position: absolute;
+    top: calc(46px * var(--SCALE));
+    right: calc(40px * var(--SCALE));
+    left: auto;
+    max-height: calc(100vh - calc(58px * var(--SCALE)));
+    max-width: calc(100% - calc(52px * var(--SCALE)));
+
     /* panel look, matching every other floating surface */
     background-color: var(--ui-panel-bg);
     -webkit-backdrop-filter: var(--ui-panel-blur);
@@ -979,6 +990,7 @@
     right: 0;
     bottom: 0;
     max-height: none;
+    max-width: none;
     border: 0;
     border-radius: 0;
     padding-top: calc(var(--ui-s6) + env(safe-area-inset-top));
