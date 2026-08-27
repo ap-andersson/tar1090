@@ -741,8 +741,27 @@
     border-radius: 0;
 }
 
+/* Every group holds label/value pairs, but only Position wrapped them in a
+   .infoSectionTable - the rest are plain divs, so the grid was reaching one
+   section out of nine. */
 .ib-group > .infoBlockSection {
     padding: var(--ui-s4) var(--ui-s5);
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--ui-s4);
+    align-items: start;
+}
+
+/* a wrapper that only groups pairs would otherwise become one cell holding
+   all of them; display: contents lets its children join the grid. JS hides it
+   with an inline style, which still wins. */
+.ib-group > .infoBlockSection > #selected_showTrace_hide {
+    display: contents;
+}
+
+/* Position keeps its table, which already grids itself - don't nest a grid */
+.ib-group > .infoBlockSection > .infoSectionTable {
+    grid-column: 1 / -1;
 }
 
 /* a primitive row used inside the (not yet migrated) settings columns:
@@ -803,14 +822,20 @@
 }
 
 #mobile_summary #selected_infoblock {
+    /* the desktop card's float, frame and shadow have no place inside the
+       sheet, which is already a surface */
     position: static;
+    inset: auto;
     width: auto;
     height: auto;
     max-height: none;
     margin: 0;
     border: 0;
     border-radius: 0;
+    box-shadow: none;
     background-color: transparent;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
     overflow: visible;
 }
 
@@ -1650,17 +1675,20 @@ select:focus-visible {
    ========================================================================== */
 
 #selected_infoblock {
-    left: 0;
-    top: 0;
-    bottom: 0;
-    height: 100%;
-    border-radius: 0;
-    /* only the edge facing the map needs a border now */
-    border-width: 0 1px 0 0;
-    border-color: var(--ui-border);
+    /* a card floating over the map, not docked to the edge - it is the
+       content that fills the card, which is what the inner gutters were in
+       the way of */
+    left: var(--ui-s5);
+    top: var(--ui-s5);
+    bottom: var(--ui-s5);
+    height: auto;
+    border-radius: var(--ui-r-md);
+    border: 1px solid var(--ui-border);
     background-color: var(--ui-panel-bg);
     -webkit-backdrop-filter: var(--ui-panel-blur);
     backdrop-filter: var(--ui-panel-blur);
+    box-shadow: var(--ui-shadow-2);
+    overflow: hidden;
     z-index: var(--ui-z-panel);
 }
 
@@ -1756,4 +1784,16 @@ select:focus-visible {
     background-color: var(--ui-accent-hover);
     border-color: var(--ui-accent-hover);
     color: var(--ui-on-accent);
+}
+
+
+/* Values the database has nothing for were rendering as a label with blank
+   space under it - owner/operator and type description most often. Every
+   other field falls back to n/a, so these do too. Done in CSS because the
+   fields are populated from a dozen places. */
+#selected_infoblock .infoData:empty::after,
+#selected_infoblock .ib-stat-value:empty::after,
+#selected_infoblock .infoData > span:empty::after {
+    content: "n/a";
+    color: var(--ui-text-3);
 }

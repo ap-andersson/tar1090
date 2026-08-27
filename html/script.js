@@ -4999,7 +4999,7 @@ function adjustInfoBlock() {
         // a docked full-height column now, and shrinking it just left the
         // panel truncated mid-content. Widening the panel to 330px was enough
         // to trip it on an ordinary window.
-        jQuery('#selected_infoblock').css('height', '100%');
+        jQuery('#selected_infoblock').css('height', '');
         jQuery('#credits').css('bottom', '');
         jQuery('#credits').css('left', '');
 
@@ -5722,7 +5722,10 @@ function initInfoblockGroups() {
             this.open = !!stored[key];
     });
 
-    jQuery('#infoblock-container').on('toggle', '.ib-group', function() {
+    // The toggle event does not bubble, so this has to be bound on each
+    // <details> rather than delegated from a container - which is why the open
+    // state was never being saved.
+    jQuery('.ib-group').on('toggle', function() {
         const state = {};
         jQuery('.ib-group').each(function() {
             state[jQuery(this).attr('data-group')] = this.open;
