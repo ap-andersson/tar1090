@@ -800,13 +800,55 @@
     overflow: visible;
 }
 
-/* ---- collapsed: summary only -------------------------------------------
+/* ---- collapsed: summary, stats and a thumbnail --------------------------
    An allow-list, not a hide-list: everything in the block is hidden except
-   the summary header and the stat tiles. Listing what to hide missed the
-   parts of the infoblock that aren't inside a group (History, the colour
-   legend, Pos. epoch) and would miss anything added later. */
-#mobile_summary:not(.mobile-expanded) #infoblock-container > *:not(.ib-summary):not(.ib-stats) {
+   the summary header, the stat tiles and the photo. Listing what to hide
+   missed the parts of the infoblock that aren't inside a group (History, the
+   colour legend, Pos. epoch) and would miss anything added later. */
+#mobile_summary:not(.mobile-expanded) #infoblock-container > *:not(.ib-summary):not(.ib-stats):not(#reg_info) {
     display: none;
+}
+
+/* summary and stats stacked on the left, photo filling the right */
+#mobile_summary:not(.mobile-expanded) #infoblock-container {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+        "summary photo"
+        "stats   photo";
+    align-items: start;
+    column-gap: var(--ui-s4);
+}
+
+#mobile_summary:not(.mobile-expanded) .ib-summary {
+    grid-area: summary;
+}
+
+#mobile_summary:not(.mobile-expanded) .ib-stats {
+    grid-area: stats;
+}
+
+#mobile_summary:not(.mobile-expanded) #reg_info {
+    grid-area: photo;
+    display: block;
+    padding: 0;
+    margin: var(--ui-s4) var(--ui-s5) 0 0;
+}
+
+/* only the picture from that block, not the registration rows under it */
+#mobile_summary:not(.mobile-expanded) #reg_info tr:not(#photo_container),
+#mobile_summary:not(.mobile-expanded) #reg_info #copyrightInfo,
+#mobile_summary:not(.mobile-expanded) #reg_info #placeholder-photo {
+    display: none;
+}
+
+#mobile_summary:not(.mobile-expanded) #selected_photo img {
+    display: block;
+    height: calc(58px * var(--SCALE));
+    width: auto;
+    max-width: calc(104px * var(--SCALE));
+    object-fit: cover;
+    border-radius: var(--ui-r-sm);
 }
 
 #mobile_summary:not(.mobile-expanded) #infoblock_close {

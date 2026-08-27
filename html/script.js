@@ -4931,9 +4931,12 @@ function showMobileSheet(selected) {
     if (!block.parent().is('#mobile_summary'))
         block.appendTo(sheet);
 
-    // adjustInfoBlock sets a desktop pixel width and height inline; both have
-    // to go or a stale height survives a desktop-to-phone resize
+    // adjustInfoBlock sets desktop pixel sizes inline, on the block and on the
+    // photo; all of them have to go or stale values survive a desktop-to-phone
+    // resize
     block.css({width: '', height: '', display: ''});
+    jQuery('#selected_photo, #airplanePhoto').css('width', '');
+    jQuery('#photo_container').css('height', '');
     sheet.show();
 }
 
