@@ -1411,6 +1411,12 @@ function earlyInitPage() {
         jQuery('#settings_infoblock').toggle();
     });
 
+    // the Toggle class only binds the checkbox itself; make the label clickable
+    // too, which matters most on a phone where a 16px box is a poor target
+    jQuery('#settings_infoblock').on('click', '.settingsText', function() {
+        jQuery(this).siblings('.settingsCheckbox').first().trigger('click');
+    });
+
     jQuery('#settings_close').on('click', function() {
         jQuery('#settings_infoblock').hide();
     });
