@@ -1400,7 +1400,6 @@ PlaneObject.prototype.processTrace = function() {
 
     this.dataChanged();
 
-    refreshHighlighted();
     refreshSelected();
 
     if (showTrace) {

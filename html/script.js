@@ -45,7 +45,6 @@ let SelectedPlane = null;
 let sp = null;
 let SelPlanes = [];
 let SelectedAllPlanes = false;
-let HighlightedPlane = null;
 let FollowSelected = false;
 let followPos = [];
 let loadStart = new Date().getTime();
@@ -1760,24 +1759,8 @@ jQuery('#selected_altitude_geom1')
     });
 
     if (onMobile) {
-        enableMouseover = false;
         (typeof hideById != 'undefined') && (hideById) && (hideById('tracking_leaderboard_container'));
     }
-
-    new Toggle({
-        key: "enableMouseover",
-        display: "Enable mouse-over block",
-        container: "#settingsRight",
-        init: enableMouseover,
-        setState: function(state) {
-            enableMouseover = state;
-            if (loadFinished) {
-                checkPointermove();
-            }
-        }
-    });
-
-
 
     jQuery('#selectall_checkbox').on('click', function() {
         if (jQuery('#selectall_checkbox').hasClass('settingsCheckboxChecked')) {
@@ -2569,7 +2552,6 @@ function webglInit() {
             }
             if (loadFinished) {
                 refreshFilter();
-                checkPointermove();
             }
         },
     });
@@ -2871,7 +2853,6 @@ function ol_map_init() {
     });
 
     // show the hover box
-    checkPointermove();
 }
 
 function initMapEarly() {
@@ -3896,104 +3877,6 @@ function refreshSelected() {
     adjustInfoBlock();
 }
 
-let somethingHighlighted = false;
-function refreshHighlighted() {
-    // this is following nearly identical logic, etc, as the refreshSelected function, but doing less junk for the highlighted pane
-    let highlighted = HighlightedPlane;
-
-    if (!highlighted) {
-        if (somethingHighlighted)
-            jQuery('#highlighted_infoblock').hide();
-        somethingHighlighted = false;
-        return;
-    }
-    somethingHighlighted = true;
-
-    highlighted.checkVisible();
-
-    jQuery('#highlighted_infoblock').show();
-
-    let infoBox = jQuery('#highlighted_infoblock');
-
-    let marker = highlighted.marker || highlighted.glMarker;
-    let geom;
-    let markerCoordinates;
-    if (!marker || !(geom = marker.getGeometry()) || !(markerCoordinates = geom.getCoordinates()) ) {
-        jQuery('#highlighted_infoblock').hide();
-        return;
-    }
-    let markerPosition = OLMap.getPixelFromCoordinate(markerCoordinates);
-    if (!markerPosition)
-        return;
-
-    let mapSize = OLMap.getSize();
-    let infoBoxLeft = markerPosition[0];
-    let infoBoxTop = markerPosition[1];
-    if ((infoBoxLeft + 20 + infoBox.width()) < mapSize[0])
-        infoBoxLeft += 20;
-    else if ((infoBoxLeft - 20 - infoBox.width()) > 0)
-        infoBoxLeft -= (20 + infoBox.width());
-    else
-        infoBoxLeft = 0;
-    if ((infoBoxTop + 20 + infoBox.height()) < mapSize[1])
-        infoBoxTop += 20;
-    else if (infoBoxTop - (20 + infoBox.height()) > 0)
-        infoBoxTop -= (20 + infoBox.height());
-    else
-        infoBoxTop = 0;
-    infoBox.css("left", infoBoxLeft);
-    infoBox.css("top", infoBoxTop);
-
-    jQuery('#highlighted_callsign').text(highlighted.name);
-
-    if (highlighted.icaoType !== null) {
-        jQuery('#highlighted_icaotype').text(highlighted.icaoType);
-    } else {
-        jQuery('#highlighted_icaotype').text("n/a");
-    }
-
-    if (useRouteAPI) {
-        if (highlighted.routeString) {
-            jQuery('#highlighted_route').updateText(highlighted.routeString);
-        } else {
-            jQuery('#highlighted_route').updateText('n/a');
-        }
-    }
-
-    jQuery('#highlighted_source').text(format_data_source(highlighted.getDataSource()));
-
-    if (highlighted.registration !== null) {
-        jQuery('#highlighted_registration').text(highlighted.registration);
-    } else {
-        jQuery('#highlighted_registration').text("n/a");
-    }
-
-    let highlightedOperator = null;
-    if (highlighted.getAirline) {
-        highlightedOperator = highlighted.getAirline();
-    } else {
-        highlightedOperator = lookupAirlineForCallsign(highlighted.name, highlighted.registration);
-    }
-    if (highlightedOperator) {
-        jQuery('#highlighted_airline').text(highlightedOperator.n || 'n/a');
-    } else {
-        jQuery('#highlighted_airline').text('n/a');
-    }
-
-    jQuery('#highlighted_speed').text(format_speed_long(highlighted.gs, DisplayUnits));
-
-    jQuery("#highlighted_altitude").text(format_altitude_long(adjust_baro_alt(highlighted.altitude), highlighted.vert_rate, DisplayUnits));
-
-    jQuery('#highlighted_pf_route').text((highlighted.pfRoute ? highlighted.pfRoute : highlighted.icao.toUpperCase()));
-
-    jQuery('#highlighted_rssi').text(highlighted.rssi != null ? highlighted.rssi.toFixed(1) + ' dBFS' : "n/a");
-}
-
-function removeHighlight() {
-    HighlightedPlane = null;
-    refreshHighlighted();
-}
-
 function mstime() {
     return new Date().getTime();
 }
@@ -4745,7 +4628,6 @@ function selectPlaneByHex(hex, options) {
 
 // loop through the planes and mark them as selected to show the paths for all planes
 function selectAllPlanes() {
-    HighlightedPlane = null;
     // if all planes are already selected, deselect them all
     if (SelectedAllPlanes) {
         deselectAllPlanes();
@@ -4773,7 +4655,6 @@ function selectAllPlanes() {
     refreshFeatures();
 
     refreshSelected();
-    refreshHighlighted();
     pTracks || TAR.planeMan.refresh();
 }
 
@@ -6239,7 +6120,6 @@ function changeZoom(init) {
     if (!init && showTrace)
         updateAddressBar();
 
-    checkPointermove();
 }
 
 function checkScale() {
@@ -6270,20 +6150,9 @@ function setGlobalScale(scale, init) {
     if (!init) {
         refreshFeatures();
         refreshSelected();
-        refreshHighlighted();
         remakeTrails();
     }
 }
-
-function checkPointermove() {
-    if ((webgl || g.zoomLvl > 5.5) && enableMouseover && !onMobile) {
-        OLMap.on('pointermove', onPointermove);
-    } else {
-        OLMap.un('pointermove', onPointermove);
-        removeHighlight();
-    }
-}
-
 
 function changeCenter(init) {
     const rawCenter = OLMap.getView().getCenter();
@@ -6426,7 +6295,6 @@ function refresh(redraw) {
 
 
     refreshSelected();
-    refreshHighlighted();
 
     triggerRefresh = 0;
 }
@@ -6505,54 +6373,6 @@ function mapRefresh(redraw) {
     }
 }
 
-function onPointermove(evt) {
-    //clearTimeout(pointerMoveTimeout);
-    //pointerMoveTimeout = setTimeout(highlight(evt), 100);
-    highlight(evt);
-}
-
-function highlight(evt) {
-    let evtCoords = evt.map.getCoordinateFromPixel(evt.pixel);
-    let source = webgl ? webglFeatures : PlaneIconFeatures;
-    let feature = source.getClosestFeatureToCoordinate(evtCoords);
-    if (feature) {
-        let fPixel = evt.map.getPixelFromCoordinate(feature.getGeometry().getCoordinates());
-        let a = fPixel[0] - evt.pixel[0];
-        let b = fPixel[1] - evt.pixel[1];
-        let c = globalScale * 20;
-        if (a**2 + b**2 > c**2) {
-            feature = null;
-        }
-    }
-    if (!feature) {
-        HighlightedPlane = null;
-        refreshHighlighted();
-        return;
-    }
-    const hex = feature.hex;
-
-    const values = feature.values_;
-    const mmsi = values ? values.mmsi : null;
-    if (hex) {
-        //console.log(hex);
-    }
-    if (mmsi) {
-        //console.log(mmsi);
-    }
-
-    if (HighlightedPlane && hex == HighlightedPlane.icao)
-        return;
-
-    //clearTimeout(pointerMoveTimeout);
-
-    if (hex) {
-        HighlightedPlane = g.planes[hex];
-    } else {
-        HighlightedPlane = null;
-    }
-    //pointerMoveTimeout = setTimeout(refreshHighlighted(), 300);
-    refreshHighlighted();
-}
 let urlIcaos = [];
 function parseURLIcaos() {
     if (usp.has('icao')) {

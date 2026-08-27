@@ -290,7 +290,6 @@ ColorByAlt = {
 //mlatTimeout = 30;
 
 // enable/disable mouseover/hover aircraft information
-//enableMouseover = true;
 
 // enable/disable temporary aircraft trails
 //tempTrails = false;

@@ -544,31 +544,6 @@ select.error, textarea.error, input.error {
  color:#fff
 }
 
-#highlighted_infoblock {
-    background-color: var(--BGCOLOR1);
-    position: absolute;
-    left: calc( 40px * var(--SCALE));
-    top: calc( 60px * var(--SCALE));
-    min-width:  calc(155px * var(--SCALE));
-    cursor: pointer;
-    z-index: 9999;
-    display: none;
-    padding-left: calc( 7px * var(--SCALE));
-    padding-right: calc( 7px * var(--SCALE));
-    border-radius: calc( 8px * var(--SCALE));
-    border: 2px solid VAR(--DARK_ACCENT);
-}
-
-.highlightedTitle {
-    border-bottom: calc( 1px * var(--SCALE)) solid #67b6c3;
-    display: inline-block;
-    width: 90%;
-    background-color: transparent !important;
-    border-radius: 0px 0px 0px 0px;
-    border: none;
-    margin-top: 10px;
-}
-
 .identLarge {
     font-size: calc( 22px * var(--SCALE));
     line-height: calc( 24px * var(--SCALE));

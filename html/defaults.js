@@ -332,7 +332,6 @@ let altitudeFilter = false;
 let mlatTimeout = 30;
 
 // enable/disable mouseover/hover aircraft information
-let enableMouseover = true;
 
 // enable/disable temporary aircraft trails
 let tempTrails = false;
