@@ -818,7 +818,10 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: var(--ui-hit);
+    /* a full touch target of dead space above the summary was wasteful; the
+       whole collapsed sheet is tappable to expand, so the chevron only has to
+       be visible */
+    min-height: calc(22px * var(--SCALE));
     color: var(--ui-text-3);
     font-size: var(--ui-fs-md);
     cursor: pointer;
@@ -870,13 +873,15 @@
     display: none;
 }
 
-/* summary and stats stacked on the left, photo filling the right */
+/* Summary and picture side by side, then the numbers across the full width.
+   The stats used to share a row with the photo column, which stopped them
+   short of the edge. */
 #mobile_summary:not(.mobile-expanded) #infoblock-container {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     grid-template-areas:
         "summary photo"
-        "stats   photo";
+        "stats   stats";
     align-items: start;
     column-gap: var(--ui-s4);
 }
@@ -892,7 +897,12 @@
 #mobile_summary:not(.mobile-expanded) #photo_block {
     grid-area: photo;
     display: block;
-    margin: var(--ui-s4) var(--ui-s5) 0 0;
+    margin: 0 var(--ui-s5) 0 0;
+}
+
+/* the summary's own top padding adds to the handle above it */
+#mobile_summary:not(.mobile-expanded) .ib-summary {
+    padding-top: 0;
 }
 
 /* just the picture: no credit line or placeholder in a collapsed bar */
@@ -903,9 +913,9 @@
 
 #mobile_summary:not(.mobile-expanded) #selected_photo img {
     display: block;
-    height: calc(58px * var(--SCALE));
+    height: calc(84px * var(--SCALE));
     width: auto;
-    max-width: calc(104px * var(--SCALE));
+    max-width: calc(150px * var(--SCALE));
     object-fit: cover;
     border-radius: var(--ui-r-sm);
 }
@@ -1421,9 +1431,14 @@ select:focus-visible {
    on a teal fill. They are all icon buttons now, one size, one row.
    ========================================================================== */
 
-/* pulled in so the row's last button sits one gap left of the layer control */
+/* The row and the layer control are anchored separately from the side column,
+   so their offsets are derived rather than guessed. With button size h and gap
+   g, the side column occupies [R-g-h, R-g], which puts the layer control at
+   h+2g and this row at 2h+2g. These were fixed pixel values worked out for
+   the 30px desktop button, so on touch - where --ui-hit is 44px - the layer
+   control landed underneath the side column. */
 #header_top {
-    right: calc(68px * var(--SCALE));
+    right: calc(2 * var(--ui-hit) + 2 * var(--ui-s2));
 }
 
 #header_top .buttonContainer {
@@ -1457,7 +1472,7 @@ select:focus-visible {
        match that by hand. Right offset clears the side column (32px) by one
        gap. */
     top: calc(var(--ui-s1) + var(--ui-s2) - 1px) !important;
-    right: calc(38px * var(--SCALE)) !important;
+    right: calc(var(--ui-hit) + 2 * var(--ui-s2)) !important;
     z-index: var(--ui-z-map-chrome);
     border-radius: var(--ui-r-sm);
 }
