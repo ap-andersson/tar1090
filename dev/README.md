@@ -31,6 +31,24 @@ behaves like the deployed one:
 Cache-Control is `no-store` on everything, so a plain reload always picks up
 the current file. No cachebust hashes, unlike the deployed copy.
 
+## Testing the phone layout without a phone
+
+The phone layout is chosen by `isMobile()`, which compares the viewport width
+against `mobileBreakpoint` (600). Chrome will not always let a window get that
+narrow, so the breakpoint is overridable:
+
+    http://localhost:8090/?mobileWidth=900
+
+Everything that used to be a `max-width: 600px` media query is now keyed off
+`.is-mobile-layout`, the class `applyLayoutMode()` puts on `<html>`, so CSS
+follows the same decision and `?mobileWidth` moves both together. Touch target
+sizing is the deliberate exception - it keys off `pointer: coarse` as well as
+width, because that genuinely is about the input device rather than the layout.
+
+A caveat worth knowing: a real phone also has `onMobile` true (user-agent) and
+`pointer: coarse`. `?mobileWidth` does not fake those, so a handful of branches
+still only run on a device.
+
 ## UI-INVENTORY.md
 
 Every user-facing surface in the frontend, for deciding what the UI refresh

@@ -1,4 +1,21 @@
-# UI inventory — mark up before the refresh starts
+# UI inventory
+
+Status: worked through. Every verdict below has been implemented on the
+`ui-refresh` branch. Kept as the record of what was decided and why, and as the
+starting point if a surface needs revisiting.
+
+Two verdicts were deliberately not followed, both noted in the relevant commit:
+
+- `darkerColors` was marked drop, but it is not a theme setting - it scales the
+  map dim and contrast and the marker colours. It became the Med/High steps of
+  the map dimming control instead of being deleted.
+- Table column priority (auto-hiding columns when narrow) was on the plan and
+  dropped: the table already scrolls, the header is already sticky, and there
+  are explicit per-column toggles that auto-hiding would silently override.
+
+---
+
+# Original inventory — marked up before the refresh started
 
 Every user-facing surface in the frontend, so we can decide what the new UI
 carries over. Fill in the **Verdict** column and nothing else is needed from you.

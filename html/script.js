@@ -5282,7 +5282,7 @@ function initTabs(selector, storeKey) {
 //   slide  -> the input event, continuous while dragging
 //   change -> the change event, on release
 // Unlike jQuery UI, setting the value programmatically fires nothing, which
-// is what the replayJumpEnabled guard existed to fake.
+// is what the old replayJumpEnabled guard existed to fake.
 function initRange(selector, opts) {
     const el = jQuery(selector);
     if (!el.length)
@@ -8466,11 +8466,8 @@ function replayOnSliderMove() {
 
     setReplayTimeHint(date);
 }
-let replayJumpEnabled = true;
 function replayJump() {
     if (!showingReplayBar)
-        return;
-    if (!replayJumpEnabled)
         return;
     let date = new Date(replay.dateText);
     date.setUTCHours(Number(replay.hours));
@@ -8492,7 +8489,6 @@ function replayJump() {
     loadReplay(date);
 }
 function replaySetTimeHint(arg) {
-    replayJumpEnabled = false;
     let dateString;
     let timeString;
 
@@ -8512,7 +8508,6 @@ function replaySetTimeHint(arg) {
 
     let minutes = replay.ts.getUTCMinutes();
     setRangeValue('#minuteSelect', minutes);
-    replayJumpEnabled = true;
 }
 
 function replayStep(arg) {
