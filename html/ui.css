@@ -2060,3 +2060,52 @@ select:focus-visible {
 .is-mobile-layout #history_collapse {
     display: none !important;
 }
+
+/* ---- replay bar on a phone --------------------------------------------
+   The four-column grid assumes desktop width. Stacked instead, so the
+   sliders get the full width they need to be usable with a thumb. Two
+   labels are dropped: the timezone caption duplicates the date line, and the
+   local-date line is secondary to the UTC one the controls work in. */
+.is-mobile-layout #replayBar {
+    left: var(--ui-s5);
+    right: var(--ui-s5);
+    transform: none;
+    width: auto;
+    max-width: none;
+    padding: var(--ui-s5);
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto;
+    gap: var(--ui-s3);
+    grid-template-areas:
+        "dateHint"
+        "datepicker"
+        "timeHint"
+        "hours"
+        "minutes"
+        "speedHint"
+        "speedSelect"
+        "play";
+}
+
+.is-mobile-layout #replayTimeZone,
+.is-mobile-layout #replayDateHintLocal,
+.is-mobile-layout #replayLoading {
+    display: none;
+}
+
+/* full width, and tall enough to grab */
+.is-mobile-layout #replayDatepicker,
+.is-mobile-layout #replayPlay {
+    width: 100%;
+    justify-self: stretch;
+}
+
+.is-mobile-layout #hourSelect,
+.is-mobile-layout #minuteSelect,
+.is-mobile-layout #replaySpeedSelect {
+    width: 100%;
+}
+
+.is-mobile-layout #replayBar p {
+    justify-self: start;
+}
