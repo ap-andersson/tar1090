@@ -4963,15 +4963,22 @@ function collapseMobileSheet() {
 
 // ---- end mobile bottom sheet -------------------------------------------
 
+// How much of the map's left edge the infoblock is covering. Panels that float
+// over the map centre themselves in what is left rather than in the whole map,
+// which otherwise puts them half behind the infoblock.
+function setInfoblockOffset(px) {
+    document.documentElement.style.setProperty('--ib-offset', Math.round(px) + 'px');
+}
+
 function adjustInfoBlock() {
     infoBlockWidth = baseInfoBlockWidth;
     jQuery('#selected_infoblock').css("width", infoBlockWidth * globalScale + 'px');
 
     jQuery('.ol-scale-line').css('left', (infoBlockWidth * globalScale + 8) + 'px');
-    jQuery('#replayBar').css('left', (infoBlockWidth * globalScale + 8) + 'px');
 
     if (isMobile()) {
         // the sheet owns the infoblock on a phone
+        setInfoblockOffset(0);
         if (SelectedPlane && toggles['enableInfoblock'].state) {
             showMobileSheet(SelectedPlane);
         } else {
@@ -5004,17 +5011,19 @@ function adjustInfoBlock() {
         jQuery('#credits').css('left', '');
 
         jQuery('#selected_infoblock').show();
+        // its left inset plus its width: where the panel's right edge lands
+        setInfoblockOffset(infoBlockWidth * globalScale + 12);
     } else {
         if (!mapIsVisible)
             jQuery("#sidebar_container").css('margin-left', '0');
         //jQuery('#sidebar_canvas').css('margin-bottom', 0);
 
         jQuery('.ol-scale-line').css('left', '8px');
-        jQuery('#replayBar').css('left', '0px');
         jQuery('#credits').css('bottom', '');
         jQuery('#credits').css('left', '');
 
         jQuery('#selected_infoblock').hide();
+        setInfoblockOffset(0);
     }
 
     // The photo used to be sized here in pixels, derived from the panel width,
@@ -8865,7 +8874,6 @@ function showReplayBar(){
     } else {
         jQuery("#replayBar").show();
         jQuery("#replayBar").css('display', 'grid');
-        jQuery('#replayBar').height('100px');
         jQuery('#map_canvas').height('calc(100% - 100px)');
         jQuery('#sidebar_canvas').height('calc(100% - 110px)');
         if (!replay) {

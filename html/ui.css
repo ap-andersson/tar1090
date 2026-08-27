@@ -133,6 +133,10 @@
 
 /* ---- panel: any floating chrome over the map --------------------------- */
 .ui-panel {
+    /* so a max-width includes the panel's own padding and border - without
+       this a panel capped to the free map area still overlapped it by its
+       padding */
+    box-sizing: border-box;
     background-color: var(--ui-panel-bg);
     -webkit-backdrop-filter: var(--ui-panel-blur);
     backdrop-filter: var(--ui-panel-blur);
@@ -1846,4 +1850,157 @@ select:focus-visible {
 .ib-group > .infoBlockSection.ib-single-column {
     grid-template-columns: minmax(0, 1fr);
     gap: var(--ui-s2);
+}
+
+/* ==========================================================================
+   Infoblock header buttons
+   ========================================================================== */
+
+.ib-header-btn {
+    position: absolute;
+    right: calc(44px * var(--SCALE));
+    top: var(--ui-s4);
+    z-index: 4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--ui-hit);
+    height: var(--ui-hit);
+    padding: 0;
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-r-sm);
+    background-color: var(--ui-surface-2);
+    color: var(--ui-text-2);
+    font-size: var(--ui-fs-md);
+    cursor: pointer;
+}
+
+.ib-header-btn:hover {
+    background-color: var(--ui-surface-3);
+    border-color: var(--ui-border-strong);
+    color: var(--ui-text-1);
+}
+
+.ib-header-btn.active {
+    background-color: var(--ui-accent);
+    border-color: var(--ui-accent);
+    color: var(--ui-on-accent);
+}
+
+/* ==========================================================================
+   History / playback controls
+   A floating panel centred in the map area rather than a column of stacked
+   rows in the sidebar - it drives playback on the map, so it belongs over it.
+   ========================================================================== */
+
+.history-panel {
+    position: absolute;
+    /* centred in the map area not covered by the infoblock */
+    left: calc(50% + var(--ib-offset, 0px) / 2);
+    transform: translateX(-50%);
+    bottom: calc(48px * var(--SCALE));
+    z-index: var(--ui-z-panel);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: var(--ui-s3) var(--ui-s5);
+    /* absolutely positioned, so it would otherwise shrink-wrap and wrap its
+       controls into a tall narrow column */
+    width: max-content;
+    max-width: calc(100% - var(--ib-offset, 0px) - var(--ui-s7));
+    padding: var(--ui-s4) var(--ui-s5);
+}
+
+/* the stack of spacers that separated rows in the sidebar */
+.history-panel .rSpacer {
+    display: none;
+}
+
+.history-panel > div {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-s2);
+}
+
+.history-panel .identSmall {
+    font-size: var(--ui-fs-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--ui-text-3);
+    white-space: nowrap;
+}
+
+.history-panel .ui-input {
+    width: auto;
+}
+
+/* ==========================================================================
+   Replay bar
+   Was a full-bleed 10px-tall strip pinned to the bottom edge, whose grid rows
+   overflowed it. Now a floating panel centred in the map area like the rest.
+   The grid areas are kept - only the frame changes.
+   ========================================================================== */
+
+#replayBar {
+    box-sizing: border-box;
+    left: calc(50% + var(--ib-offset, 0px) / 2);
+    right: auto;
+    transform: translateX(-50%);
+    bottom: calc(24px * var(--SCALE));
+    width: auto;
+    max-width: calc(100% - var(--ib-offset, 0px) - var(--ui-s7));
+    height: auto;
+    padding: var(--ui-s4) var(--ui-s6);
+    background: var(--ui-panel-bg);
+    -webkit-backdrop-filter: var(--ui-panel-blur);
+    backdrop-filter: var(--ui-panel-blur);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-r-md);
+    box-shadow: var(--ui-shadow-2);
+    color: var(--ui-text-1);
+    font-family: var(--ui-font);
+    font-size: var(--ui-fs-sm);
+    z-index: var(--ui-z-panel);
+    /* the rows were fixed heights that the content outgrew */
+    grid-template-rows: auto auto auto;
+    grid-template-columns: auto auto minmax(calc(160px * var(--SCALE)), 1fr) auto;
+    gap: var(--ui-s2) var(--ui-s5);
+    grid-template-areas:
+        "timezone dateHint      timeHint speedHint"
+        "play     datepicker    hours    speedSelect"
+        ".        dateHintLocal minutes  loading";
+}
+
+#replayBar p {
+    margin: 0;
+    font-size: var(--ui-fs-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--ui-text-3);
+    white-space: nowrap;
+}
+
+#replayBar #replayPlay {
+    min-height: var(--ui-hit);
+    padding: 0 var(--ui-s5);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-r-sm);
+    background-color: var(--ui-surface-2);
+    color: var(--ui-text-1);
+    font-family: var(--ui-font);
+    font-size: var(--ui-fs-sm);
+    font-weight: 600;
+    cursor: pointer;
+}
+
+#replayBar #replayPlay:hover {
+    background-color: var(--ui-surface-3);
+    border-color: var(--ui-border-strong);
+}
+
+#hourSelect,
+#minuteSelect,
+#replaySpeedSelect {
+    width: 100%;
 }
