@@ -1846,23 +1846,49 @@ select:focus-visible {
     padding: var(--ui-s4) var(--ui-s5);
 }
 
-/* the stack of spacers that separated rows in the sidebar */
-.history-panel .rSpacer {
-    display: none;
-}
-
-.history-panel > div {
+/* one cluster per thing being controlled: the day, the leg, the speed */
+.history-group {
     display: flex;
     align-items: center;
-    gap: var(--ui-s2);
+    gap: var(--ui-s3);
 }
 
-.history-panel .identSmall {
+/* a divider between clusters, rather than relying on the gap alone */
+.history-group + .history-group {
+    padding-left: var(--ui-s5);
+    border-left: 1px solid var(--ui-border);
+}
+
+.history-label {
     font-size: var(--ui-fs-xs);
+    font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.05em;
     color: var(--ui-text-3);
     white-space: nowrap;
+}
+
+/* JS writes these and bakes its own caption into the text, so they get no
+   separate label - "Legs: All", "Time: 2026-08-27 ..." */
+.history-status {
+    font-size: var(--ui-fs-sm);
+    color: var(--ui-text-2);
+    white-space: nowrap;
+}
+
+.history-footer {
+    display: flex;
+    align-items: baseline;
+    gap: var(--ui-s5);
+    flex: 1 0 100%;
+    padding-top: var(--ui-s2);
+    border-top: 1px solid var(--ui-border);
+}
+
+.history-hint {
+    font-size: var(--ui-fs-xs);
+    color: var(--ui-text-3);
+    margin-left: auto;
 }
 
 .history-panel .ui-input {
@@ -1977,8 +2003,21 @@ select:focus-visible {
 /* This line carries either "Legs: All" or "No Data available for
    2026-08-25"; without a floor the whole panel resized every time you paged
    a day. Sized to the longer string. */
-.history-panel #leg_sel {
-    min-width: calc(230px * var(--SCALE));
+/* #leg_sel carries either "Legs: All" or "No Data available for 2026-08-25",
+   so the cluster needs a floor or the panel resized every time you paged a
+   day. The floor is on the cluster rather than the text, so the arrows stay
+   next to what they act on and the slack falls after them. */
+.history-group-leg {
+    min-width: calc(250px * var(--SCALE));
+}
+
+/* on a phone the clusters stack, so the dividers become horizontal */
+.is-mobile-layout .history-group + .history-group {
+    padding-left: 0;
+    border-left: 0;
+    padding-top: var(--ui-s3);
+    border-top: 1px solid var(--ui-border);
+    width: 100%;
 }
 
 

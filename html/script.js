@@ -916,9 +916,20 @@ function processQueryToggles() {
     }
 }
 
+// Which speed is running was not shown anywhere - the buttons all looked the
+// same whatever was selected.
+const replaySpeedButtons = {0: '#tStop', 1: '#t1x', 5: '#t5x', 10: '#t10x', 20: '#t20x', 40: '#t40x'};
+
+function markReplaySpeed(speed) {
+    jQuery('#replay_speeds .ui-btn').removeClass('is-on');
+    const button = replaySpeedButtons[speed];
+    if (button)
+        jQuery(button).addClass('is-on');
+}
+
 function replaySpeedChange(arg) {
     traceOpts.replaySpeed = arg;
-    console.log(arg);
+    markReplaySpeed(arg);
     if (traceOpts.animate)
         return;
     legShift(0);
@@ -1552,7 +1563,7 @@ jQuery('#selected_altitude_geom1')
         }
     });
 
-    jQuery('#tStop').on('click', function() { traceOpts.replaySpeed = 0; gotoTime(traceOpts.showTime); });
+    jQuery('#tStop').on('click', function() { traceOpts.replaySpeed = 0; markReplaySpeed(0); gotoTime(traceOpts.showTime); });
     jQuery('#t1x').on('click', function() { replaySpeedChange(1); });
     jQuery('#t5x').on('click', function() { replaySpeedChange(5); });
     jQuery('#t10x').on('click', function() { replaySpeedChange(10); });
@@ -7250,6 +7261,9 @@ function toggleShowTrace() {
 
     jQuery('#history_collapse').toggle();
     jQuery('#show_trace').toggleClass('active');
+    if (showTrace)
+        // nothing is playing until a speed is picked, which is Stop
+        markReplaySpeed(traceOpts.replaySpeed || 0);
 }
 
 function legShift(offset, plane) {
