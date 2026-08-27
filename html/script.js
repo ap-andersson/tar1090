@@ -1372,6 +1372,8 @@ function earlyInitPage() {
     jQuery("#jump_form").submit(onJump);
 
     jQuery("#show_trace").click(toggleShowTrace);
+    // the panel's own close leaves history mode, same as the header button
+    jQuery("#history_close").click(toggleShowTrace);
     jQuery("#trace_back_1d").click(function() {shiftTrace(-1)});
     jQuery("#trace_jump_1d").click(function() {shiftTrace(1)});
 
@@ -6820,6 +6822,15 @@ function findPlanes(queries, byIcao, byCallsign, byReg, byType, showWarnings) {
 }
 
 function trailReaper() {
+    // Temp trails keep the last N seconds of a track, measured against the
+    // live clock. A historic trace or a replay is made of segments that are
+    // hours old by that measure, so reaping would delete the whole thing a
+    // few seconds after it loaded - which is what made a track vanish, and
+    // the aircraft jump, while looking at a past day without touching
+    // anything.
+    if (showTrace || replay)
+        return;
+
     for (let i in g.planesOrdered) {
         g.planesOrdered[i].reapTrail();
     }
@@ -8867,15 +8878,12 @@ function showReplayBar(){
         jQuery("#replayBar").hide();
         clearTimeout(refreshId);
         replay = null;
-        jQuery('#map_canvas').height('100%');
-        jQuery('#sidebar_canvas').height('100%');
         jQuery("#selected_showTrace_hide").show();
         fetchData({force: true});
     } else {
         jQuery("#replayBar").show();
         jQuery("#replayBar").css('display', 'grid');
-        jQuery('#map_canvas').height('calc(100% - 100px)');
-        jQuery('#sidebar_canvas').height('calc(100% - 110px)');
+        // the bar floats over the map now; it used to occupy the bottom 100px
         if (!replay) {
             replay = replayDefaults(new Date());
         }

@@ -1858,7 +1858,9 @@ select:focus-visible {
 
 .ib-header-btn {
     position: absolute;
-    right: calc(44px * var(--SCALE));
+    /* close sits at the edge; anything else stacks to its left by one button
+       plus a gap */
+    right: var(--ui-s4);
     top: var(--ui-s4);
     z-index: 4;
     display: flex;
@@ -2003,4 +2005,47 @@ select:focus-visible {
 #minuteSelect,
 #replaySpeedSelect {
     width: 100%;
+}
+
+
+/* the history toggle sits one button to the left of the close control */
+#show_trace.ib-header-btn {
+    right: calc(var(--ui-s4) + var(--ui-hit) + var(--ui-s2));
+}
+
+/* ---- history panel: close control and a stable width ------------------- */
+.history-close {
+    position: absolute;
+    right: var(--ui-s2);
+    top: var(--ui-s2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: calc(24px * var(--SCALE));
+    height: calc(24px * var(--SCALE));
+    padding: 0;
+    border: 0;
+    border-radius: var(--ui-r-sm);
+    background: transparent;
+    color: var(--ui-text-3);
+    font-size: var(--ui-fs-md);
+    cursor: pointer;
+}
+
+.history-close:hover {
+    background-color: var(--ui-surface-2);
+    color: var(--ui-text-1);
+}
+
+/* room for the close control */
+.history-panel {
+    padding-right: calc(var(--ui-s5) + 24px * var(--SCALE));
+}
+
+/* This line carries either "Legs: All" or "No Data available for
+   2026-08-25"; without a floor the whole panel resized every time you paged
+   a day. Sized to the longer string. */
+.history-panel #leg_sel,
+.history-panel #trace_time {
+    min-width: calc(230px * var(--SCALE));
 }
