@@ -1237,9 +1237,18 @@
 }
 
 /* ---- sidebar splitter --------------------------------------------------
+   #splitter is position: absolute with left: 0, so it needs a positioned
+   ancestor to sit on the sidebar's edge. jQuery UI's .ui-resizable supplied
+   that on the container; without it the handle escaped to the top-left of
+   the page, which is why it could not be grabbed at the border.
+
    The visible handle is a small tab, but the draggable area is the whole
-   left edge of the sidebar - jQuery UI's stylesheet used to provide that
-   full-height strip, and it went with the library. */
+   left edge of the sidebar - jQuery UI's stylesheet provided that
+   full-height strip too, and it went with the library. */
+#sidebar_container {
+    position: relative;
+}
+
 #splitter {
     /* without this a touch drag becomes a page pan and the pointer is
        cancelled mid-gesture */
