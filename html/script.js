@@ -5166,15 +5166,7 @@ function initSidebarResize() {
     let startX = 0;
     let startWidth = 0;
 
-    splitter.addEventListener('pointerdown', function(e) {
-        dragging = true;
-        startX = e.clientX;
-        startWidth = sidebar.getBoundingClientRect().width;
-        splitter.setPointerCapture(e.pointerId);
-        e.preventDefault();
-    });
-
-    splitter.addEventListener('pointermove', function(e) {
+    function onMove(e) {
         if (!dragging)
             return;
         // it is the west edge, so dragging left makes the sidebar wider
@@ -5182,21 +5174,33 @@ function initSidebarResize() {
         const width = Math.max(MIN_WIDTH, Math.min(maxWidth, startWidth - (e.clientX - startX)));
         sidebar.style.width = width + 'px';
         updateMapSize();
-    });
+        e.preventDefault();
+    }
 
-    function endDrag(e) {
+    function onEnd() {
         if (!dragging)
             return;
         dragging = false;
-        try {
-            splitter.releasePointerCapture(e.pointerId);
-        } catch (err) { /* capture already gone */ }
+        document.body.classList.remove('is-resizing');
         loStore['sidebar_width'] = Math.round(sidebar.getBoundingClientRect().width);
         updateMapSize();
     }
 
-    splitter.addEventListener('pointerup', endDrag);
-    splitter.addEventListener('pointercancel', endDrag);
+    splitter.addEventListener('pointerdown', function(e) {
+        dragging = true;
+        startX = e.clientX;
+        startWidth = sidebar.getBoundingClientRect().width;
+        // stops the pointer turning into a text selection or a page pan
+        document.body.classList.add('is-resizing');
+        e.preventDefault();
+    });
+
+    // On window rather than the handle: pointer capture is the tidier
+    // mechanism but it fails silently if the browser cancels the pointer
+    // (a pan gesture, a lost capture), leaving a drag that never moves.
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onEnd);
+    window.addEventListener('pointercancel', onEnd);
 }
 
 // Native <input type="date"> in place of the jQuery UI datepicker. Both call

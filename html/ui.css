@@ -1235,3 +1235,29 @@
     outline-offset: calc(-2px * var(--SCALE));
     font-weight: 700;
 }
+
+/* ---- sidebar splitter --------------------------------------------------
+   The visible handle is a small tab, but the draggable area is the whole
+   left edge of the sidebar - jQuery UI's stylesheet used to provide that
+   full-height strip, and it went with the library. */
+#splitter {
+    /* without this a touch drag becomes a page pan and the pointer is
+       cancelled mid-gesture */
+    touch-action: none;
+}
+
+#splitter::before {
+    content: "";
+    position: absolute;
+    top: calc(-7px * var(--SCALE));
+    left: 0;
+    width: calc(14px * var(--SCALE));
+    height: 100vh;
+    cursor: ew-resize;
+}
+
+/* while dragging, don't let the pointer select text across the page */
+body.is-resizing {
+    user-select: none;
+    cursor: ew-resize;
+}
