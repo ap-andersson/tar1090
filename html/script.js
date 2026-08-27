@@ -5298,10 +5298,45 @@ function initRange(selector, opts) {
         el.on('input', function() { opts.slide(null, {value: parseFloat(this.value)}); });
     if (opts.change)
         el.on('change', function() { opts.change(null, {value: parseFloat(this.value)}); });
+
+    // See setRangeValue: mark the slider as held while the user is on it.
+    el.on('pointerdown', function() { rangeDragging.add(this); });
+    el.on('input', function() { rangeTouchedUntil.set(this, Date.now() + RANGE_GRACE_MS); });
+}
+
+// A native range moves its thumb the instant .value is written, so a
+// background writer will drag the thumb out from under the pointer. That is
+// what made the replay hour and minute sliders snap back to the current time:
+// replayStep -> replaySetTimeHint writes them on every tick. jQuery UI's
+// slider hid this, because it recomputed its handle from the pointer on the
+// next move.
+const rangeDragging = new Set();
+const rangeTouchedUntil = new WeakMap();
+const RANGE_GRACE_MS = 750;
+
+function releaseRangeDrags() {
+    rangeDragging.forEach(el => rangeTouchedUntil.set(el, Date.now() + RANGE_GRACE_MS));
+    rangeDragging.clear();
+}
+window.addEventListener('pointerup', releaseRangeDrags);
+window.addEventListener('pointercancel', releaseRangeDrags);
+
+function rangeIsHeld(el) {
+    if (rangeDragging.has(el))
+        return true;
+    // the grace period also covers keyboard adjustment, where there is no
+    // pointer to track
+    const until = rangeTouchedUntil.get(el);
+    return until != undefined && Date.now() < until;
 }
 
 function setRangeValue(selector, value) {
-    jQuery(selector).val(value);
+    const el = jQuery(selector);
+    if (!el.length)
+        return;
+    if (rangeIsHeld(el[0]))
+        return;
+    el.val(value);
 }
 
 function buttonActive(id, state) {
