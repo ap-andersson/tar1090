@@ -631,10 +631,8 @@
 
 /* ---- the three numbers ------------------------------------------------- */
 .ib-stats {
-    /* auto-fit rather than three fixed columns: the values are wide enough
-       ("-2560 ft/min") that a narrow panel has to fall back to two */
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(calc(84px * var(--SCALE)), 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 1px;
     margin: 0 var(--ui-s5) var(--ui-s4);
     border-radius: var(--ui-r-sm);
@@ -658,9 +656,10 @@
     text-transform: uppercase;
     letter-spacing: 0.05em;
     color: var(--ui-text-3);
-    /* labels wrap rather than truncate - "Baro. altitude" is set from JS and
-       truncating it to "BARO. ..." tells the reader nothing */
     line-height: var(--ui-lh-tight);
+    /* one line, always: a label that wrapped pushed its value below the
+       others and the row stopped reading as a set of tiles */
+    white-space: nowrap;
 }
 
 .ib-stat-value {
@@ -1464,4 +1463,169 @@ select:focus-visible {
     color: var(--ui-text-1);
     font-family: var(--ui-font);
     font-size: var(--ui-fs-sm);
+}
+
+/* ==========================================================================
+   Infoblock, second pass
+   The summary was a callsign and three tiles above an unchanged label/value
+   list. Taking the parts of FR24's panel that fit the data tar1090 has: a
+   tight identity line, a full-bleed photo with its credit over the image, a
+   prominent route, and detail as a two-column grid of label-over-value rather
+   than label-left/value-right.
+   ========================================================================== */
+
+.ib-summary {
+    padding: var(--ui-s5) var(--ui-s5) var(--ui-s3);
+    gap: var(--ui-s1) var(--ui-s3);
+}
+
+.ib-callsign {
+    font-size: var(--ui-fs-2xl);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+
+/* the hex as a quiet bordered chip, not a second heading */
+.ib-hex {
+    align-self: center;
+    padding: calc(1px * var(--SCALE)) var(--ui-s2);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-r-sm);
+    font-size: var(--ui-fs-xs);
+    color: var(--ui-text-2);
+    white-space: nowrap;
+}
+
+/* route: the second thing read, so it gets size and the accent */
+.ib-route {
+    margin-top: var(--ui-s1);
+    font-size: var(--ui-fs-lg);
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: var(--ui-accent-hover);
+}
+
+/* ---- detail rows as a two-column grid ---------------------------------
+   Every row in these tables is a <tr> holding one <td> with a label and a
+   value, so making the row group a two-column grid puts two pairs per line
+   with no markup change. */
+#selected_infoblock .infoSectionTable {
+    display: block;
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#selected_infoblock .infoSectionTable > tbody {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--ui-s4) var(--ui-s4);
+}
+
+#selected_infoblock .infoSectionTable tr {
+    display: block;
+    min-width: 0;
+}
+
+/* the rule above outranks .hidden, which several of these rows rely on -
+   receiver id, the airline row, the photo link */
+#selected_infoblock .infoSectionTable tr.hidden {
+    display: none;
+}
+
+#selected_infoblock .infoSectionTable td {
+    display: block;
+    padding: 0;
+    min-width: 0;
+}
+
+#selected_infoblock .infoHeading {
+    display: block;
+    float: none;
+    margin: 0;
+    font-size: var(--ui-fs-xs);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    line-height: var(--ui-lh-tight);
+    color: var(--ui-text-3);
+}
+
+#selected_infoblock .infoData {
+    display: block;
+    float: none;
+    margin: 0;
+    text-align: left;
+    font-size: var(--ui-fs-md);
+    color: var(--ui-text-1);
+    font-variant-numeric: tabular-nums;
+    overflow-wrap: anywhere;
+}
+
+/* ---- photo: full width, credit over the image -------------------------- */
+#selected_infoblock #photo_container {
+    /* spans both columns; not bled to the panel edge because the container
+       padding and the scroll gutter are not symmetric, which made a
+       full-bleed photo visibly off-centre */
+    grid-column: 1 / -1;
+    position: relative;
+    height: auto !important;
+    margin: 0;
+}
+
+#selected_infoblock #selected_photo {
+    width: auto !important;
+    text-align: center;
+}
+
+#selected_infoblock #selected_photo img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 0;
+}
+
+#selected_infoblock #copyrightInfo {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    margin: 0;
+    padding: var(--ui-s4) var(--ui-s3) var(--ui-s1);
+    font-size: var(--ui-fs-xs);
+    color: var(--ui-text-2);
+    text-align: right;
+    /* a scrim so the credit stays readable over any photo */
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.65), transparent);
+    pointer-events: none;
+}
+
+/* identity block sits directly under the photo with no extra frame */
+#selected_infoblock #reg_info {
+    padding: 0 var(--ui-s5) var(--ui-s4);
+}
+
+/* the History row is a collapsible section like the groups, so it gets the
+   same header bar treatment */
+#selected_infoblock #history_collapse {
+    padding: 0;
+}
+
+#selected_infoblock .sectionTitle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--ui-s3);
+    min-height: var(--ui-control-h);
+    padding: var(--ui-s3) var(--ui-s5);
+    background-color: var(--ui-surface-2);
+    border-top: 1px solid var(--ui-border);
+    font-size: var(--ui-fs-xs);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--ui-text-2);
+}
+
+#selected_infoblock .sectionTitleNoBg {
+    background-color: transparent;
 }

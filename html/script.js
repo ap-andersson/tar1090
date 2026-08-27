@@ -1301,6 +1301,7 @@ function earlyInitPage() {
         toggleLabels();
     }
     initMapDim();
+    tidyInfoblockLabels();
     initInfoblockGroups();
     initLabelPicker();
     loadLabelFields();
@@ -1504,11 +1505,11 @@ jQuery('#selected_altitude_geom1')
         setState: function(state) {
             baroUseQNH = state;
             if (baroUseQNH) {
-                jQuery('#selected_altitude1_title').updateText('Corr. baro-alt');
+                jQuery('#selected_altitude1_title').updateText('Corr. alt');
                 jQuery('#selected_altitude2_title').updateText('Corr. baro.');
                 jQuery('#infoblock_altimeter').removeClass('hidden');
             } else {
-                jQuery('#selected_altitude1_title').updateText('Baro. altitude');
+                jQuery('#selected_altitude1_title').updateText('Baro. alt');
                 jQuery('#selected_altitude2_title').updateText('Barometric');
                 jQuery('#infoblock_altimeter').addClass('hidden');
             }
@@ -3708,7 +3709,7 @@ function refreshSelected() {
         ((selected.messages == undefined && selected.receiverCount) || (globeIndex && binCraft))
         && !showTrace
     ) {
-        jQuery('#selected_message_count').prev().updateText('Receivers:');
+        jQuery('#selected_message_count').prev().updateText('Receivers');
         jQuery('#selected_message_count').prop('title', 'Number of receivers receiving this aircraft');
         if (selected.receiverCount >= 5 && selected.dataSource != 'mlat') {
             jQuery('#selected_message_count').updateText('> ' + selected.receiverCount);
@@ -3716,7 +3717,7 @@ function refreshSelected() {
             jQuery('#selected_message_count').updateText(selected.receiverCount);
         }
     } else {
-        jQuery('#selected_message_count').prev().updateText('Messages:');
+        jQuery('#selected_message_count').prev().updateText('Messages');
         jQuery('#selected_message_count').prop('title', 'The total number of messages received from this aircraft');
         jQuery('#selected_message_count').updateText(selected.messages);
     }
@@ -5685,6 +5686,37 @@ function toggleLabelPicker(show) {
 
 // Remember which infoblock detail groups are left open. Native <details>
 // handles the interaction; this only persists the state.
+// The infoblock's labels were written for a label-left/value-right layout, so
+// many carry a colon - some inside the label element, some as a bare text node
+// beside it. With labels block-level those colons either dangle on a line of
+// their own or trail an uppercased label. The markup is static, so one pass at
+// startup is enough.
+function tidyInfoblockLabels() {
+    const block = document.getElementById('selected_infoblock');
+    if (!block)
+        return;
+
+    const walker = document.createTreeWalker(block, NodeFilter.SHOW_TEXT);
+    const strays = [];
+    while (walker.nextNode()) {
+        if (walker.currentNode.textContent.trim() == ':')
+            strays.push(walker.currentNode);
+    }
+    strays.forEach(node => node.remove());
+
+    jQuery('#selected_infoblock .infoHeading').each(function() {
+        // strip a trailing colon from whichever text node ends the label
+        const walk = document.createTreeWalker(this, NodeFilter.SHOW_TEXT);
+        let last = null;
+        while (walk.nextNode()) {
+            if (walk.currentNode.textContent.trim())
+                last = walk.currentNode;
+        }
+        if (last)
+            last.textContent = last.textContent.replace(/\s*:\s*$/, '');
+    });
+}
+
 function initInfoblockGroups() {
     let stored = {};
     if (loStore['infoblockGroups']) {
