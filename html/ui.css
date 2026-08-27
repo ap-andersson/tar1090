@@ -2119,3 +2119,212 @@ select:focus-visible {
 .is-mobile-layout #replayBar p {
     justify-self: start;
 }
+
+/* ==========================================================================
+   Photo: reserve the space before it arrives
+   The panel used to reflow when the picture finished loading. The container
+   holds a 16:9 box from the start - which is the ratio planespotters'
+   thumbnail_large actually is (498x280), so cover-fitting crops nothing in
+   practice - with a pulse in the empty space until an image is there.
+   ========================================================================== */
+
+#selected_infoblock #photo_container {
+    aspect-ratio: 16 / 9;
+    background-color: var(--ui-surface-2);
+    overflow: hidden;
+}
+
+#selected_infoblock #selected_photo,
+#selected_infoblock #selected_photo a {
+    display: block;
+    height: 100%;
+}
+
+#selected_infoblock #selected_photo img {
+    height: 100%;
+    object-fit: cover;
+}
+
+/* the waiting state: a slow pulse rather than a spinner, so it reads as
+   "something is coming" without drawing the eye */
+#selected_infoblock #photo_container::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(100deg,
+        var(--ui-surface-2) 30%,
+        var(--ui-surface-3) 50%,
+        var(--ui-surface-2) 70%);
+    background-size: 300% 100%;
+    animation: ui-photo-wait 1.4s ease-in-out infinite;
+}
+
+/* once there is an image or the fallback icon, stop waiting */
+#selected_infoblock #photo_container:has(img)::after,
+#selected_infoblock #photo_container:has(#placeholder-photo)::after {
+    content: none;
+}
+
+@keyframes ui-photo-wait {
+    0%   { background-position: 100% 0; }
+    100% { background-position: 0 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #selected_infoblock #photo_container::after {
+        animation: none;
+    }
+}
+
+/* ---- fallback icon ----------------------------------------------------- */
+#selected_infoblock #placeholder-photo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    /* it was a fixed 130px tall box with a 96px glyph, which left it sitting
+       off-centre in the reserved space */
+    height: 100%;
+    font-size: calc(56px * var(--SCALE));
+    color: var(--ui-text-3);
+    opacity: 0.5;
+}
+
+/* ==========================================================================
+   Layer switcher list and the OpenAIP panel
+   Two different looks and two different type scales sitting side by side.
+   Both onto the panel language, at the OpenAIP sizes.
+   ========================================================================== */
+
+.layer-switcher .panel {
+    padding: var(--ui-s4) var(--ui-s5);
+    max-height: 80vh;
+    /* a couple of pixels of label was enough to put a scrollbar along the
+       bottom of the list */
+    overflow-x: hidden;
+}
+
+.layer-switcher ul {
+    margin: 0;
+    padding-left: 0;
+}
+
+/* the library's markup is <li><input><label>, siblings - so the row has to be
+   the flex container, not the label */
+.layer-switcher li {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0 var(--ui-s3);
+    min-height: var(--ui-control-h);
+    margin-top: 0;
+}
+
+/* a group's nested list belongs on its own line, not beside the label */
+.layer-switcher li > ul {
+    flex: 1 0 100%;
+}
+
+.layer-switcher li label {
+    display: block;
+    flex: 1;
+    min-width: 0;
+    padding: 0;
+    margin: 0;
+    font-size: var(--ui-fs-sm);
+    color: var(--ui-text-1);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+}
+
+.layer-switcher li.group > label {
+    flex: 1 0 100%;
+    font-size: var(--ui-fs-xs);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--ui-text-3);
+    border-bottom: 1px solid var(--ui-border);
+    padding-bottom: var(--ui-s1);
+    margin-top: var(--ui-s4);
+}
+
+/* the library positions inputs absolutely and pads the label around them */
+.layer-switcher li input {
+    position: static;
+    left: auto;
+    flex: none;
+    width: calc(13px * var(--SCALE));
+    height: calc(13px * var(--SCALE));
+    margin: 0;
+    accent-color: var(--ui-accent);
+    cursor: pointer;
+}
+
+.layer-switcher.layer-switcher-group-select-style-none li.group > label,
+.layer-switcher li.layer-switcher-base-group > label {
+    padding-left: 0;
+}
+
+/* ---- OpenAIP panel: same frame as every other panel -------------------- */
+#openaip_vector_panel {
+    box-sizing: border-box;
+    padding: var(--ui-s4) var(--ui-s5);
+    background-color: var(--ui-panel-bg);
+    -webkit-backdrop-filter: var(--ui-panel-blur);
+    backdrop-filter: var(--ui-panel-blur);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-r-md);
+    box-shadow: var(--ui-shadow-2);
+    color: var(--ui-text-1);
+    font-family: var(--ui-font);
+    z-index: var(--ui-z-panel);
+    max-height: 80vh;
+}
+
+.openaip-panel-title {
+    font-size: var(--ui-fs-md);
+    font-weight: 600;
+    color: var(--ui-text-1);
+    margin-bottom: var(--ui-s3);
+}
+
+.openaip-panel-section {
+    font-size: var(--ui-fs-xs);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--ui-text-3);
+    border-bottom: 1px solid var(--ui-border);
+    margin-top: var(--ui-s4);
+    margin-bottom: var(--ui-s2);
+    padding-bottom: var(--ui-s1);
+}
+
+.openaip-panel-row {
+    gap: var(--ui-s3);
+    padding: var(--ui-s1) 0;
+    font-size: var(--ui-fs-sm);
+    color: var(--ui-text-1);
+}
+
+.openaip-panel-row input[type="checkbox"] {
+    accent-color: var(--ui-accent);
+}
+
+.openaip-opacity-label,
+.openaip-opacity-pct {
+    font-size: var(--ui-fs-xs);
+    color: var(--ui-text-3);
+}
+
+/* nested inside the layer list on a phone: no frame of its own */
+.is-mobile-layout #openaip_vector_panel {
+    background: transparent;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    box-shadow: none;
+    border-radius: 0;
+}
