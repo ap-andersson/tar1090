@@ -680,7 +680,9 @@
 .ib-group-summary {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: var(--ui-s3);
+    background-color: var(--ui-surface-2);
     min-height: var(--ui-control-h);
     padding: var(--ui-s3) var(--ui-s5);
     font-size: var(--ui-fs-xs);
@@ -702,18 +704,21 @@
     content: "";
 }
 
+/* The chevron was a rotated bordered box, whose visible ink is its
+   bottom-right corner and therefore sits below the box's own centre - it read
+   as misaligned with the label. A glyph centres on its own line box. */
 .ib-group-summary::after {
-    content: "";
-    width: calc(6px * var(--SCALE));
-    height: calc(6px * var(--SCALE));
-    border: solid var(--ui-text-3);
-    border-width: 0 calc(1.5px * var(--SCALE)) calc(1.5px * var(--SCALE)) 0;
-    transform: rotate(45deg);
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    content: "\f078";      /* chevron-down */
+    font-size: calc(10px * var(--SCALE));
+    line-height: 1;
+    color: var(--ui-text-3);
     transition: transform var(--ui-dur-fast) var(--ui-ease);
 }
 
 .ib-group[open] > .ib-group-summary::after {
-    transform: rotate(-135deg);
+    transform: rotate(180deg);
 }
 
 .ib-group-summary:hover {
@@ -726,9 +731,18 @@
     box-shadow: var(--ui-focus-ring);
 }
 
-/* the original section wrapper inside a group no longer draws its own frame */
+/* style.css gives every .infoBlockSection background: var(--BGCOLOR1), which
+   is lighter than the panel - that is the mismatch between an expanded
+   group's header and its content. Inside the infoblock they are transparent
+   and the header bar is the only filled surface. */
+#selected_infoblock .infoBlockSection {
+    background: transparent;
+    margin-bottom: 0;
+    border-radius: 0;
+}
+
 .ib-group > .infoBlockSection {
-    padding: 0 var(--ui-s5) var(--ui-s4);
+    padding: var(--ui-s4) var(--ui-s5);
 }
 
 /* a primitive row used inside the (not yet migrated) settings columns:
@@ -1353,4 +1367,101 @@ select:focus-visible {
 .exportButton:hover {
     background-color: var(--ui-surface-3);
     border-color: var(--ui-border-strong);
+}
+
+/* ==========================================================================
+   Top button row
+   U / H / T / replay / layers were four different things: letter buttons,
+   a background-image SVG, and an OpenLayers control with its own base64 PNG
+   on a teal fill. They are all icon buttons now, one size, one row.
+   ========================================================================== */
+
+/* pulled in so the row's last button sits one gap left of the layer control */
+#header_top {
+    right: calc(68px * var(--SCALE));
+}
+
+#header_top .buttonContainer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--ui-s2);
+    /* inline-block spans separated by source whitespace were doing the
+       spacing before, which is why the row never quite lined up */
+    margin: var(--ui-s2);
+}
+
+/* replay: drop the background image for the same glyph treatment as the rest */
+#RP.replayButton {
+    background-image: none;
+}
+
+#RP .buttonText::before {
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    content: "\f1da";       /* clock-rotate-left */
+    font-size: calc(15px * var(--SCALE));
+}
+
+/* ---- the layer switcher control ---------------------------------------
+   Sized and coloured to match .ui-btn-square, and lifted into the top row
+   rather than floating a few pixels below it. */
+.layer-switcher {
+    /* #header_top carries .infoHeading's 2px margin plus the row's 4px, so the
+       buttons start 6px down; the control is anchored separately and has to
+       match that by hand. Right offset clears the side column (32px) by one
+       gap. */
+    top: calc(var(--ui-s1) + var(--ui-s2) - 1px) !important;
+    right: calc(38px * var(--SCALE)) !important;
+    z-index: var(--ui-z-map-chrome);
+    border-radius: var(--ui-r-sm);
+}
+
+.layer-switcher button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    float: none;
+    width: var(--ui-hit);
+    height: var(--ui-hit);
+    padding: 0;
+    box-sizing: border-box;
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-r-sm);
+    /* the control ships a base64 PNG of a layers icon on a teal fill */
+    background-image: none;
+    background-color: var(--ui-surface-2);
+    color: var(--ui-text-1);
+    cursor: pointer;
+    transition: background-color var(--ui-dur-fast) var(--ui-ease),
+                border-color var(--ui-dur-fast) var(--ui-ease);
+}
+
+.layer-switcher button::before {
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    content: "\f5fd";       /* layer-group */
+    font-size: calc(15px * var(--SCALE));
+}
+
+.layer-switcher button:hover {
+    background-color: var(--ui-surface-3);
+    border-color: var(--ui-border-strong);
+}
+
+.layer-switcher.shown button {
+    background-color: var(--ui-accent);
+    border-color: var(--ui-accent);
+    color: var(--ui-on-accent);
+}
+
+.layer-switcher .panel {
+    background: var(--ui-panel-bg);
+    -webkit-backdrop-filter: var(--ui-panel-blur);
+    backdrop-filter: var(--ui-panel-blur);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-r-md);
+    color: var(--ui-text-1);
+    font-family: var(--ui-font);
+    font-size: var(--ui-fs-sm);
 }

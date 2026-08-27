@@ -513,6 +513,8 @@ select.error, textarea.error, input.error {
     flex-direction: column;
     align-items: center;
     gap: var(--ui-s2);
+    /* same outer spacing as the top row, so the two line up */
+    margin: var(--ui-s2);
 }
 
 #header_side .buttonSpacer {
