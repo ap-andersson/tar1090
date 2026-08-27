@@ -690,15 +690,15 @@
         </div>
         <div id="header_top" class="infoHeading">
           <div class="buttonContainer">
+            <div id="tempTrailsBar" class="ui-panel ui-strip" style="display: none">
+              <label class="ui-strip-label" for="tempTrailsInput">Trail seconds</label>
+              <input id="tempTrailsInput" class="ui-input ui-input-num" type="number" min="0" max="1200" step="5" value="0" title="0 = full tracks, otherwise only show the last X seconds of each track">
+              <button id="tempTrailsApply" class="ui-btn ui-btn-square" type="button" title="Apply trail length"><span class="fa-solid fa-check"></span></button>
+            </div>
+            <span id="T" title="All (T)racks" class="ui-btn ui-btn-square inActiveButton" onclick="selectAllPlanes();"><span class="buttonText">T</span></span>
             <span id="U" title="only show the U2 and other military planes" class="ui-btn ui-btn-square inActiveButton" onclick="toggleMilitary();"><span class="buttonText">U</span></span>
             <span id="H" title="(H)ome / Reset Map" class="ui-btn ui-btn-square inActiveButton" onclick="resetMap();"><span class="buttonText">H</span></span>
-            <span id="T" title="All (T)racks" class="ui-btn ui-btn-square inActiveButton" onclick="selectAllPlanes();"><span class="buttonText">T</span></span>
             <span id="RP" title="Repla(Y)" class="ui-btn ui-btn-square inActiveButton replayButton" onclick="showReplayBar();" style="display: none"><span class="buttonText"></span></span>
-          </div>
-          <div id="tempTrailsBar" class="ui-panel ui-strip" style="display: none">
-            <label class="ui-strip-label" for="tempTrailsInput">Trail seconds</label>
-            <input id="tempTrailsInput" class="ui-input ui-input-num" type="number" min="0" max="1200" step="5" value="0" title="0 = full tracks, otherwise only show the last X seconds of each track">
-            <button id="tempTrailsApply" class="ui-btn ui-btn-square" type="button" title="Apply trail length"><span class="fa-solid fa-check"></span></button>
           </div>
         </div>
         <div id="header_side" class="infoHeading">

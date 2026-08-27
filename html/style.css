@@ -999,10 +999,4 @@ tr#photo_container {
     z-index: auto;
 }
 
-/* trail-seconds bar: positioned here, styled by ui.css primitives.
-   Absolute so showing it doesn't widen #header_top and shift the buttons. */
-#tempTrailsBar {
-    position: absolute;
-    top: 100%;
-    right: var(--ui-s2);
-}
+/* the trail-seconds bar sits in the top button row, styled by ui.css */

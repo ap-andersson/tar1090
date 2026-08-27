@@ -2427,3 +2427,19 @@ select:focus-visible {
 .ol-zoom .ol-zoom-out:focus-visible {
     box-shadow: var(--ui-focus-ring);
 }
+
+/* ---- trail-seconds bar -------------------------------------------------
+   It sits in the top row, to the left of the T button that reveals it,
+   rather than hanging below the row - where it read as a stray box. The row
+   is anchored to the right, so the bar appearing extends the row leftwards
+   and the buttons stay where they are. */
+#tempTrailsBar {
+    position: static;
+    flex: none;
+    /* the row's flex gap already spaces it from the T button */
+    margin: 0;
+    /* exactly the button height: any taller and the row grows, which pushes
+       the buttons out of line with the separately-anchored layer control */
+    height: var(--ui-hit);
+    padding: 0 var(--ui-s3);
+}
