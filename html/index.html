@@ -651,14 +651,14 @@
               </div>
           </div>
 
-          <div class="sectionTitle sectionTitleNoBg">
-            <div class="section-title-content">
-              Export KML
+          <details class="ib-group" data-group="export">
+            <summary class="ib-group-summary">Export KML</summary>
+            <div class="infoBlockSection ib-single-column">
+              <button id="export_kml_geom" class="exportButton" onclick='exportKML("geom")'>geometric altitude (EGM96)</button>
+              <button id="export_kml_geom_avg" class="exportButton" onclick='exportKML("geom_avg")'>baro + avg.(EGM96 - baro)</button>
+              <button id="export_kml_baro" class="exportButton" onclick='exportKML("baro")'>uncorrected pressure alt.</button>
             </div>
-          </div>
-          <button id="export_kml_geom" class="exportButton" onclick='exportKML("geom")'>geometric altitude (EGM96)</button>
-          <button id="export_kml_geom_avg" class="exportButton" onclick='exportKML("geom_avg")'>baro + avg.(EGM96 - baro)</button>
-          <button id="export_kml_baro" class="exportButton" onclick='exportKML("baro")'>uncorrected pressure alt.</button>
+          </details>
 
         </div>
       </div> <!-- selected_infoblock -->

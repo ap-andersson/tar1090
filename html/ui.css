@@ -58,6 +58,9 @@
     --ui-fs-sm: calc(12px * var(--SCALE));
     --ui-fs-md: calc(13px * var(--SCALE));
     --ui-fs-lg: calc(16px * var(--SCALE));
+    /* the step between lg and xl, for the summary bands: a step above the
+       detail rows without "-2368 ft/min" outgrowing a third of the panel */
+    --ui-fs-lg2: calc(18px * var(--SCALE));
     --ui-fs-xl: calc(22px * var(--SCALE));
     --ui-fs-2xl: calc(28px * var(--SCALE));
 
@@ -653,7 +656,9 @@
 }
 
 .ib-stat-label {
-    font-size: var(--ui-fs-xs);
+    /* these are the panel's headline figures, so every part of them sits a
+       step above the detail rows below */
+    font-size: var(--ui-fs-sm);
     text-transform: uppercase;
     letter-spacing: 0.05em;
     color: var(--ui-text-3);
@@ -664,10 +669,13 @@
 }
 
 .ib-stat-value {
-    font-size: var(--ui-fs-md);
+    font-size: var(--ui-fs-lg2);
     font-weight: 600;
     color: var(--ui-text-1);
     white-space: nowrap;
+    /* a freak value should trim rather than spill out of its tile */
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* ---- collapsible detail groups -----------------------------------------
@@ -1622,7 +1630,7 @@ select:focus-visible {
     float: none;
     margin: 0;
     text-align: left;
-    font-size: var(--ui-fs-md);
+    font-size: var(--ui-fs-lg);
     color: var(--ui-text-1);
     font-variant-numeric: tabular-nums;
     overflow-wrap: anywhere;
@@ -1731,10 +1739,14 @@ select:focus-visible {
     scrollbar-color: var(--ui-border-strong) transparent;
 }
 
-/* bands span the whole panel */
+/* bands span the whole panel, and sit 1px apart so they read as one block */
 .ib-stats {
-    margin: 0 0 var(--ui-s4);
+    margin: 0 0 1px;
     border-radius: 0;
+}
+
+.ib-stats-two {
+    margin-bottom: var(--ui-s4);
 }
 
 #selected_infoblock #photo_container {
@@ -1800,9 +1812,9 @@ select:focus-visible {
 }
 
 /* these two carry prose rather than numbers, so they wrap instead of
-   overflowing the tile */
+   overflowing the tile - and a model name at headline size would dominate */
 .ib-stats-two .ib-stat-value {
-    font-size: var(--ui-fs-md);
+    font-size: var(--ui-fs-lg);
     font-weight: 600;
     white-space: normal;
     overflow-wrap: anywhere;
@@ -1827,4 +1839,11 @@ select:focus-visible {
 #selected_infoblock .infoData > span:empty::after {
     content: "n/a";
     color: var(--ui-text-3);
+}
+
+
+/* a group whose content is a stack, not label/value pairs */
+.ib-group > .infoBlockSection.ib-single-column {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--ui-s2);
 }
