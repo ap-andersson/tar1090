@@ -2049,3 +2049,14 @@ select:focus-visible {
 .history-panel #trace_time {
     min-width: calc(230px * var(--SCALE));
 }
+
+
+/* History mode is a desktop affair: its controls are a wide panel of small
+   buttons that does not work on a phone, and the panel floated at whatever
+   position the map area gave it. So the entry point is hidden there rather
+   than offering a view that does not hold up. !important because both
+   elements have their display set inline from JS. */
+.is-mobile-layout #show_trace,
+.is-mobile-layout #history_collapse {
+    display: none !important;
+}
