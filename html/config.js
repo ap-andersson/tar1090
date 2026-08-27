@@ -356,7 +356,6 @@ HideCols = [
 // windLabelsSlim = false;
 // showLabelUnits = true;
 //
-// wideInfoBlock = false;
 // baseInfoBlockWidth = 200;
 
 //enableDWD = true;

@@ -9495,19 +9495,6 @@ function deleteTraces() {
     }
 }
 
-function setPictureVisibility() {
-    showPictures = planespottersAPI || planespottingAPI;
-    if (showPictures) {
-        jQuery('#photo_container').removeClass('hidden');
-    } else {
-        jQuery('#photo_container').addClass('hidden');
-    }
-    if (planespottersLinks && !showPictures) {
-        jQuery('#photoLinkRow').removeClass('hidden');
-    } else {
-        jQuery('#photoLinkRow').addClass('hidden');
-    }
-}
 
 // just an idea, unused
 let infoBits = {

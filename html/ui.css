@@ -199,11 +199,6 @@
     font-size: var(--ui-fs-sm);
 }
 
-.ui-row-value {
-    color: var(--ui-text-1);
-    font-variant-numeric: tabular-nums;
-    text-align: right;
-}
 
 /* ---- inline strip: a single-line control cluster ----------------------- */
 .ui-strip {
@@ -356,19 +351,8 @@
     font-variant-numeric: tabular-nums;
 }
 
-.ui-unit {
-    color: var(--ui-text-3);
-    font-size: 0.85em;
-    margin-left: 0.15em;
-}
 
 /* ---- misc -------------------------------------------------------------- */
-.ui-divider {
-    height: 1px;
-    background-color: var(--ui-border);
-    border: 0;
-    margin: var(--ui-s4) 0;
-}
 
 .ui-scroll {
     overflow: auto;
@@ -377,17 +361,6 @@
     scrollbar-color: var(--ui-border-strong) transparent;
 }
 
-.ui-visually-hidden {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    margin: -1px;
-    padding: 0;
-    overflow: hidden;
-    clip: rect(0 0 0 0);
-    white-space: nowrap;
-    border: 0;
-}
 
 /* ==========================================================================
    Migration compatibility
@@ -1700,25 +1673,7 @@ select:focus-visible {
     padding: 0;
 }
 
-#selected_infoblock .sectionTitle {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--ui-s3);
-    min-height: var(--ui-control-h);
-    padding: var(--ui-s3) var(--ui-s5);
-    background-color: var(--ui-surface-2);
-    border-top: 1px solid var(--ui-border);
-    font-size: var(--ui-fs-xs);
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--ui-text-2);
-}
 
-#selected_infoblock .sectionTitleNoBg {
-    background-color: transparent;
-}
 
 /* ==========================================================================
    Infoblock: fill the space, no inner gutters
@@ -1782,45 +1737,9 @@ select:focus-visible {
 
 /* the History toggle is a collapsible header like the groups; it was a
    full-width grey button with an emoji plus/minus */
-#selected_infoblock .greyButton {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--ui-s3);
-    min-height: var(--ui-control-h);
-    padding: var(--ui-s3) var(--ui-s5);
-    border: 0;
-    border-top: 1px solid var(--ui-border);
-    background-color: var(--ui-surface-2);
-    color: var(--ui-text-2);
-    font-family: var(--ui-font);
-    font-size: var(--ui-fs-xs);
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-}
 
-#selected_infoblock .greyButton:hover {
-    color: var(--ui-text-1);
-    background-color: var(--ui-surface-3);
-}
 
-#selected_infoblock .greyButton::after {
-    font-family: "Font Awesome 6 Free";
-    font-weight: 900;
-    content: "\f078";       /* chevron-down, matching the groups */
-    float: none;
-    margin: 0;
-    font-size: calc(10px * var(--SCALE));
-    line-height: 1;
-    color: var(--ui-text-3);
-    transition: transform var(--ui-dur-fast) var(--ui-ease);
-}
 
-#selected_infoblock .greyButton.active::after {
-    content: "\f078";
-    transform: rotate(180deg);
-}
 
 /* second stat band: two fields wide instead of three */
 .ib-stats-two {
@@ -2058,8 +1977,7 @@ select:focus-visible {
 /* This line carries either "Legs: All" or "No Data available for
    2026-08-25"; without a floor the whole panel resized every time you paged
    a day. Sized to the longer string. */
-.history-panel #leg_sel,
-.history-panel #trace_time {
+.history-panel #leg_sel {
     min-width: calc(230px * var(--SCALE));
 }
 
@@ -2318,10 +2236,6 @@ select:focus-visible {
 }
 
 .openaip-opacity-label,
-.openaip-opacity-pct {
-    font-size: var(--ui-fs-xs);
-    color: var(--ui-text-3);
-}
 
 /* nested inside the layer list on a phone: no frame of its own */
 .is-mobile-layout #openaip_vector_panel {
@@ -2442,4 +2356,17 @@ select:focus-visible {
        the buttons out of line with the separately-anchored layer control */
     height: var(--ui-hit);
     padding: 0 var(--ui-s3);
+}
+
+/* On a phone the row is too narrow for the bar and five 44px buttons - the
+   bar alone is ~200px - so it wraps onto its own line beneath them. Ordered
+   after the buttons so they keep the first line, and right-aligned with them
+   rather than floating loose. */
+.is-mobile-layout #header_top .buttonContainer {
+    flex-wrap: wrap;
+}
+
+.is-mobile-layout #tempTrailsBar {
+    order: 1;
+    margin-top: var(--ui-s2);
 }

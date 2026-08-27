@@ -269,7 +269,6 @@ let openAIPVectorFillOpacity = 8; // slider value (1–10)
 let mapOrientation = 0; // This determines what is up, normally north (0 degrees)
 
 // NO LONGER USED
-let utcTimes = null;
 
 // Use UTC for live labels
 // show times in UTC everywhere (labels, track timestamps, trace headers)
@@ -408,7 +407,6 @@ let baroUseQNH = false;
 let windLabelsSlim = false;
 let showLabelUnits = true;
 
-let wideInfoBlock = false;
 let baseInfoBlockWidth = 330;
 
 // enable DWD Radolan (NEXRAD like weather for Germany)

@@ -148,7 +148,7 @@ class Handler(BaseHTTPRequestHandler):
         if body:
             self.wfile.write(data)
 
-    def proxy(self, body):
+    def proxy(self, body, attempt=0):
         url = self.upstream + self.path
         req = urllib.request.Request(url, method="GET")
         for h in ("Accept", "Accept-Encoding", "Range", "If-None-Match"):
@@ -175,6 +175,11 @@ class Handler(BaseHTTPRequestHandler):
             if body:
                 self.wfile.write(data)
         except Exception as e:
+            # The aircraft database fires dozens of parallel requests; a
+            # single-process proxy drops one occasionally, which surfaces as a
+            # confusing 502 in the page's console. One retry covers it.
+            if attempt == 0:
+                return self.proxy(body, attempt=1)
             msg = f"devserver: upstream {url} failed: {e}\n".encode()
             self.send_response(502)
             self.send_header("Content-Type", "text/plain")
