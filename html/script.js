@@ -3055,7 +3055,6 @@ function initMap() {
         }
     });
 
-    tableColorsLight = tableColors;
     tableColorsDark = JSON.parse(JSON.stringify(tableColors));
     let darkVals = Object.values(tableColorsDark);
     for (let i in ['selected', 'unselected']) {
@@ -3069,49 +3068,7 @@ function initMap() {
             obj[key] = hslToRgb(hsl);
         }
     }
-    new Toggle({
-        key: "darkMode",
-        display: "Dark Mode",
-        container: "#settingsLeft",
-        init: darkModeDefault,
-        setState: function(state) {
-            let root = document.documentElement;
-            jQuery(".layer-switcher .panel").css("background", "var(--BGCOLOR1)");
-            jQuery(".layer-switcher .panel").css("border", "4px solid var(--BGCOLOR1)");
-            if (state) {
-                root.style.setProperty("--BGCOLOR1", '#313131');
-                root.style.setProperty("--BGCOLOR2", '#242424');
-                root.style.setProperty("--TXTCOLOR1","#BFBFBF");
-                root.style.setProperty("--TXTCOLOR2","#D8D8D8");
-                root.style.setProperty("--TXTCOLOR3","#a8a8a8");
-                //invert the "x" images
-                jQuery(".infoblockCloseBox").css('filter','invert(100%)');
-                jQuery(".infoblockCloseBox").css(' -webkit-filter','invert(100%)');
-                jQuery(".settingsCloseBox").css('filter','invert(100%)');
-                jQuery(".settingsCloseBox").css(' -webkit-filter','invert(100%)');
-                tableColors = tableColorsDark;
-            } else {
-                root.style.setProperty("--BGCOLOR1", '#F8F8F8');
-                root.style.setProperty("--BGCOLOR2", '#CCCCCC');
-                root.style.setProperty("--TXTCOLOR1","#003f4b");
-                root.style.setProperty("--TXTCOLOR2","#050505");
-                root.style.setProperty("--TXTCOLOR3","#003f4b");
-                jQuery(".infoblockCloseBox").css('filter','invert(0%)');
-                jQuery(".infoblockCloseBox").css(' -webkit-filter','invert(0%)');
-                jQuery(".settingsCloseBox").css('filter','invert(0%)');
-                jQuery(".settingsCloseBox").css(' -webkit-filter','invert(0%)');
-
-                tableColors = tableColorsLight;
-            }
-            if (loadFinished) {
-                TAR.planeMan.redraw();
-                refreshFilter();
-                initLegend(tableColors.unselected);
-                initSourceFilter(tableColors.unselected);
-                initFlagFilter(tableColors.unselected);
-            }
-        }
-    });
+    tableColors = tableColorsDark;
 
     initLegend(tableColors.unselected);
 

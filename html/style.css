@@ -1,15 +1,29 @@
 :root {
+    /* Dark only. These were the values the darkMode toggle used to set from
+       JS; the light set and the toggle are gone. */
     --SCALE: 1;
-    --BGCOLOR1: #F8F8F8;
-    --BGCOLOR2: #CCCCCC;
+    --BGCOLOR1: #313131;
+    --BGCOLOR2: #242424;
     --ACCENT: #00596b;
     --DARK_ACCENT: #2c3e43;
     --FS1: calc( 11px * var(--SCALE));
     --FS2: calc( 14px * var(--SCALE));
     --FS3: calc( 18px * var(--SCALE));
-    --TXTCOLOR1: #003f4b;
-    --TXTCOLOR2: #050505;
-    --TXTCOLOR3: #101010;
+    --TXTCOLOR1: #BFBFBF;
+    --TXTCOLOR2: #D8D8D8;
+    --TXTCOLOR3: #a8a8a8;
+}
+
+/* these close buttons are dark artwork, inverted for a dark background -
+   the darkMode toggle used to apply this filter from JS */
+.infoblockCloseBox,
+.settingsCloseBox {
+    filter: invert(100%);
+}
+
+.layer-switcher .panel {
+    background: var(--BGCOLOR1);
+    border: 4px solid var(--BGCOLOR1);
 }
 
 html, body {

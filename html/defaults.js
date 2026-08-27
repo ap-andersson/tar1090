@@ -426,7 +426,6 @@ let jaeroLabel = "ADS-C"; // relabel the ADS-C data if used for other purposes (
 let seenTimeout = 58; // in seconds
 let seenTimeoutMlat = 58; // in seconds
 
-let darkModeDefault = true; // turn on dark mode by default (change in browser possible)
 
 let tableInView = false; // only show aircraft in current view (V button)
 
@@ -448,7 +447,6 @@ let icaoBlacklist = null;
 let OutlineMlatColor = null;
 
 let tableColorsDark;
-let tableColorsLight;
 let tableColors = {
     unselected: {
         adsb:      "#d8f4ff",
