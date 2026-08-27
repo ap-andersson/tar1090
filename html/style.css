@@ -659,20 +659,10 @@ table.infoSectionTable tr td {
     padding-bottom: calc( 3.5px * var(--SCALE));
 }
 
+/* size and state are set by ui.css, which draws the box and tick rather than
+   using the two PNGs this used to reference */
 .settingsCheckbox {
-    width: calc( 12px * var(--SCALE));
-    height: calc( 12px * var(--SCALE));
-    background-size: calc( 12px * var(--SCALE)) calc( 12px * var(--SCALE));
-    margin-left: calc( 5px * var(--SCALE));
-    margin-right: calc( 5px * var(--SCALE));
-    background-image: url('images/box-empty.png');
-    background-repeat: no-repeat;
-    background-position: center;
     cursor: pointer;
-}
-
-.settingsCheckboxChecked {
-    background-image: url('images/box-checked.png') !important;
 }
 
 .settingsCloseBox {

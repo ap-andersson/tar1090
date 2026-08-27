@@ -970,9 +970,6 @@
     border: 1px solid var(--ui-border-strong);
     border-radius: var(--ui-r-sm);
     background-color: var(--ui-surface-0);
-    /* style.css sets the checked artwork with !important, so clearing it
-       needs the same weight */
-    background-image: none !important;
     cursor: pointer;
     position: relative;
 }
