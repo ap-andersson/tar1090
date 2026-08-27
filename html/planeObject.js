@@ -2050,7 +2050,7 @@ PlaneObject.prototype.updateLines = function() {
             let timestamp1;
             let timestamp2 = "";
             const historic = (showTrace || replay);
-            const useLocal = ((historic && !utcTimesHistoric) || (!historic && !utcTimesLive));
+            const useLocal = !useUTC;
             const date = new Date(seg.ts * 1000);
             if (!date) {
                 console.log(seg);
@@ -2081,7 +2081,7 @@ PlaneObject.prototype.updateLines = function() {
                 timestamp2 += '.' + (Math.floor((seg.ts*10)) % 10);
             }
 
-            if (showTrace && !utcTimesHistoric) {
+            if (showTrace && !useUTC) {
                 timestamp2 += '\n' + TIMEZONE;
             } else if (!useLocal) {
                 timestamp2 += NBSP + 'Z';

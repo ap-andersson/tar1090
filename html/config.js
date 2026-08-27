@@ -228,10 +228,8 @@ ColorByAlt = {
 //mapOrientation = 0;
 
 // Use UTC for live labels
-// utcTimesLive = false;
-
-// Use UTC for historic labels
-// utcTimesHistoric = true;
+// show all times in UTC instead of the browser's local timezone
+// useUTC = false;
 
 // Only display labels when zoomed in this far:
 //labelZoom = 8;

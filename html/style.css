@@ -475,11 +475,6 @@ select.error, textarea.error, input.error {
 }
 
 
-.fullscreenButton {
-    background-image: url('images/fullscreen.svg');
-    background-size: 90%;
-}
-
 #toggle_sidebar_control,
 #expand_sidebar_control,
 #shrink_sidebar_control,

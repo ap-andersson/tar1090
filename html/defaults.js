@@ -272,10 +272,9 @@ let mapOrientation = 0; // This determines what is up, normally north (0 degrees
 let utcTimes = null;
 
 // Use UTC for live labels
-let utcTimesLive = false;
-
-// Use UTC for historic labels
-let utcTimesHistoric = true;
+// show times in UTC everywhere (labels, track timestamps, trace headers)
+// rather than the browser's local timezone
+let useUTC = false;
 
 // Only display labels when zoomed in this far:
 let labelZoom = 0;

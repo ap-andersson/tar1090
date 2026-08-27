@@ -1411,18 +1411,6 @@ function earlyInitPage() {
         jQuery('#settings_infoblock').toggle();
     });
 
-    if (onMobile) {
-        jQuery('#fullscreenButton').on('click', function() {
-            if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen();
-            } else if (document.exitFullscreen) {
-                document.exitFullscreen();
-            }
-        });
-    } else {
-        jQuery('#fullscreenButton').hide();
-    }
-
     jQuery('#settings_close').on('click', function() {
         jQuery('#settings_infoblock').hide();
     });
@@ -1545,25 +1533,23 @@ jQuery('#selected_altitude_geom1')
         toggles['geomUseEGM'].toggle(true, 'init');
     }
 
-    new Toggle({
-        key: "utcTimesLive",
-        display: "Live track labels: UTC",
-        container: "#settingsLeft",
-        init: utcTimesLive,
-        setState: function(state) {
-            utcTimesLive = state;
-            remakeTrails();
-            refreshSelected();
-        }
-    });
+    // one setting for every time shown in the UI, replacing the separate
+    // live and historic ones. Carry over whichever the user already had -
+    // live is the view they spend most time in.
+    if (loStore['useUTC'] == undefined) {
+        if (loStore['utcTimesLive'] != undefined)
+            loStore['useUTC'] = loStore['utcTimesLive'];
+        else if (loStore['utcTimesHistoric'] != undefined)
+            loStore['useUTC'] = loStore['utcTimesHistoric'];
+    }
 
     new Toggle({
-        key: "utcTimesHistoric",
-        display: "Historic track labels: UTC",
+        key: "useUTC",
+        display: "Times in UTC",
         container: "#settingsLeft",
-        init: utcTimesHistoric,
+        init: useUTC,
         setState: function(state) {
-            utcTimesHistoric = state;
+            useUTC = state;
             remakeTrails();
             refreshSelected();
         }
@@ -3519,7 +3505,7 @@ function refreshSelected() {
     if (showTrace) {
         if (selected.position_time) {
             const date = new Date(selected.position_time * 1000);
-            let timestamp = utcTimesHistoric ? (zuluTime(date) + NBSP + 'Z') : (lDateString(date) + ' ' + localTime(date) + NBSP + TIMEZONE);
+            let timestamp = useUTC ? (zuluTime(date) + NBSP + 'Z') : (lDateString(date) + ' ' + localTime(date) + NBSP + TIMEZONE);
             jQuery('#trace_time').updateText('Time:\n' + timestamp);
         } else {
             jQuery('#trace_time').updateText('Time:\n');
@@ -8262,7 +8248,7 @@ function initReplay(chunk, data) {
 }
 
 function setReplayTimeHint(date) {
-    if (true || utcTimesHistoric) {
+    if (true) {
         jQuery("#replayDateHintLocal").html(TIMEZONE + " Date: " + lDateString(date));
         jQuery("#replayDateHint").html("" + zDateString(date));
         jQuery("#replayTimeHint").html("UTC:" + NBSP + zuluTime(date) + ' / ' + TIMEZONE + ":" + NBSP + localTime(date));
