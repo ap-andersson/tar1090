@@ -3705,7 +3705,7 @@ function refreshSelected() {
         jQuery('#selected_temp').updateText('n/a');
 
     jQuery('#selected_speed1').updateText(format_speed_long(selected.gs, DisplayUnits));
-    if (isMobile()) updateMobileSummary(selected);
+    if (isMobile()) showMobileSheet(selected);
     jQuery('#selected_speed2').updateText(format_speed_long(selected.gs, DisplayUnits));
     jQuery('#selected_ias').updateText(format_speed_long(selected.ias, DisplayUnits));
     jQuery('#selected_tas').updateText(format_speed_long(selected.tas, DisplayUnits));
@@ -4949,42 +4949,26 @@ function initLayoutMode() {
     });
 }
 
-function updateMobileSummary(selected) {
+// The sheet displays the real #selected_infoblock rather than a parallel copy
+// of the same fields, so the phone summary is the desktop summary by
+// construction. Collapsed vs expanded is a CSS concern.
+function showMobileSheet(selected) {
+    const sheet = jQuery('#mobile_summary');
+    const block = jQuery('#selected_infoblock');
+
     if (!selected) {
-        jQuery('#mobile_summary').hide();
+        collapseMobileSheet();
+        sheet.hide();
         return;
     }
-    const callsign = selected.name || selected.icao || 'n/a';
-    const icao     = selected.icao ? selected.icao.toUpperCase() : '';
-    const type     = selected.icaoType || '';
-    const squawk   = (selected.squawk && selected.squawk !== '0000') ? ('SQ\u00a0' + selected.squawk) : '';
-    const operator = selected.ownOp || '';
-    const route    = selected.routeString || '';
-    const alt      = format_altitude_long(adjust_baro_alt(selected.altitude), selected.vert_rate, DisplayUnits);
-    const spd      = format_speed_long(selected.gs, DisplayUnits);
-    const vrate    = format_vert_rate_long(selected.vert_rate, DisplayUnits);
 
-    jQuery('#mob_callsign').text(callsign);
-    jQuery('#mob_icao').text(icao).toggle(!!icao);
-    jQuery('#mob_type').text(type).toggle(!!type);
-    jQuery('#mob_squawk').text(squawk).toggle(!!squawk);
-    jQuery('#mob_operator').text(operator).toggle(!!operator);
-    jQuery('#mob_route').text(route).toggle(!!route);
-    jQuery('#mob_altitude').text(alt);
-    jQuery('#mob_speed').text(spd);
-    jQuery('#mob_vrate').text(vrate);
+    if (!block.parent().is('#mobile_summary'))
+        block.appendTo(sheet);
 
-    // Show thumbnail if available
-    const photos = selected.psAPIresponse && (selected.psAPIresponse['photos'] || selected.psAPIresponse['images']);
-    const thumbSrc = photos && photos[0] && (photos[0]['thumbnail'] || photos[0]['thumbnail_large']);
-    const thumbUrl = thumbSrc && (typeof thumbSrc === 'string' ? thumbSrc : thumbSrc['src']);
-    if (thumbUrl) {
-        jQuery('#mob_thumbnail').attr('src', thumbUrl).show();
-    } else {
-        jQuery('#mob_thumbnail').hide();
-    }
-
-    jQuery('#mobile_summary').show();
+    // adjustInfoBlock sets a desktop pixel width and height inline; both have
+    // to go or a stale height survives a desktop-to-phone resize
+    block.css({width: '', height: '', display: ''});
+    sheet.show();
 }
 
 function toggleMobileExpand() {
@@ -4997,20 +4981,14 @@ function toggleMobileExpand() {
 }
 
 function expandMobileSheet() {
-    // Move infoblock into the sheet so it scrolls with it, then expand
     const sheet = jQuery('#mobile_summary');
-    jQuery('#selected_infoblock').appendTo(sheet);
     sheet.addClass('mobile-expanded');
     sheet.scrollTop(0);
-    jQuery('#mobile_expanded_close').show();
 }
 
 function collapseMobileSheet() {
-    const sheet = jQuery('#mobile_summary');
-    // Return infoblock to map_container before collapsing
-    jQuery('#selected_infoblock').appendTo(jQuery('#map_container'));
-    sheet.removeClass('mobile-expanded');
-    jQuery('#mobile_expanded_close').hide();
+    // the block stays in the sheet; only the amount shown changes
+    jQuery('#mobile_summary').removeClass('mobile-expanded');
 }
 
 // ---- end mobile bottom sheet -------------------------------------------
@@ -5023,12 +5001,11 @@ function adjustInfoBlock() {
     jQuery('#replayBar').css('left', (infoBlockWidth * globalScale + 8) + 'px');
 
     if (isMobile()) {
-        // On mobile the bottom sheet handles display; keep infoblock hidden
+        // the sheet owns the infoblock on a phone
         if (SelectedPlane && toggles['enableInfoblock'].state) {
-            updateMobileSummary(SelectedPlane);
+            showMobileSheet(SelectedPlane);
         } else {
-            jQuery('#mobile_summary').hide();
-            collapseMobileSheet();
+            showMobileSheet(null);
         }
         return;
     }

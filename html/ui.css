@@ -741,3 +741,118 @@
     flex: 1 0 auto;
     white-space: nowrap;
 }
+
+/* ==========================================================================
+   Mobile bottom sheet
+   The sheet holds the real #selected_infoblock, so there is one summary
+   layout for both phone and desktop. Collapsed shows the summary header and
+   the stat tiles; expanded shows the whole block.
+   ========================================================================== */
+
+#mobile_summary {
+    display: none;             /* shown by showMobileSheet */
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: var(--ui-z-sheet);
+    background-color: var(--ui-surface-1);
+    border-top: 1px solid var(--ui-border);
+    border-radius: var(--ui-r-lg) var(--ui-r-lg) 0 0;
+    box-shadow: var(--ui-shadow-2);
+    padding-bottom: env(safe-area-inset-bottom);
+}
+
+#mobile_summary_handle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: var(--ui-hit);
+    color: var(--ui-text-3);
+    font-size: var(--ui-fs-md);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+
+#mobile_summary_handle:hover {
+    color: var(--ui-text-1);
+}
+
+/* the infoblock, living inside the sheet rather than floating over the map */
+#mobile_summary #infoblock-container {
+    /* style.css gives this height: 100%, which leaves dead space below the
+       summary when the sheet is collapsed */
+    height: auto;
+    overflow: visible;
+}
+
+#mobile_summary #selected_infoblock {
+    position: static;
+    width: auto;
+    height: auto;
+    max-height: none;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    background-color: transparent;
+    overflow: visible;
+}
+
+/* ---- collapsed: summary only -------------------------------------------
+   An allow-list, not a hide-list: everything in the block is hidden except
+   the summary header and the stat tiles. Listing what to hide missed the
+   parts of the infoblock that aren't inside a group (History, the colour
+   legend, Pos. epoch) and would miss anything added later. */
+#mobile_summary:not(.mobile-expanded) #infoblock-container > *:not(.ib-summary):not(.ib-stats) {
+    display: none;
+}
+
+#mobile_summary:not(.mobile-expanded) #infoblock_close {
+    display: none;
+}
+
+/* ---- expanded: the whole block, full screen and scrollable ------------- */
+#mobile_summary.mobile-expanded {
+    top: 0;
+    border-radius: 0;
+    border-top: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-top: env(safe-area-inset-top);
+}
+
+#mobile_summary.mobile-expanded #mobile_summary_handle {
+    display: none;
+}
+
+
+
+/* the expanded sheet has its own collapse control at the top */
+#mobile_summary.mobile-expanded #infoblock_close {
+    display: none;
+}
+
+#mobile_summary.mobile-expanded #selected_photo img,
+#mobile_summary.mobile-expanded #photo_container td {
+    max-width: 100%;
+    height: auto;
+}
+
+#mobile_expanded_close {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    min-height: var(--ui-hit);
+    background-color: var(--ui-surface-1);
+    border-bottom: 1px solid var(--ui-border);
+    color: var(--ui-text-2);
+    font-size: var(--ui-fs-lg);
+    cursor: pointer;
+}
+
+#mobile_summary.mobile-expanded #mobile_expanded_close {
+    display: flex;
+}
