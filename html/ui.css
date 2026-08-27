@@ -1261,3 +1261,87 @@ body.is-resizing {
     user-select: none;
     cursor: ew-resize;
 }
+
+/* ==========================================================================
+   Remaining form controls
+   The last surfaces still carrying browser defaults or pre-refresh colours:
+   the units select, the search/jump/altimeter inputs, and the KML export
+   buttons. Styled by their existing class names so no markup changes.
+   ========================================================================== */
+
+select {
+    height: var(--ui-control-h);
+    box-sizing: border-box;
+    /* right padding leaves room for the drawn arrow below */
+    padding: 0 calc(20px * var(--SCALE)) 0 var(--ui-s3);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-r-sm);
+    background-color: var(--ui-surface-2);
+    color: var(--ui-text-1);
+    font-family: var(--ui-font);
+    font-size: var(--ui-fs-sm);
+    cursor: pointer;
+    /* the native arrow varies wildly between engines; draw one instead */
+    -webkit-appearance: none;
+    appearance: none;
+    background-image: linear-gradient(45deg, transparent 50%, var(--ui-text-3) 50%),
+                      linear-gradient(135deg, var(--ui-text-3) 50%, transparent 50%);
+    background-position: right calc(11px * var(--SCALE)) center,
+                         right calc(7px * var(--SCALE)) center;
+    background-size: calc(4px * var(--SCALE)) calc(4px * var(--SCALE));
+    background-repeat: no-repeat;
+}
+
+select:hover {
+    background-color: var(--ui-surface-3);
+    border-color: var(--ui-border-strong);
+}
+
+select:focus-visible {
+    outline: none;
+    border-color: var(--ui-accent);
+    box-shadow: var(--ui-focus-ring);
+}
+
+.searchInput {
+    width: calc(120px * var(--SCALE));
+    height: var(--ui-control-h);
+    box-sizing: border-box;
+    padding: 0 var(--ui-s3);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-r-sm);
+    background-color: var(--ui-surface-0);
+    color: var(--ui-text-1);
+    font-family: var(--ui-font);
+    font-size: var(--ui-fs-sm);
+    font-variant-numeric: tabular-nums;
+}
+
+.searchInput:focus-visible {
+    outline: none;
+    border-color: var(--ui-accent);
+    box-shadow: var(--ui-focus-ring);
+}
+
+.searchInput::placeholder {
+    color: var(--ui-text-3);
+}
+
+.exportButton {
+    width: 100%;
+    min-height: var(--ui-hit);
+    margin-bottom: var(--ui-s3);
+    padding: 0 var(--ui-s4);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-r-sm);
+    background-color: var(--ui-surface-2);
+    color: var(--ui-text-1);
+    font-family: var(--ui-font);
+    font-size: var(--ui-fs-sm);
+    cursor: pointer;
+}
+
+.exportButton:hover {
+    background-color: var(--ui-surface-3);
+    border-color: var(--ui-border-strong);
+}
