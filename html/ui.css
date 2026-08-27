@@ -21,7 +21,11 @@
     --ui-surface-2: #212830;
     --ui-surface-3: #2c343d;
 
-    --ui-panel-bg: rgba(23, 28, 33, 0.92);
+    /* 0.92 let bright aircraft markers show through as faint coloured shapes
+       inside panels - the blur spreads them rather than hiding them. At 0.97
+       the frosted feel comes from the blur, not the alpha, and nothing on the
+       map reads through a list of text. */
+    --ui-panel-bg: rgba(23, 28, 33, 0.97);
     --ui-panel-blur: blur(calc(12px * var(--SCALE)));
 
     --ui-border: #333c45;
