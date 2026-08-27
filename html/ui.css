@@ -1451,6 +1451,10 @@ select:focus-visible {
    control landed underneath the side column. */
 #header_top {
     right: calc(2 * var(--ui-hit) + 2 * var(--ui-s2));
+    /* style.css fixes this at 38px, but the row is taller than that once the
+       buttons grow for touch - and #tempTrailsBar hangs off its bottom at
+       top: 100%, so it landed on top of the buttons */
+    height: auto;
 }
 
 #header_top .buttonContainer {
@@ -1516,9 +1520,14 @@ select:focus-visible {
     font-size: calc(15px * var(--SCALE));
 }
 
-.layer-switcher button:hover {
+.layer-switcher button:hover,
+.layer-switcher button:focus {
     background-color: var(--ui-surface-3);
     border-color: var(--ui-border-strong);
+    /* ol.css sets both a colour and an outline on .ol-control button:hover,
+       which greyed the glyph out on hover. Only the surface should change. */
+    color: var(--ui-text-1);
+    outline: none;
 }
 
 .layer-switcher.shown button {
@@ -1831,6 +1840,7 @@ select:focus-visible {
     background-color: var(--ui-accent-hover);
     border-color: var(--ui-accent-hover);
     color: var(--ui-on-accent);
+    outline: none;
 }
 
 
