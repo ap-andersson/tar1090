@@ -97,12 +97,14 @@
     --ui-ease: cubic-bezier(0.2, 0, 0.2, 1);
 
     /* ---- stacking -------------------------------------------------------
-       Named layers so z-index stops being a guessing game. */
-    --ui-z-map-chrome: 10;
-    --ui-z-panel: 20;
-    --ui-z-sheet: 30;
-    --ui-z-modal: 40;
-    --ui-z-toast: 50;
+       Named layers so z-index stops being a guessing game. These start above
+       1000 because the OpenLayers layer switcher sits at 999 - a scale that
+       started at 10 put every panel underneath it. */
+    --ui-z-map-chrome: 1000;
+    --ui-z-panel: 1100;
+    --ui-z-sheet: 1200;
+    --ui-z-modal: 1300;
+    --ui-z-toast: 1400;
 }
 
 /* Bigger targets for touch, and for any viewport narrow enough to be a phone.

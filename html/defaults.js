@@ -337,6 +337,10 @@ let tempTrails = false;
 let tempTrailsTimeout = 90;
 // upper limit for the "Trail seconds" input in the UI
 let tempTrailsMax = 1200;
+// viewport width at or below which the phone layout is used;
+// ?mobileWidth=N overrides it, which is how the phone path gets tested
+// on a desktop browser that will not make its window narrow enough
+let mobileBreakpoint = 600;
 let squareMania = false;
 
 // Columns that have a // in front of them are shown.

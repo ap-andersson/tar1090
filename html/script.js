@@ -1124,6 +1124,11 @@ function earlyInitPage() {
             tempTrailsTimeout = Math.min(stored, tempTrailsMax);
         }
     }
+    if (usp.has('mobileWidth')) {
+        const width = parseInt(usp.get('mobileWidth'));
+        if (width > 0)
+            mobileBreakpoint = width;
+    }
     if (usp.has('squareMania')) {
         squareMania = true;
     }
@@ -1696,13 +1701,8 @@ jQuery('#selected_altitude_geom1')
             init: useRouteAPI,
             setState: function(state) {
                 useRouteAPI = state;
-                if (useRouteAPI) {
-                    jQuery('#routeRow').show();
-                    jQuery('#routeRowHighlighted').show();
-                } else {
-                    jQuery('#routeRow').hide();
-                    jQuery('#routeRowHighlighted').hide();
-                }
+                if (loadFinished)
+                    refreshSelected();
             }
         });
         if (useIataAirportCodes == false) {
@@ -3564,13 +3564,15 @@ function refreshSelected() {
         jQuery('#selected_squawk2').updateText(selected.squawk);
     }
 
-    if (useRouteAPI) {
-        if (selected.routeString) {
-            jQuery('#selected_route').updateText(selected.routeString);
-            jQuery('#selected_route').attr('title', selected.routeVerbose);
-        } else {
-            jQuery('#selected_route').updateText('n/a');
-        }
+    // The route line lives in the summary header now, so an aircraft with no
+    // route reads better with the line absent than with "n/a" under the
+    // callsign. #routeRow used to track only whether the setting was on.
+    if (useRouteAPI && selected.routeString) {
+        jQuery('#selected_route').updateText(selected.routeString);
+        jQuery('#selected_route').attr('title', selected.routeVerbose);
+        jQuery('#routeRow').show();
+    } else {
+        jQuery('#routeRow').hide();
     }
 
     let magResult = null;
@@ -4850,7 +4852,7 @@ function setPhotoHtml(source) {
 // ---- Mobile bottom sheet ------------------------------------------------
 
 function isMobile() {
-    return window.innerWidth <= 600;
+    return window.innerWidth <= mobileBreakpoint;
 }
 
 // Layout mode is re-evaluated on resize and rotation, not just at load.

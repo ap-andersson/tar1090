@@ -1003,26 +1003,26 @@ tr#photo_container {
 
 /* Collapsed summary bar */
 /* On mobile: hide desktop infoblock; expanded state overrides with its own rule above */
-@media screen and (max-width: 600px) {
-    #selected_infoblock {
-        display: none !important;
-    }
+/* The infoblock used to be hidden here, because the sheet carried its own
+   copy of the summary. The sheet now holds the real infoblock, so hiding it
+   emptied the sheet - visible only on a screen actually narrower than 600px,
+   which is why it survived testing on a desktop browser.
 
-    /* OpenAIP panel: flows inline below the layer list on mobile */
-    #openaip_vector_panel {
-        position: relative !important;
-        top: auto !important;
-        left: auto !important;
-        right: auto !important;
-        width: 100% !important;
-        box-sizing: border-box !important;
-        border-radius: 0 !important;
-        border: none !important;
-        border-top: 1px solid var(--DARK_ACCENT) !important;
-        box-shadow: none !important;
-        margin-top: calc(8px * var(--SCALE));
-        z-index: auto;
-    }
+   Keyed off .is-mobile-layout rather than a media query so CSS follows the
+   same decision as isMobile(), which ?mobileWidth can move. */
+.is-mobile-layout #openaip_vector_panel {
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    right: auto !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    border-radius: 0 !important;
+    border: none !important;
+    border-top: 1px solid var(--DARK_ACCENT) !important;
+    box-shadow: none !important;
+    margin-top: calc(8px * var(--SCALE));
+    z-index: auto;
 }
 
 /* trail-seconds bar: positioned here, styled by ui.css primitives.
