@@ -2474,6 +2474,13 @@ PlaneObject.prototype.getAircraftData = function() {
 };
 
 PlaneObject.prototype.reapTrail = function() {
+    // Temp trails exist to keep the map readable when everything is drawing a
+    // track. The aircraft you have actually selected is the exception: while
+    // it is selected its whole track stays, and it goes back to the temp
+    // length once deselected.
+    if (this.selected)
+        return;
+
     const oldSegs = this.track_linesegs;
     this.track_linesegs = [];
     this.history_size = 0;
