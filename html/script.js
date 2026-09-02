@@ -4510,6 +4510,11 @@ function deselect(plane) {
         refreshSelected();
     }
 
+    // it was exempt from trimming while selected, so bring it back to the
+    // temp-trails window now rather than leaving a long track behind until
+    // the reaper's next tick
+    plane.reapTrail();
+
     plane.updateTick('redraw');
     updateAddressBar();
 }
@@ -6833,15 +6838,7 @@ function findPlanes(queries, byIcao, byCallsign, byReg, byType, showWarnings) {
 }
 
 function trailReaper() {
-    // Temp trails keep the last N seconds of a track, measured against the
-    // live clock. A historic trace or a replay is made of segments that are
-    // hours old by that measure, so reaping would delete the whole thing a
-    // few seconds after it loaded - which is what made a track vanish, and
-    // the aircraft jump, while looking at a past day without touching
-    // anything.
-    if (showTrace || replay)
-        return;
-
+    // reapTrail decides per aircraft whether trimming applies
     for (let i in g.planesOrdered) {
         g.planesOrdered[i].reapTrail();
     }

@@ -2473,12 +2473,16 @@ PlaneObject.prototype.getAircraftData = function() {
         });
 };
 
+// Trim this aircraft's track to the temp-trails window. Every condition for
+// whether trimming applies at all lives here, so any caller gets it right:
+//
+//   - the setting is off, so there is no window to trim to
+//   - a historic trace or a replay, whose segments are hours old measured
+//     against the live clock and would all be thrown away
+//   - the aircraft the user has selected, which shows its whole track; it
+//     goes back to the temp length as soon as it is deselected
 PlaneObject.prototype.reapTrail = function() {
-    // Temp trails exist to keep the map readable when everything is drawing a
-    // track. The aircraft you have actually selected is the exception: while
-    // it is selected its whole track stays, and it goes back to the temp
-    // length once deselected.
-    if (this.selected)
+    if (!tempTrails || showTrace || replay || this.selected)
         return;
 
     const oldSegs = this.track_linesegs;
