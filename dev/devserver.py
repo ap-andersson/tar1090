@@ -193,6 +193,8 @@ def main():
     here = os.path.dirname(os.path.abspath(__file__))
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--port", type=int, default=8090)
+    ap.add_argument("--bind", default="127.0.0.1",
+                    help="address to listen on (0.0.0.0 to reach it from a phone)")
     ap.add_argument("--upstream", default="http://localhost:8088",
                     help="running tar1090 backend to proxy data from")
     ap.add_argument("--root", default=os.path.join(os.path.dirname(here), "html"),
@@ -219,7 +221,7 @@ def main():
     Handler.config_append = config_append
     Handler.quiet = args.quiet
 
-    srv = ThreadingHTTPServer(("127.0.0.1", args.port), Handler)
+    srv = ThreadingHTTPServer((args.bind, args.port), Handler)
     print(f"\n  http://localhost:{args.port}/   (Ctrl-C to stop)\n")
     try:
         srv.serve_forever()
