@@ -47,6 +47,7 @@
             <span class="ib-callsign" title="Callsign: Typically the air traffic control callsign or the aircraft's registration, as entered into the transponder by the pilot" id="selected_callsign">n/a</span>
             <span class="ib-hex ui-mono" id="selected_icao" title="ICAO hex ID: The aircraft's unique ICAO identification number shown in hexadecimal format as set in the aircrafts transponder (can be wrong, we will still display the data with the wrong hex)">
             </span>
+            <span class="ib-model" id="selected_model_compact" title="Aircraft model"></span>
             <div id="routeRow" class="ib-route hidden" title="Reported flight origin and destination according to adsbdb.com">
               <span id="selected_route"></span>
             </div>
@@ -601,7 +602,7 @@
           <div class="bottom-info-container">
             <div class="bottom-info-text"> Learn more about Mode S data type by hovering over each data label.</div>
           </div>
-          <div>
+          <div class="ib-epoch">
               <div class="infoHeading">
                   <span >Pos. epoch</span>:
               </div>

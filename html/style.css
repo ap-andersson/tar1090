@@ -44,10 +44,6 @@ select {
     height: calc(22px * var(--SCALE));
 }
 
-#selected_callsign {
-    font-size: calc( 28px * var(--SCALE)) !important;
-}
-
 #planesTable {
     font-size: var(--FS2);
     white-space: nowrap;
@@ -201,12 +197,16 @@ select {
 /* the zoom buttons themselves are styled in ui.css; only their position on
    the map belongs here */
 .ol-zoom {
-    left: calc(100% - calc( 65px * var(--SCALE)));
-    top: calc(100% - calc( 85px * var(--SCALE)));
-}
-
-.ol-attribution {
-    font-size: var(--FS1);
+    /* anchored to the corner rather than offset from the top-left, and the
+       same distance from the bottom as from the right. The right inset is
+       what it was (65px to the button's left edge), so the buttons only move
+       up - they had sat 7px past the bottom edge once they grew to 44px on a
+       phone. */
+    --zoom-inset: calc(65px * var(--SCALE) - var(--ui-hit));
+    left: auto;
+    top: auto;
+    right: var(--zoom-inset);
+    bottom: var(--zoom-inset);
 }
 
 .warning {
@@ -685,7 +685,6 @@ table.infoSectionTable tr td {
 div#selected_photo{
   text-align: center;
   display: block;
-  margin-top: 1px;
 }
 div#reg_info {
     padding-top: 6px;

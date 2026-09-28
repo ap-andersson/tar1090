@@ -3551,6 +3551,8 @@ function refreshSelected() {
         typeLine = "n/a"
 
     jQuery('#selected_typelong').updateText(typeLine);
+    // the collapsed phone sheet has room for the model, not the year
+    jQuery('#selected_model_compact').updateText(selected.typeLong || selected.icaoType || "");
 
     if (selected.ownOp)
         jQuery('#selected_ownop').updateText(selected.ownOp);
@@ -3582,7 +3584,7 @@ function refreshSelected() {
     // route reads better with the line absent than with "n/a" under the
     // callsign. #routeRow used to track only whether the setting was on.
     if (useRouteAPI && selected.routeString) {
-        jQuery('#selected_route').updateText(selected.routeString);
+        setSelectedRoute(selected.routeString);
         jQuery('#selected_route').attr('title', selected.routeVerbose);
         jQuery('#routeRow').show();
     } else {
@@ -4981,6 +4983,24 @@ function collapseMobileSheet() {
 
 // ---- end mobile bottom sheet -------------------------------------------
 
+// The panel shows the route with an arrow icon between the airports. The
+// string itself keeps its " - " for the aircraft table and the map labels.
+function setSelectedRoute(routeString) {
+    const el = document.getElementById('selected_route');
+    if (el.dataset.route === routeString)
+        return;
+    el.dataset.route = routeString;
+    el.replaceChildren();
+    routeString.split(/ -[ \n]/).forEach(function(part, i) {
+        if (i > 0) {
+            const arrow = document.createElement('i');
+            arrow.className = 'fa-solid fa-arrow-right ib-route-arrow';
+            el.append(arrow);
+        }
+        el.append(part);
+    });
+}
+
 // How much of the map's left edge the infoblock is covering. Panels that float
 // over the map centre themselves in what is left rather than in the whole map,
 // which otherwise puts them half behind the infoblock.
@@ -4991,8 +5011,6 @@ function setInfoblockOffset(px) {
 function adjustInfoBlock() {
     infoBlockWidth = baseInfoBlockWidth;
     jQuery('#selected_infoblock').css("width", infoBlockWidth * globalScale + 'px');
-
-    jQuery('.ol-scale-line').css('left', (infoBlockWidth * globalScale + 8) + 'px');
 
     if (isMobile()) {
         // the sheet owns the infoblock on a phone
@@ -5036,7 +5054,6 @@ function adjustInfoBlock() {
             jQuery("#sidebar_container").css('margin-left', '0');
         //jQuery('#sidebar_canvas').css('margin-bottom', 0);
 
-        jQuery('.ol-scale-line').css('left', '8px');
         jQuery('#credits').css('bottom', '');
         jQuery('#credits').css('left', '');
 

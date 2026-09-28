@@ -63,6 +63,9 @@
     --ui-fs-lg2: calc(18px * var(--SCALE));
     --ui-fs-xl: calc(22px * var(--SCALE));
     --ui-fs-2xl: calc(28px * var(--SCALE));
+    /* the expanded phone sheet's callsign: the headline of a full-screen
+       view */
+    --ui-fs-3xl: calc(36px * var(--SCALE));
 
     --ui-lh-tight: 1.15;
     --ui-lh: 1.4;
@@ -581,33 +584,81 @@
    that matter.
    ========================================================================== */
 
+/* The hex quietly on top, then the callsign and the route sharing
+   a line: callsign left, route right. This is the desktop panel and the
+   expanded phone sheet; the collapsed sheet rearranges it (see Mobile bottom
+   sheet). The callsign is at most eight characters and always fits, so it
+   is the route that trims when a long one (cities, several hops) runs out
+   of room. */
 .ib-summary {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas:
+        "hex  hex"
+        "call route";
     align-items: baseline;
-    gap: var(--ui-s2) var(--ui-s4);
-    padding: var(--ui-s4) var(--ui-s5) var(--ui-s3);
+    gap: var(--ui-s3) var(--ui-s5);
+    padding: var(--ui-s5);
 }
 
 .ib-callsign {
-    font-size: var(--ui-fs-xl);
-    font-weight: 600;
-    letter-spacing: 0.01em;
-    color: var(--ui-text-1);
+    grid-area: call;
+    font-size: var(--ui-fs-2xl);
+    font-weight: 700;
+    letter-spacing: -0.01em;
     line-height: var(--ui-lh-tight);
+    color: var(--ui-text-1);
+    white-space: nowrap;
 }
 
+/* plain quiet text rather than a bordered chip, so it starts on the same
+   inset as the callsign under it */
 .ib-hex {
-    font-size: var(--ui-fs-sm);
-    color: var(--ui-text-3);
+    grid-area: hex;
+    justify-self: start;
+    font-size: var(--ui-fs-xs);
+    color: var(--ui-text-2);
+    white-space: nowrap;
 }
 
-/* route gets its own line, full width, since it is the second thing read */
+/* on desktop the panel's buttons sit in the top-right corner, level with
+   the hex line; a little more room under it keeps the route clear of them */
+html:not(.is-mobile-layout) #selected_infoblock .ib-hex {
+    margin-bottom: var(--ui-s4);
+}
+
+/* the second thing read, so it gets size and the accent */
 .ib-route {
-    flex: 1 0 100%;
-    order: 2;
-    font-size: var(--ui-fs-md);
-    color: var(--ui-text-2);
+    grid-area: route;
+    min-width: 0;
+    font-size: var(--ui-fs-lg);
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: var(--ui-accent-hover);
+    text-align: right;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* the arrow between the airports, set by setSelectedRoute: smaller than the
+   codes, and dimmer, so the airports carry the line */
+.ib-route-arrow {
+    margin: 0 0.35em;
+    font-size: 0.7em;
+    vertical-align: 0.1em;
+    opacity: 0.75;
+}
+
+/* the collapsed sheet's model line; see Mobile bottom sheet */
+.ib-model {
+    display: none;
+}
+
+/* aggregator credits, when shown: a line of their own under the rest. Not a
+   named area, so when hidden it leaves no empty row and no gap. */
+.ib-summary > #creditsSelected {
+    grid-column: 1 / -1;
 }
 
 /* ---- the three numbers ------------------------------------------------- */
@@ -628,7 +679,10 @@
     display: flex;
     flex-direction: column;
     gap: var(--ui-s1);
-    padding: var(--ui-s3);
+    /* the band runs edge to edge, so the tiles take the same side inset as
+       the panel's other text - at 6px the outer tiles sat closer to the
+       screen edge than anything else, worse on a phone with curved edges */
+    padding: var(--ui-s3) var(--ui-s5);
     background-color: var(--ui-surface-2);
 }
 
@@ -806,7 +860,7 @@
     /* a full touch target of dead space above the summary was wasteful; the
        whole collapsed sheet is tappable to expand, so the chevron only has to
        be visible */
-    min-height: calc(22px * var(--SCALE));
+    min-height: calc(26px * var(--SCALE));
     color: var(--ui-text-3);
     font-size: var(--ui-fs-md);
     cursor: pointer;
@@ -871,10 +925,6 @@
     column-gap: var(--ui-s4);
 }
 
-#mobile_summary:not(.mobile-expanded) .ib-summary {
-    grid-area: summary;
-}
-
 #mobile_summary:not(.mobile-expanded) .ib-stats {
     grid-area: stats;
 }
@@ -885,15 +935,52 @@
     margin: 0 var(--ui-s5) 0 0;
 }
 
-/* the summary's own top padding adds to the handle above it */
+/* Collapsed identity: callsign, model, route, one per line, left-aligned
+   beside the thumbnail. No hex - not worth the room in a bar this small.
+   A column rather than the header's grid, so a line with nothing in it (no
+   model, no route) leaves no gap behind. */
 #mobile_summary:not(.mobile-expanded) .ib-summary {
+    grid-area: summary;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--ui-s2);
+    /* its own top padding would add to the handle above it */
     padding-top: 0;
+}
+
+#mobile_summary:not(.mobile-expanded) .ib-hex {
+    display: none;
+}
+
+#mobile_summary:not(.mobile-expanded) .ib-callsign {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#mobile_summary:not(.mobile-expanded) .ib-model:not(:empty) {
+    display: block;
+    font-size: var(--ui-fs-md);
+    color: var(--ui-text-2);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#mobile_summary:not(.mobile-expanded) .ib-route {
+    text-align: left;
 }
 
 /* just the picture: no credit line or placeholder in a collapsed bar */
 #mobile_summary:not(.mobile-expanded) #copyrightInfo,
 #mobile_summary:not(.mobile-expanded) #placeholder-photo {
     display: none;
+}
+
+/* rounded on the box as well as the image: the box clips, and it is what
+   shows while the picture is still loading */
+#mobile_summary:not(.mobile-expanded) #photo_container {
+    border-radius: var(--ui-r-sm);
 }
 
 #mobile_summary:not(.mobile-expanded) #selected_photo img {
@@ -921,6 +1008,17 @@
 
 #mobile_summary.mobile-expanded #mobile_summary_handle {
     display: none;
+}
+
+/* A full-screen view gets a headline: the same header, with a much larger
+   callsign and the route a step below it */
+#mobile_summary.mobile-expanded .ib-callsign {
+    font-size: var(--ui-fs-3xl);
+}
+
+#mobile_summary.mobile-expanded .ib-route {
+    font-size: var(--ui-fs-xl);
+    letter-spacing: 0;
 }
 
 
@@ -1532,43 +1630,6 @@ select:focus-visible {
    than label-left/value-right.
    ========================================================================== */
 
-.ib-summary {
-    padding: var(--ui-s5);
-    /* callsign, hex chip and route each on their own line, with room between */
-    gap: var(--ui-s3) var(--ui-s3);
-}
-
-.ib-callsign {
-    /* takes the whole line so the hex drops beneath it */
-    flex: 1 0 100%;
-    font-size: var(--ui-fs-2xl);
-    font-weight: 700;
-    letter-spacing: -0.01em;
-    line-height: var(--ui-lh-tight);
-}
-
-/* the hex as a quiet bordered chip, on its own line under the callsign */
-.ib-hex {
-    flex: 0 0 auto;
-    order: 1;
-    margin-right: auto;
-    padding: calc(1px * var(--SCALE)) var(--ui-s2);
-    border: 1px solid var(--ui-border);
-    border-radius: var(--ui-r-sm);
-    font-size: var(--ui-fs-xs);
-    color: var(--ui-text-2);
-    white-space: nowrap;
-}
-
-/* route: the second thing read, so it gets size and the accent */
-.ib-route {
-    margin-top: var(--ui-s1);
-    font-size: var(--ui-fs-lg);
-    font-weight: 600;
-    letter-spacing: 0.04em;
-    color: var(--ui-accent-hover);
-}
-
 /* ---- detail rows as a two-column grid ---------------------------------
    Every row in these tables is a <tr> holding one <td> with a label and a
    value, so making the row group a two-column grid puts two pairs per line
@@ -1667,6 +1728,11 @@ select:focus-visible {
     padding: 0 var(--ui-s5) var(--ui-s4);
 }
 
+/* the one label/value pair outside any group, which had no inset at all */
+#selected_infoblock .ib-epoch {
+    padding: var(--ui-s4) var(--ui-s5);
+}
+
 /* the History row is a collapsible section like the groups, so it gets the
    same header bar treatment */
 #selected_infoblock #history_collapse {
@@ -1753,6 +1819,27 @@ select:focus-visible {
     font-weight: 600;
     white-space: normal;
     overflow-wrap: anywhere;
+}
+
+/* The desktop panel is narrow enough that a climb or descent rate
+   ("-3200 ft/min") overflowed its tile and trimmed. There the headline
+   figures come down to the prose tiles' size, and only the band's outer
+   edges keep the text inset; between tiles the padding halves. */
+html:not(.is-mobile-layout) #selected_infoblock .ib-stat-value {
+    font-size: var(--ui-fs-lg);
+}
+
+html:not(.is-mobile-layout) #selected_infoblock .ib-stat {
+    padding-left: var(--ui-s3);
+    padding-right: var(--ui-s3);
+}
+
+html:not(.is-mobile-layout) #selected_infoblock .ib-stat:first-child {
+    padding-left: var(--ui-s5);
+}
+
+html:not(.is-mobile-layout) #selected_infoblock .ib-stat:last-child {
+    padding-right: var(--ui-s5);
 }
 
 /* the layer switcher's own stylesheet lightens the button on hover while the
@@ -2379,6 +2466,88 @@ select:focus-visible {
 .ol-zoom .ol-zoom-in:focus-visible,
 .ol-zoom .ol-zoom-out:focus-visible {
     box-shadow: var(--ui-focus-ring);
+}
+
+/* ---- map attribution and scale line --------------------------------------
+   OpenLayers put the attribution flush in the bottom-right corner on a
+   translucent grey strip, where the zoom buttons covered the end of it, and
+   the scale line on a white one. Both are now the same dark chip: the
+   attribution centred along the bottom edge, the scale line in the
+   bottom-left corner level with it. One fixed height for the pair so they
+   line up, and so the phone layout can stack them exactly. */
+.ol-attribution,
+.ol-scale-line {
+    --map-chip-h: calc(18px * var(--SCALE));
+}
+
+.ol-attribution,
+.ol-attribution.ol-uncollapsible {
+    left: 50%;
+    right: auto;
+    bottom: var(--ui-s4);
+    transform: translateX(-50%);
+    box-sizing: border-box;
+    height: var(--map-chip-h);
+    max-width: calc(100% - 2 * var(--ui-s4));
+    background-color: var(--ui-panel-bg);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-r-sm);
+}
+
+/* the list is a flex item of the chip, so it needs min-width: 0 to shrink
+   and trim with an ellipsis instead of spilling past a narrow map */
+.ol-attribution ul {
+    min-width: 0;
+    padding: 0 var(--ui-s3);
+    font-family: var(--ui-font);
+    font-size: var(--ui-fs-xs);
+    line-height: var(--ui-lh-tight);
+    color: var(--ui-text-3);
+    text-shadow: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ol-attribution a {
+    color: var(--ui-text-2);
+}
+
+.ol-attribution a:hover {
+    color: var(--ui-text-1);
+}
+
+.ol-scale-line {
+    left: var(--ui-s4);
+    bottom: var(--ui-s4);
+    box-sizing: border-box;
+    height: var(--map-chip-h);
+    padding: 0 var(--ui-s2);
+    display: flex;
+    align-items: center;
+    background-color: var(--ui-panel-bg);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-r-sm);
+}
+
+/* the inner box's width is the scale itself, set by OpenLayers - only its
+   colours and type change */
+.ol-scale-line-inner {
+    margin: 0;
+    border-color: var(--ui-text-3);
+    color: var(--ui-text-2);
+    font-family: var(--ui-font);
+    font-size: var(--ui-fs-xs);
+    line-height: var(--ui-lh-tight);
+}
+
+/* A phone is too narrow for the attribution to sit centred beside the scale
+   line, so the scale line steps up to sit just above it, centred the same
+   way so the two read as one stack. */
+.is-mobile-layout .ol-scale-line {
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: calc(var(--ui-s4) + var(--map-chip-h) + var(--ui-s2));
 }
 
 /* ---- trail-seconds bar -------------------------------------------------
