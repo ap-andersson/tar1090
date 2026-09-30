@@ -542,6 +542,79 @@ Make sure that the server address is reachable from the device you are viewing t
 
 **Note:** for this to work, you must have started AIS-catcher with the geojson flag set to on with the option `-N 8100 geojson on` and you should be able to see a geojson if you visit the `aiscatcher_server` address from above with `/geojson` appeanded to it - from the above example this would be `http://192.168.1.113:8100/geojson`
 
+## Airband / ATC audio
+
+tar1090 can show a small player at the top of the map for an airband audio stream, for example an Icecast mount fed by [RTLSDR-Airband](https://github.com/rtl-airband/RTLSDR-Airband). It has a start/stop button and a status box that:
+
+- shows the stream's current title - with RTLSDR-Airband's frequency tags, the channel that is active
+- lights up while someone is transmitting, also while muted
+- has a green border while playing, yellow while muted and red when the stream fails; click it to mute or unmute
+
+It never starts by itself. It is off by default and nothing is shown until a stream is configured.
+
+### Configuration
+
+See the instructions for "[Configuring part 2](#configuring-part-2-the-web-interface-optional)". The settings, with their defaults:
+```
+atcStreamUrl = "";            // the stream, e.g. "https://example.com/atc/stream.mp3" - empty turns the feature off
+atcStatusUrl = "";            // Icecast status JSON for the title; empty = status-json.xsl next to the stream, false = no title
+atcStreamName = "ATC";        // shown until the stream has a title
+atcActivityThreshold = 0.01;  // how loud (RMS, 0 - 1) the audio must be to count as a transmission
+```
+
+With [docker-adsb-ultrafeeder](https://github.com/sdr-enthusiasts/docker-adsb-ultrafeeder) or docker-tar1090, use `TAR1090_CONFIGJS_APPEND`:
+```
+- TAR1090_CONFIGJS_APPEND=atcStreamUrl = "https://example.com/atc/stream.mp3";
+```
+
+### Requirements
+
+- **https:** if tar1090 is served over https, the stream has to be https too. Browsers refuse to play an http stream on an https page (mixed content), and Icecast usually only serves http. The simplest fix is a reverse proxy route on the same host as tar1090, see below.
+- **CORS, for the activity light and the title:** the stream and the status JSON must either come from the same host as tar1090 (a proxy route does this) or send `Access-Control-Allow-Origin`. Icecast 2.4 sends `Access-Control-Allow-Origin: *` by default. Without it the stream still plays, but the dot shows hollow and no title is shown.
+- **Privacy:** Icecast's `status-json.xsl` includes the `<admin>` address from `icecast.xml` and the listener counts. Anything that proxies it publicly publishes those too.
+
+### Reverse proxy examples
+
+Both route `/atc/` on the tar1090 host to Icecast, so `atcStreamUrl = "https://example.com/atc/stream.mp3";`. Only the stream and the status JSON are exposed, not the rest of Icecast. Replace `example.com`, `stream.mp3` and the Icecast address with your own.
+
+Traefik, file provider:
+```yaml
+http:
+  routers:
+    tar1090-atc:
+      rule: "Host(`example.com`) && (Path(`/atc/stream.mp3`) || Path(`/atc/status-json.xsl`))"
+      service: icecast
+      middlewares:
+        - atc-strip
+      tls: true
+      entrypoints:
+        - websecure
+  middlewares:
+    atc-strip:
+      stripPrefix:
+        prefixes:
+          - "/atc"
+  services:
+    icecast:
+      loadBalancer:
+        servers:
+          - url: http://192.168.1.50:8000
+```
+Traefik picks the most specific rule, so this router wins over a `Host(`example.com`)` router serving tar1090 for these two paths.
+
+nginx, inside the `server {}` that serves tar1090:
+```
+location = /atc/stream.mp3 {
+  proxy_pass http://192.168.1.50:8000/stream.mp3;
+  proxy_buffering off;
+}
+location = /atc/status-json.xsl {
+  proxy_pass http://192.168.1.50:8000/status-json.xsl;
+}
+```
+
+Note: the nginx inside docker-tar1090 / ultrafeeder can't be extended this way - its configuration is fixed when the image is built - so with those use a reverse proxy in front of the container.
+
 
 ## NO WARRANTY - Excerpt from the License:
 

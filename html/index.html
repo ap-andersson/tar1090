@@ -707,6 +707,20 @@
             <span id="RP" title="Repla(Y)" class="ui-btn ui-btn-square inActiveButton replayButton" onclick="showReplayBar();" style="display: none"><span class="buttonText"></span></span>
           </div>
         </div>
+        <!-- Airband audio player: hidden unless atcStreamUrl is set -->
+        <div id="atc_player" class="atc-player" hidden>
+          <button id="atc_toggle" class="ui-btn ui-btn-square atc-toggle" type="button" title="Start the airband audio">
+            <span class="fa-solid fa-play"></span>
+          </button>
+          <div class="atc-status-wrap">
+            <button id="atc_status" class="ui-btn atc-status" type="button" title="Mute" aria-pressed="false">
+              <span class="atc-dot" aria-hidden="true"></span>
+              <span id="atc_title" class="atc-title"></span>
+            </button>
+            <input id="atc_volume" class="atc-volume" type="range" min="0" max="1.5" step="0.05" value="1" title="Volume" aria-label="Volume" list="atc_volume_marks">
+            <datalist id="atc_volume_marks"><option value="1"></option></datalist>
+          </div>
+        </div>
         <div id="header_side" class="infoHeading">
           <div class="buttonContainer">
             <div id="toggle_sidebar_control" class="ui-btn ui-btn-square">
@@ -1090,6 +1104,7 @@
     <script>let spriteSrc = 'images/sprites.png';</script>
     <script src="planeObject.js"></script>
     <script src="script.js"></script>
+    <script src="atc.js"></script>
 
     <link rel="preload" as="image" crossOrigin="anonymous" href="images/sprites.png">
 

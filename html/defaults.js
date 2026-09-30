@@ -502,3 +502,28 @@ let DefaultCenterLat = 40.56;
 let DefaultCenterLon = -73.66
 
 let MergeNonIcao = false; // set to true to merge non icao hex with the icao hex (remove the ~)
+
+// -- Airband / ATC audio ---------------------------------
+// A small player at the top of the map for an airband audio stream, for
+// example an Icecast mount fed by RTLSDR-Airband. Empty turns the feature
+// off entirely and nothing is shown. The player never starts by itself.
+//
+// If this page is served over https, the stream has to be https as well -
+// browsers refuse to play an http stream on an https page. A reverse proxy
+// route on the same host as tar1090 is the simplest way to get there.
+//
+//   atcStreamUrl = "https://example.com/atc/stream.mp3";
+let atcStreamUrl = "";
+
+// Icecast's status JSON, read every few seconds while playing to show the
+// current title - with RTLSDR-Airband's frequency tags, the channel that
+// is active. Empty looks for status-json.xsl next to the stream, which is
+// where Icecast serves it; set to false to show no title.
+let atcStatusUrl = "";
+
+// Shown in the player until the stream has a title
+let atcStreamName = "ATC";
+
+// How loud the audio has to be (RMS, 0 - 1) to count as a transmission.
+// Airband audio is silent between transmissions, so this can be low.
+let atcActivityThreshold = 0.01;

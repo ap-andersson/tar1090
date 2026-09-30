@@ -40,6 +40,7 @@
     --ui-accent-quiet: rgba(47, 159, 181, 0.16);
     --ui-on-accent: #06131a;
 
+    --ui-ok: #4cc38a;
     --ui-warn: #e0a33a;
     --ui-danger: #e05c4b;
 
@@ -2577,4 +2578,172 @@ html:not(.is-mobile-layout) #selected_infoblock .ib-stat:last-child {
 .is-mobile-layout #tempTrailsBar {
     order: 1;
     margin-top: var(--ui-s2);
+}
+
+/* ==========================================================================
+   Airband audio player (atc.js)
+   A start/stop button and a status box, centred at the top of the map area.
+   The box's border says what the audio is doing - green playing, yellow
+   muted, red failing - and its dot lights while someone transmits, muted
+   or not. On a phone the pair moves to the top-left corner, stacked, since
+   the top row has no room for them.
+   ========================================================================== */
+
+.atc-player {
+    position: absolute;
+    /* level with the top row's buttons: its .infoHeading margin (2px) plus
+       the row's own inset */
+    top: calc(env(safe-area-inset-top) + 2px * var(--SCALE) + var(--ui-s2));
+    /* centred in the map area not covered by the infoblock */
+    left: calc(50% + var(--ib-offset, 0px) / 2);
+    transform: translateX(-50%);
+    z-index: var(--ui-z-map-chrome);
+    display: flex;
+    align-items: center;
+    gap: var(--ui-s2);
+}
+
+/* the rule above would otherwise outrank the hidden attribute */
+.atc-player[hidden] {
+    display: none;
+}
+
+.atc-status-wrap {
+    position: relative;
+    display: flex;
+    min-width: 0;
+}
+
+.atc-status {
+    justify-content: flex-start;
+    gap: var(--ui-s3);
+    min-width: calc(120px * var(--SCALE));
+    max-width: calc(280px * var(--SCALE));
+    padding: 0 var(--ui-s4);
+}
+
+.atc-title {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--ui-text-2);
+}
+
+.atc-dot {
+    flex: none;
+    width: calc(8px * var(--SCALE));
+    height: calc(8px * var(--SCALE));
+    border-radius: 50%;
+    background-color: var(--ui-text-3);
+    transition: background-color var(--ui-dur-fast) var(--ui-ease),
+                box-shadow var(--ui-dur-fast) var(--ui-ease);
+}
+
+/* ---- what the audio is doing: the border -------------------------------- */
+.atc-player[data-state="playing"] .atc-status {
+    border-color: var(--ui-ok);
+}
+
+.atc-player[data-state="playing"].is-muted .atc-status {
+    border-color: var(--ui-warn);
+}
+
+.atc-player[data-state="error"] .atc-status {
+    border-color: var(--ui-danger);
+}
+
+.atc-player[data-state="error"] .atc-title {
+    color: var(--ui-danger);
+}
+
+/* muted while stopped: it will start muted, so say so quietly */
+.atc-player[data-state="stopped"].is-muted .atc-dot {
+    background-color: var(--ui-warn);
+    opacity: 0.6;
+}
+
+.atc-player[data-state="connecting"] .atc-dot {
+    animation: atc-connecting 1s ease-in-out infinite alternate;
+}
+
+@keyframes atc-connecting {
+    from { opacity: 0.25; }
+    to   { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .atc-player[data-state="connecting"] .atc-dot {
+        animation: none;
+    }
+}
+
+/* ---- someone is transmitting: the dot and the title light up ------------ */
+.atc-player.is-active .atc-dot {
+    background-color: var(--ui-ok);
+    box-shadow: 0 0 0 calc(3px * var(--SCALE)) rgba(76, 195, 138, 0.3);
+}
+
+.atc-player.is-active .atc-title {
+    color: var(--ui-text-1);
+}
+
+/* the stream doesn't allow the level to be measured: a hollow dot, so an
+   unlit one isn't read as silence */
+.atc-player.atc-no-level[data-state="playing"] .atc-dot {
+    background-color: transparent;
+    box-shadow: inset 0 0 0 calc(1.5px * var(--SCALE)) var(--ui-text-3);
+}
+
+/* ---- volume: a slider under the box, while hovering it (desktop) --------
+   The wrap reaches down over the slider so moving onto it keeps it open. */
+.atc-volume {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    box-sizing: border-box;
+    width: 100%;
+    margin: var(--ui-s2) 0 0;
+    padding: var(--ui-s2) var(--ui-s3);
+    background-color: var(--ui-panel-bg);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-r-sm);
+    accent-color: var(--ui-accent);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--ui-dur-fast) var(--ui-ease);
+}
+
+.atc-status-wrap::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    height: var(--ui-s2);
+}
+
+.atc-status-wrap:hover .atc-volume,
+.atc-status-wrap:focus-within .atc-volume {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* ---- phone: top-left, stacked; the hardware keys are the volume --------- */
+.is-mobile-layout .atc-player {
+    left: calc(env(safe-area-inset-left) + var(--ui-s2));
+    transform: none;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.is-mobile-layout .atc-status {
+    /* clear of the column of buttons down the right edge */
+    max-width: calc(100vw - 2 * var(--ui-hit) - 5 * var(--ui-s2));
+}
+
+.is-mobile-layout .atc-volume,
+.is-mobile-layout .atc-status-wrap::after {
+    display: none;
 }
