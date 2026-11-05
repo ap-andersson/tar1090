@@ -2552,6 +2552,18 @@ function ol_map_init() {
         maxTilesLoading: 4,
     });
 
+    // Every base layer is created visible and only the chosen one is switched
+    // on further down, but the first-visit webGL test below already renders a
+    // frame. That frame used to start every base map at once, and with a
+    // vector-tile map as the default (OpenFreeMap, before its style is
+    // applied) the tile queue then never loaded a tile: a black map on a
+    // browser's first visit only. Hide them all first; the loop below shows
+    // the one that is wanted.
+    ol.control.LayerSwitcher.forEachRecursive(layers_group, function(lyr) {
+        if (lyr.get('type') == 'base')
+            lyr.setVisible(false);
+    });
+
     console.time('webglInit');
     webglInit();
     console.timeEnd('webglInit');
