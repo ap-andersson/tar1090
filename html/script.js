@@ -2709,6 +2709,7 @@ function ol_map_init() {
     OLMap.addControl(new ol.control.LayerSwitcher({
         groupSelectStyle: 'none',
         activationMode: 'click', // click sucks in the current implementation
+        collapseLabel: '', // the open state is shown by the button's colour, not a »
         target: 'map_canvas',
     }));
 

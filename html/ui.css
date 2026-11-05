@@ -1622,6 +1622,66 @@ select:focus-visible {
     font-size: var(--ui-fs-sm);
 }
 
+/* ---- the open layer list: a dropdown under its button -------------------
+   In click mode the library opens the list in place: the control grows
+   upwards over the top row and the toggle jumps to the list's top-left
+   corner. Instead the toggle stays where it is in the row - so the same
+   click closes the list again - and the list hangs below the row,
+   right-aligned to the button, the way the settings panel sits under the
+   cog. Selectors carry .ol-control and the activation-mode class to outrank
+   the library's own .shown rules. */
+.layer-switcher {
+    --ui-layer-panel-w: calc(250px * var(--SCALE));
+}
+
+#openaip_vector_panel {
+    --ui-layer-panel-w: calc(250px * var(--SCALE));
+}
+
+.layer-switcher.shown.layer-switcher-activation-mode-click.ol-control {
+    padding: 0;
+    overflow: visible;
+    max-height: none;
+}
+
+.layer-switcher.shown.layer-switcher-activation-mode-click.ol-control > button {
+    display: flex;
+    position: static;
+    margin: 0;
+}
+
+.layer-switcher.shown.layer-switcher-activation-mode-click .panel {
+    position: absolute;
+    /* level with the settings panel (46px from the map top; this box starts
+       at the control's own offset), but never tucked under a taller
+       touch-sized button */
+    top: max(calc(100% + var(--ui-s4)),
+             calc(46px * var(--SCALE) - var(--ui-s1) - var(--ui-s2) + 1px));
+    right: 0;
+    /* one fixed width shared with the OpenAIP filter panel beside it, so the
+       pair reads as a matched set; shrink-to-fit would size it against the
+       30px control and squeeze the labels */
+    width: var(--ui-layer-panel-w);
+    height: auto;
+    max-height: calc(100vh - calc(58px * var(--SCALE)));
+    max-width: calc(100vw - var(--ui-hit) - 4 * var(--ui-s4));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: var(--ui-border-strong) transparent;
+    box-sizing: border-box;
+    box-shadow: var(--ui-shadow-2);
+}
+
+/* The OpenAIP filter panel opens beside the layer list (its right edge is
+   set from script), so its top follows the list down below the row. Same
+   numbers as above, measured from the map top instead of the control. */
+html:not(.is-mobile-layout) #openaip_vector_panel {
+    width: var(--ui-layer-panel-w);
+    top: max(calc(var(--ui-s1) + var(--ui-s2) - 1px + var(--ui-hit) + var(--ui-s4)),
+             calc(46px * var(--SCALE)));
+}
+
 /* ==========================================================================
    Infoblock, second pass
    The summary was a callsign and three tiles above an unchanged label/value
