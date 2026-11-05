@@ -43,7 +43,7 @@ let autoselectCoords = null;
 let showGrid = false;
 
 
-let SiteShow    = true;           // true to show a center marker
+let SiteShow    = false;          // true to show a center marker
 let SiteName    = "My Radar Site"; // tooltip of the marker
 
 // Update GPS location (keep map centered on GPS location)
@@ -63,10 +63,10 @@ let actual_range_outline_width = 1.7;
 // NOTE: dashed lines cause slowdown when zooming in, not recommended
 let actual_range_outline_dash = null; // null - solid line, [5, 5] - dashed line with 5 pixel lines and spaces in between
 //
-let actual_range_show = true;
+let actual_range_show = false;
 
 // which map is displayed to new visitors
-let MapType_tar1090 = "osm";
+let MapType_tar1090 = "OpenFreeMapDark";
 let defaultOverlays = [];
 let dwdLayers = 'dwd:RADOLAN-RY';
 
@@ -124,7 +124,7 @@ let monochromeTracks = null;
 // covering this many minutes at the current ground speed, 0 disables
 let headingLineMinutes = 0;
 
-let altitudeChartDefaultState = true;
+let altitudeChartDefaultState = false;
 
 // HSL for planes that are squawking IDENT
 let identOverrideColor = null;
@@ -217,7 +217,7 @@ let ColorByAlt = {
 // };
 
 // Also called range rings :)
-let SiteCircles = true; // true to show circles (only shown if the center marker is shown)
+let SiteCircles = false; // true to show circles (only shown if the center marker is shown)
 // In miles, nautical miles, or km (depending settings value 'DisplayUnits')
 let SiteCirclesDistances = new Array(100, 150, 200);
 // When more circles defined than cirle colors last color will be used or black by default
@@ -315,9 +315,13 @@ let showZoomLevel = false;
 // O has no visible effect unless labels (L) are on.
 let defaultMilitaryOnly = false;    // U: only show military aircraft
 let defaultAllTracks = false;       // T: show all tracks
-let defaultLabels = false;          // L: aircraft labels
+let defaultLabels = true;           // L: aircraft labels
 let defaultExtendedLabels = 0;      // O: label extension, 0 - 3
 let defaultTrackLabels = false;     // K: track labels
+
+// Whether the sidebar with the aircraft table is open on page load. Once it is
+// opened or closed the browser remembers that, the default only applies before.
+let defaultSidebarVisible = false;
 
 // some scaling for fonts and things
 let globalScale = 1;

@@ -1666,7 +1666,7 @@ jQuery('#selected_altitude_geom1')
         container: null,
         checkbox: null,
         button: '#toggle_sidebar_control',
-        init: (onMobile ? false : true),
+        init: (onMobile ? false : defaultSidebarVisible),
         setState: function (state) {
             if (state) {
                 jQuery("#sidebar_container").show();
@@ -4974,7 +4974,9 @@ function applyLayoutMode(force) {
         // A phone hides the sidebar, but that is a consequence of the window
         // size, not a preference - pass init so it isn't written to loStore
         // and the desktop preference survives.
-        sidebarWanted = (mode == 'mobile') ? false : (loStore['sidebar_visible'] != 'false');
+        sidebarWanted = (mode == 'mobile') ? false
+            : (loStore['sidebar_visible'] == 'true'
+                || (loStore['sidebar_visible'] == undefined && defaultSidebarVisible));
         if (sidebar.state != sidebarWanted)
             sidebar.toggle(sidebarWanted, 'noSave');
     }
