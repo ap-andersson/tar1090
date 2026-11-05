@@ -1118,15 +1118,20 @@ function earlyInitPage() {
         loStore['sidebar_visible'] = "true";
     }
 
-    if (usp.has('allTracks')) {
+    if (usp.has('allTracks') || takeSessionFlag('tempTrailsOffAllTracks')) {
         SelectedAllPlanes = true;
         buttonActive('#T', SelectedAllPlanes);
     }
     if (usp.has('tempTrails')) {
+        // A link can still switch temp trails on, but the setting lives in
+        // local storage, not the address bar: take the value, save it, and
+        // drop the parameter so it doesn't ride along in every URL after.
         tempTrails = true;
         let tmp = parseInt(usp.get('tempTrails'));
         if (tmp > 0)
-            tempTrailsTimeout = tmp;
+            tempTrailsTimeout = Math.min(tmp, tempTrailsMax);
+        loStore['tempTrailsTimeout'] = tempTrailsTimeout;
+        removeUrlParam('tempTrails');
     } else {
         // no URL parameter: fall back to the saved "trail seconds" setting
         const stored = parseInt(loStore['tempTrailsTimeout']);
@@ -4663,16 +4668,13 @@ function setTempTrails(seconds, options) {
     // Shortening just trims what we have, no reload needed.
     const wantsMore = (seconds == 0) ? (previous != 0) : (seconds > previous);
     if (!options.init && wantsMore) {
+        // the reload picks the new value up from local storage
         loStore['tempTrailsTimeout'] = seconds;
-        const params = new URLSearchParams(window.location.search);
-        if (seconds == 0) {
-            params.delete('tempTrails');
-            // keep showing all tracks after the reload
-            params.set('allTracks', '');
-        } else {
-            params.set('tempTrails', seconds);
-        }
-        window.location.search = params.toString();
+        // keep showing all tracks after the reload, without putting
+        // ?allTracks in the address bar for good
+        if (seconds == 0)
+            setSessionFlag('tempTrailsOffAllTracks');
+        window.location.reload();
         return;
     }
 
@@ -4697,6 +4699,43 @@ function setTempTrails(seconds, options) {
         // but from here on the full track is kept again
         refreshFeatures();
         updateAddressBar();
+    }
+}
+
+// Drop one parameter from the address bar, leaving the rest exactly as
+// written (URLSearchParams would re-encode them, commas and all). Also from
+// initialURL, which updateAddressBar falls back to when it has nothing of
+// its own to show.
+function removeUrlParam(name) {
+    const strip = function (href) {
+        const url = new URL(href);
+        const kept = url.search.slice(1).split('&').filter(function (part) {
+            return part && decodeURIComponent(part.split('=')[0]) != name;
+        });
+        url.search = kept.length ? '?' + kept.join('&') : '';
+        return url.href;
+    };
+    initialURL = strip(initialURL);
+    const href = strip(window.location.href);
+    if (href != window.location.href && window.history && window.history.replaceState)
+        window.history.replaceState(window.history.state, '', href);
+}
+
+// a flag that survives one reload of this tab, then is gone
+function setSessionFlag(name) {
+    try {
+        sessionStorage.setItem(name, '1');
+    } catch (e) {
+    }
+}
+
+function takeSessionFlag(name) {
+    try {
+        const set = sessionStorage.getItem(name) != null;
+        sessionStorage.removeItem(name);
+        return set;
+    } catch (e) {
+        return false;
     }
 }
 
@@ -7115,11 +7154,6 @@ function updateAddressBar() {
     if (icaoFilter && !showTrace) {
         string += (string ? '&' : '?');
         string += 'icaoFilter=' + icaoFilter.join(',')
-    }
-
-    if (tempTrails && !showTrace && !replay) {
-        string += (string ? '&' : '?');
-        string += 'tempTrails=' + tempTrailsTimeout;
     }
 
     if (shareBaseUrl) {
