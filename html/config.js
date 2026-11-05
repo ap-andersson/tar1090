@@ -214,14 +214,22 @@ ColorByAlt = {
 //
 //MapboxAPIKey = null;
 
+// Provide an OpenAIP API key here to enable the advanced OpenAIP vector layer
+// with per-category filtering (show/hide gliding sectors, restricted areas, etc.)
+// Create a free account and generate a key at https://www.openaip.net/
+//
+// Be sure to quote your key:
+//   OpenAIPAPIKey = "your key here";
+//
+// OpenAIPAPIKey = "your-key-here";
+// docker-ultrafeeder users: set TAR1090_CONFIGJS_APPEND=OpenAIPAPIKey = "your-key-here";
+
 // This determines what is up, default is north (0 degrees)
 //mapOrientation = 0;
 
 // Use UTC for live labels
-// utcTimesLive = false;
-
-// Use UTC for historic labels
-// utcTimesHistoric = true;
+// show all times in UTC instead of the browser's local timezone
+// useUTC = false;
 
 // Only display labels when zoomed in this far:
 //labelZoom = 8;
@@ -280,7 +288,6 @@ ColorByAlt = {
 //mlatTimeout = 30;
 
 // enable/disable mouseover/hover aircraft information
-//enableMouseover = true;
 
 // enable/disable temporary aircraft trails
 //tempTrails = false;
@@ -349,7 +356,6 @@ HideCols = [
 // windLabelsSlim = false;
 // showLabelUnits = true;
 //
-// wideInfoBlock = false;
 // baseInfoBlockWidth = 200;
 
 //enableDWD = true;
@@ -364,7 +370,6 @@ HideCols = [
 //filterMaxRange = 50; // don't show aircraft further than 50 nmi from the receiver
 //
 //
-//darkModeDefault = true; // turn on dark mode by default (change in browser possible)
 //
 //
 //jaeroTimeout = 35 * 60; // in seconds

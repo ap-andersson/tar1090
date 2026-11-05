@@ -1,14 +1,29 @@
 :root {
+    /* Dark only. These were the values the darkMode toggle used to set from
+       JS; the light set and the toggle are gone. */
     --SCALE: 1;
-    --BGCOLOR1: #F8F8F8;
-    --BGCOLOR2: #CCCCCC;
+    --BGCOLOR1: #313131;
+    --BGCOLOR2: #242424;
     --ACCENT: #00596b;
-    --FS1: calc( 10px * var(--SCALE));
-    --FS2: calc( 13px * var(--SCALE));
-    --FS3: calc( 17px * var(--SCALE));
-    --TXTCOLOR1: #003f4b;
-    --TXTCOLOR2: #050505;
-    --TXTCOLOR3: #101010;
+    --DARK_ACCENT: #2c3e43;
+    --FS1: calc( 11px * var(--SCALE));
+    --FS2: calc( 14px * var(--SCALE));
+    --FS3: calc( 18px * var(--SCALE));
+    --TXTCOLOR1: #BFBFBF;
+    --TXTCOLOR2: #D8D8D8;
+    --TXTCOLOR3: #a8a8a8;
+}
+
+/* these close buttons are dark artwork, inverted for a dark background -
+   the darkMode toggle used to apply this filter from JS */
+.infoblockCloseBox,
+.settingsCloseBox {
+    filter: invert(100%);
+}
+
+.layer-switcher .panel {
+    background: var(--BGCOLOR1);
+    border: 4px solid var(--BGCOLOR1);
 }
 
 html, body {
@@ -41,14 +56,17 @@ select {
 }
 
 #selected_infoblock {
+    border-radius: calc( 10px * var(--SCALE));
     position: absolute;
-    left: 0px;
-    bottom: 0px;
-    width:  calc(180px * var(--SCALE));
-    height: 100%;
+    left: 10px;
+    top: 10px;
+    bottom: 10px;
+    width:  calc(260px * var(--SCALE));
+    height: calc(100%);
     overflow: auto;
     z-index: 1;
-    background-color: var(--BGCOLOR1);
+    background-color: var(--BGCOLOR2);
+    border: 2px solid VAR(--DARK_ACCENT);
 }
 .aggregator-selected-bg:before {
     content: ' ';
@@ -66,10 +84,14 @@ select {
     opacity: 0.12;
 }
 #infoblock-container {
+    padding-left: 12px;
+    padding-right: 12px;
     position:relative;
     overflow: auto;
-    height: 100%;
+    height: calc(100%);
     z-index:3;
+    scrollbar-color: VAR(--DARK_ACCENT) var(--BGCOLOR2);
+    scrollbar-width: thin;
 }
 #sidebar_canvas {
     padding: calc( 5px * var(--SCALE));
@@ -117,22 +139,11 @@ select {
 
 #toggle_sidebar_button.show_sidebar {
     transform: scaleX(-1);
-    background-image: url("images/hide_sidebar.png");
-}
-
-#toggle_sidebar_button.hide_sidebar {
-    background-image: url("images/hide_sidebar.png");
-}
-
-#shrink_sidebar_button {
-    background-image: url("images/hide_sidebar.png");
 }
 
 #expand_sidebar_button {
     transform: scaleX(-1);
-    background-image: url("images/hide_sidebar.png");
 }
-
 
 #credits {
     display: flex;
@@ -160,83 +171,42 @@ select {
     opacity: 0.7;
     margin: 4px;
 }
-.withOverflowingBackground::before {
-   z-index: -1;
-   background-image: url(https://www.exratione.com/assets/color_background.png);
-}
 
 #splitter {
     cursor: ew-resize;
     display: block;
     position: absolute;
     z-index: 99;
-    top:  calc( 5px * var(--SCALE));
+    top:  calc( 7px * var(--SCALE));
     left: calc( 0px * var(--SCALE));
     float: right;
     width: calc( 30px * var(--SCALE));
     height: calc( 30px * var(--SCALE));
-    background-size: calc( 30px * var(--SCALE)) calc( 30px * var(--SCALE));
-    background-repeat: no-repeat;
-    background-color: transparent;
     border: none;
-    background-image: url("images/toggle-width.png");
-    background-size: cover;
-    transform: scaleX(-1);
+    font-size: calc( 26px * var(--SCALE)) !important;
+    background-color: var(--ACCENT);
+    border-radius: 0px calc(4px*var(--SCALE)) calc(4px*var(--SCALE)) 0px;
+    padding-left: 4px;
 }
-
-#splitter-infoblock {
-    cursor: ns-resize;
-    display: inline-block;
-    position: absolute	;
-    top: calc( 0px * var(--SCALE));
-    right: 0;
-    margin-left: auto;
-    width: calc( 24px * var(--SCALE));
-    height: calc( 4px * var(--SCALE));
-    background-size: calc( 24px * var(--SCALE)) calc( 25px * var(--SCALE));
-    background-repeat: no-repeat;
-    background-position: calc( 0px * var(--SCALE));
-    border: none;
-    width: 100%;
-    border-bottom: #234c75;
-    background-color: #65819e;
-    border-bottom-width: calc( 1px * var(--SCALE));
-    border-bottom-style: solid;
-}
-
 /* remove the blue highlighting around the map buttons */
 .ol-control button {
     outline: none;
     z-index: 999;
 }
 
-.ol-zoom-in {
-    background-image: url("images/zoom-in.png");
-    background-size: cover;
-    color:transparent !important;
-    width: calc( 25px * var(--SCALE)) !important;
-    height: calc( 25px * var(--SCALE)) !important;
-    background-color: transparent !important;
-    margin-bottom: calc( 5px * var(--SCALE)) !important;
-}
-
-.ol-zoom-out {
-    background-image: url("images/zoom-out.png");
-    background-size: cover;
-    color:transparent !important;
-    width: calc( 25px * var(--SCALE)) !important;
-    height: calc( 25px * var(--SCALE)) !important;
-    background-color: transparent !important;
-}
-
+/* the zoom buttons themselves are styled in ui.css; only their position on
+   the map belongs here */
 .ol-zoom {
-    background-color: transparent !important;
-    left: calc(100% - calc( 65px * var(--SCALE)));
-    top: calc(100% - calc( 85px * var(--SCALE)));
-}
-
-.ol-attribution {
-    font-size: var(--FS1);
+    /* anchored to the corner rather than offset from the top-left, and the
+       same distance from the bottom as from the right. The right inset is
+       what it was (65px to the button's left edge), so the buttons only move
+       up - they had sat 7px past the bottom edge once they grew to 44px on a
+       phone. */
+    --zoom-inset: calc(65px * var(--SCALE) - var(--ui-hit));
+    left: auto;
+    top: auto;
+    right: var(--zoom-inset);
+    bottom: var(--zoom-inset);
 }
 
 .warning {
@@ -308,10 +278,6 @@ select {
     text-transform: uppercase;
 }
 
-.plane_table_row {
-    cursor: default;
-    height: var(--FS2);
-}
 
 .hidden { display: none; }
 
@@ -321,17 +287,7 @@ select {
 
 .pointer { cursor: pointer; }
 
-.sidebarButton {
-    background-color: #409EDF;
-    padding: calc( 4px * var(--SCALE));
-    color: #FFFFFF;
-    font-weight: normal;
-    font-size: var(--FS2);
-}
 
-.sidebarButton:hover {
-    background-color: #3c6ea3;
-}
 
 .altitudeFilterInput {
     width: calc( 50px * var(--SCALE));
@@ -363,16 +319,18 @@ select.error, textarea.error, input.error {
 }
 
 .layer-switcher {
-    top: calc( 3px * var(--SCALE)) !important;
-    right: calc( 44px * var(--SCALE)) !important;
+    top: calc( 6px * var(--SCALE)) !important;
+    right: calc( 50px * var(--SCALE)) !important;
     z-index: 999;
+    border-radius: calc( 4px * var(--SCALE));
 }
 .layer-switcher button {
     background-size: calc( 26px * var(--SCALE)) calc( 26px * var(--SCALE));
     background-repeat: no-repeat;
     background-position: center;
     width: calc( 30px * var(--SCALE));
-    height: calc( 30px * var(--SCALE));
+    height: calc( 28px * var(--SCALE));
+    border-radius: calc( 4px * var(--SCALE));
 }
 .layer-switcher !.shown {
     top: calc( 3px * var(--SCALE)) !important;
@@ -401,22 +359,10 @@ select.error, textarea.error, input.error {
 }
 
 @media screen and (max-width: 1 calc(000px * var(--SCALE))) {
-    .dateTime {
-        display: none;
-    }
 }
 
-.sectionTitle {
-    width: 100%;
-    text-transform: uppercase;
-    text-align: center;
-    color: #e8e8e8;
-    background: #003f4b;
-}
 
-.section-title-content {
-    padding: calc( 3px * var(--SCALE)) calc( 20px * var(--SCALE));
-}
+
 
 .legend
 {
@@ -444,7 +390,8 @@ select.error, textarea.error, input.error {
     position: absolute;
     right: calc( 0px * var(--SCALE));
     top:  calc( 0px * var(--SCALE));
-    width: calc( 38px * var(--SCALE));
+    /* sized by its buttons, which grow for touch - a fixed width clipped them */
+    width: max-content;
     z-index: 9;
 }
 #header_top {
@@ -456,25 +403,18 @@ select.error, textarea.error, input.error {
     z-index: 9;
 }
 
-.svgButton {
-    background-color: var(--ACCENT);
-    width: calc( 27px * var(--SCALE));
-    height: calc( 27px * var(--SCALE));
-    cursor: pointer;
-    background-position: center;
-    margin: calc( 2px * var(--SCALE));
-    display: inline-block;
-    border-radius: calc( 2px * var(--SCALE));
+
+.button-fa {
+    font-size: calc( 20px * var(--SCALE));
+    padding-top: calc( 4px * var(--SCALE));
 }
 
-.fullscreenButton {
-    background-image: url('images/fullscreen.svg');
-    background-size: 90%;
-}
 
+#toggle_sidebar_control,
+#expand_sidebar_control,
+#shrink_sidebar_control,
 .settingsCog {
-    background-image: url('images/cog-white.svg');
-    background-size: 120%;
+    color: #fff;
 }
 
 .replayButton {
@@ -484,10 +424,10 @@ select.error, textarea.error, input.error {
 
 .button {
     background-color: var(--ACCENT);
-    width: calc( 27px * var(--SCALE));
-    height: calc( 27px * var(--SCALE));
-    border-radius: calc( 2px * var(--SCALE));
-    margin: calc( 2px * var(--SCALE));
+    width: calc( 30px * var(--SCALE));
+    height: calc( 28px * var(--SCALE));
+    border-radius: calc( 4px * var(--SCALE));
+    margin: calc( 4px * var(--SCALE));
     display: inline-block;
     cursor: pointer;
     text-align: center;
@@ -499,6 +439,22 @@ select.error, textarea.error, input.error {
     display: block;
     margin: calc( 1px * var(--SCALE));
     text-align: center;
+}
+
+/* the side chrome is a single column; without this its inline-block buttons
+   wrap into a block as soon as the container is content-sized */
+#header_side .buttonContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--ui-s2);
+    /* same outer spacing as the top row, so the two line up */
+    margin: var(--ui-s2);
+}
+
+#header_side .buttonSpacer {
+    margin: 0;
+    height: var(--ui-s5);
 }
 .buttonSpacer {
     margin: calc( 9px * var(--SCALE));
@@ -520,38 +476,7 @@ select.error, textarea.error, input.error {
  color:#fff
 }
 
-#highlighted_infoblock {
-    background-color: var(--BGCOLOR1);
-    position: absolute;
-    left: calc( 40px * var(--SCALE));
-    top: calc( 60px * var(--SCALE));
-    min-width:  calc(132px * var(--SCALE));
-    padding-right: calc( 5px * var(--SCALE));
-    box-shadow: calc( 4px * var(--SCALE)) calc( 4px * var(--SCALE)) calc( 10px * var(--SCALE)) #444444;
-    cursor: pointer;
-    z-index: 9999;
-    display: none;
-}
 
-.highlightedTitle {
-    border-bottom: calc( 1px * var(--SCALE)) solid #67b6c3;
-    display: inline-block;
-    width: 90%;
-}
-
-.identLarge {
-    font-size: calc( 22px * var(--SCALE));
-    line-height: calc( 24px * var(--SCALE));
-    color: var(--TXTCOLOR1);
-    font-weight: lighter;
-}
-
-.identMedium {
-    font-size: calc( 17px * var(--SCALE));
-    line-height: calc( 22px * var(--SCALE));
-    color: var(--TXTCOLOR1);
-    font-weight: lighter;
-}
 
 .identSmall {
     font-size: calc( 14px * var(--SCALE));
@@ -600,6 +525,13 @@ table.infoSectionTable tr td {
     padding-bottom: calc( 7px * var(--SCALE));
     padding-left: calc( 7px * var(--SCALE));
     padding-right: calc( 7px * var(--SCALE));
+    background: var(--BGCOLOR1);
+    margin-bottom: 10px;
+    border-radius: 0px 0px calc(10px*var(--SCALE)) calc(10px*var(--SCALE));
+}
+
+.infoBlockSectionRoundedTop {
+    border-radius: calc(8px*var(--SCALE)) calc(8px*var(--SCALE)) calc(8px*var(--SCALE)) calc(8px*var(--SCALE))  !important;
 }
 
 .largeText a {
@@ -634,11 +566,12 @@ table.infoSectionTable tr td {
     left: 1%;
     overflow: auto;
     max-height: 90%;
-    box-shadow: calc( 4px * var(--SCALE)) calc( 4px * var(--SCALE)) calc( 10px * var(--SCALE)) #444444;
     padding: calc( 20px * var(--SCALE));
     z-index: 9999;
     display: none;
     background-color: var(--BGCOLOR1);
+    border-radius: calc( 10px * var(--SCALE));
+    border: 2px solid VAR(--DARK_ACCENT);
 }
 
 .settingsColumn {
@@ -651,44 +584,21 @@ table.infoSectionTable tr td {
     padding-bottom: calc( 3.5px * var(--SCALE));
 }
 
+/* size and state are set by ui.css, which draws the box and tick rather than
+   using the two PNGs this used to reference */
 .settingsCheckbox {
-    width: calc( 12px * var(--SCALE));
-    height: calc( 12px * var(--SCALE));
-    background-size: calc( 12px * var(--SCALE)) calc( 12px * var(--SCALE));
-    margin-left: calc( 5px * var(--SCALE));
-    margin-right: calc( 5px * var(--SCALE));
-    background-image: url('images/box-empty.png');
-    background-repeat: no-repeat;
-    background-position: center;
     cursor: pointer;
-}
-
-.settingsCheckboxChecked {
-    background-image: url('images/box-checked.png') !important;
 }
 
 .settingsCloseBox {
     position: absolute;
-    right: calc( 8px * var(--SCALE));
+    right: calc( 12px * var(--SCALE));
     top: calc( 8px * var(--SCALE));
-    background-image: url('images/close-settings.png');
-    background-size: cover;
-    width: calc( 20px * var(--SCALE));
-    height: calc( 20px * var(--SCALE));
     cursor: pointer;
+    font-size: calc( 24px * var(--SCALE));
+    color: #000000;
 }
 
-.infoblockCloseBox {
-    position: absolute;
-    right: calc( 20px * var(--SCALE));
-    top: calc( 8px * var(--SCALE));
-    background-image: url('images/close-settings.png');
-    background-size: cover;
-    width: calc( 20px * var(--SCALE));
-    height: calc( 20px * var(--SCALE));
-    cursor: pointer;
-    z-index: 99;
-}
 
 .settingsText {
     line-height: calc( 20px * var(--SCALE));
@@ -737,54 +647,8 @@ table.infoSectionTable tr td {
     display: inline;
 }
 
-.ui-tabs {
-    background-color: var(--BGCOLOR1);
-}
-.ui-tabs-nav {
-    background-color: var(--BGCOLOR2);
-}
-.ui-tabs-panel {
-    background-color: var(--BGCOLOR1);
-}
-.greyButton {
-    background-color: var(--BGCOLOR2);
-    cursor: pointer;
-    padding: calc( 4px * var(--SCALE));
-    width: 100%;
-    border: none;
-    text-align: left;
-    outline: none;
-    font-size: calc( 15px * var(--SCALE));
-    font-weight: bold;
-    color: var(--TXTCOLOR1);
-}
-.greyButton:after {
-    content: '\02795\FE0E'; /* Unicode character for "plus" sign (+) */
-    float: right;
-    margin-left: calc( 5px * var(--SCALE));
-}
-.greyButton.active:after {
-    content: "\2796\FE0E"; /* Unicode character for "minus" sign (-) */
-}
 
-.ui-tabs-nav li a:focus {
-    outline: none;
-}
 
-.ui-tabs .ui-tabs-panel {
-    padding: 1em 0.5em;
-}
-.ui-tabs .ui-tabs-nav {
-    padding: 2px;
-    margin: 1px;
-    margin-bottom: 1px;
-}
-.ui-tabs .ui-tabs-nav li.ui-tabs-active {
-    padding-bottom: 0px;
-}
-.ui-corner-all, .ui-corner-top, .ui-corner-right, .ui-corner-tr {
-    border-radius: 3px;
-}
 
 .buttonFilter {
     list-style-type: none;
@@ -793,11 +657,6 @@ table.infoSectionTable tr td {
     width: calc( 240px * var(--SCALE));
     cursor: pointer;
 }
-
-.ui-widget-content .ui-selectable .ui-selected {
-    border-color: #cc6600;
-}
-
 .buttonFilter li {
     border-width: 2px;
     border-color: var(--BGCOLOR2);
@@ -818,54 +677,21 @@ table.infoSectionTable tr td {
     max-width: calc( 2 * 130px * var(--SCALE));
 }
 
-#sortableColumns li {
-    margin: 3px 3px 3px 3px;
-    padding: calc( 0px * var(--SCALE));
-    float: left;
-    width: calc( 120px * var(--SCALE));
-    border-color: var(--ACCENT);
-    background-color: var(--BGCOLOR2);
-}
 #copyrightInfo {
   position: Relative;
   font-size: var(--FS1);
-
+  margin-bottom: 12px;
 }
-#selected_photo{
+div#selected_photo{
   text-align: center;
   display: block;
 }
-.ui-widget-content .ui-state-default, .ui-widget-header .ui-state-default, .ui-button, html .ui-button.ui-state-disabled:hover, html .ui-button.ui-state-disabled:active {
-  background: var(--BGCOLOR1);
-  border: none;
+div#reg_info {
+    padding-top: 6px;
 }
-.ui-state-active, .ui-widget-content .ui-state-active, .ui-widget-header .ui-state-active, a.ui-button:active, .ui-button:active, .ui-button.ui-state-active:hover{
-  background: #3d7382;
+#airplanePhoto {
+    border-radius: calc(8px*var(--SCALE)) calc(8px*var(--SCALE)) calc(8px*var(--SCALE)) calc(8px*var(--SCALE));
 }
-.ui-state-default a, .ui-state-default a:link, .ui-state-default a:visited, a.ui-button, a:link.ui-button, a:visited.ui-button, .ui-button {
-  color:var(--TXTCOLOR2);
-}
- .ui-widget-header .ui-state-default, .ui-button, html .ui-button.ui-state-disabled:hover, html .ui-button.ui-state-disabled:active {
-  color:var(--TXTCOLOR2);
-}
-.ui-widget-header, .ui-widget.ui-widget-content {
-    border: none;
-}
-.ui-state-default, .ui-widget-content .ui-state-default, .ui-widget-header .ui-state-default, .ui-button, html .ui-button.ui-state-disabled:hover, html .ui-button.ui-state-disabled:active {
-    color:var(--TXTCOLOR2);
-}
-.ui-widget-content {
-  color:var(--TXTCOLOR2);
-}
-
-.ui-slider {
-    background-color: var(--BGCOLOR2);
-}
-.ui-slider .ui-slider-handle {
-    background-color: rgb(0, 115, 222);
-}
-
-
 input{
   color:var(--TXTCOLOR1);
 }
@@ -929,3 +755,126 @@ input{
 #replaySpeedHint{
   grid-area: speedHint;
 }
+
+.exportButton {
+    width: 100%;
+    margin-bottom: 12px;
+}
+
+div#placeholder-photo {
+    font-size: 96px;
+    align-content: center;
+    height: 130px;
+}
+tr#photo_container {
+    vertical-align: top;
+}
+
+/* OpenAIP Vector Layer filter panel */
+#openaip_vector_panel {
+    position: absolute;
+    top: calc(36px * var(--SCALE));   /* tweak this to move up/down */
+    overflow: auto;
+    max-height: 90vh;
+    padding: calc(16px * var(--SCALE));
+    z-index: 9998;
+    background-color: var(--BGCOLOR1);
+    border-radius: calc(8px * var(--SCALE));
+    border: 2px solid var(--DARK_ACCENT);
+    min-width: calc(220px * var(--SCALE));
+}
+
+.openaip-panel-title {
+    font-weight: bold;
+    font-size: calc(13px * var(--SCALE));
+    margin-bottom: calc(6px * var(--SCALE));
+    color: var(--FGCOLOR1);
+}
+
+.openaip-panel-section {
+    font-size: calc(11px * var(--SCALE));
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--FGCOLOR2, #888);
+    margin-top: calc(8px * var(--SCALE));
+    margin-bottom: calc(3px * var(--SCALE));
+    border-bottom: 1px solid var(--FGCOLOR2, #888);
+    padding-bottom: calc(2px * var(--SCALE));
+}
+
+.openaip-panel-row {
+    display: flex;
+    align-items: center;
+    gap: calc(6px * var(--SCALE));
+    padding: calc(3px * var(--SCALE)) 0;
+    cursor: pointer;
+    font-size: calc(12px * var(--SCALE));
+    color: var(--FGCOLOR1);
+    white-space: nowrap;
+}
+
+.openaip-panel-row input[type="checkbox"] {
+    cursor: pointer;
+    width: calc(13px * var(--SCALE));
+    height: calc(13px * var(--SCALE));
+    flex-shrink: 0;
+}
+
+.oaip-swatch {
+    display: inline-block;
+    width: calc(12px * var(--SCALE));
+    height: calc(12px * var(--SCALE));
+    border-radius: 2px;
+    flex-shrink: 0;
+    opacity: 0.9;
+}
+
+.openaip-opacity-row {
+    display: flex;
+    align-items: center;
+    gap: calc(5px * var(--SCALE));
+    padding: calc(4px * var(--SCALE)) 0 calc(2px * var(--SCALE)) 0;
+}
+
+.openaip-opacity-label {
+    font-size: calc(10px * var(--SCALE));
+    color: var(--FGCOLOR2, #888);
+    flex-shrink: 0;
+}
+
+
+#oaip_fill_opacity {
+    cursor: pointer;
+    height: calc(4px * var(--SCALE));
+}
+
+/* =====================================================================
+   Mobile bottom sheet (shown instead of sidebar on small screens)
+   ===================================================================== */
+
+/* Collapsed summary bar */
+/* On mobile: hide desktop infoblock; expanded state overrides with its own rule above */
+/* The infoblock used to be hidden here, because the sheet carried its own
+   copy of the summary. The sheet now holds the real infoblock, so hiding it
+   emptied the sheet - visible only on a screen actually narrower than 600px,
+   which is why it survived testing on a desktop browser.
+
+   Keyed off .is-mobile-layout rather than a media query so CSS follows the
+   same decision as isMobile(), which ?mobileWidth can move. */
+.is-mobile-layout #openaip_vector_panel {
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    right: auto !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    border-radius: 0 !important;
+    border: none !important;
+    border-top: 1px solid var(--DARK_ACCENT) !important;
+    box-shadow: none !important;
+    margin-top: calc(8px * var(--SCALE));
+    z-index: auto;
+}
+
+/* the trail-seconds bar sits in the top button row, styled by ui.css */

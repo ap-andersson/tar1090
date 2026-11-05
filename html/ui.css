@@ -1,0 +1,2749 @@
+/* ==========================================================================
+   ui.css - design tokens and UI primitives for the refreshed interface.
+   Loaded after style.css so it can take over surfaces one at a time.
+
+   Rules of the road:
+     - Every colour, size and duration comes from a token below. No literals
+       in component rules.
+     - Everything that should grow with the user scale slider multiplies by
+       var(--SCALE), which script.js sets from globalScale.
+     - Dark only. There is no light theme and no theme switching.
+     - Class-based, single specificity. No ids in selectors, no !important.
+   ========================================================================== */
+
+:root {
+    /* ---- surfaces -------------------------------------------------------
+       0 is the deepest (sheets, full-bleed panels), rising to 3 (hover).
+       The map is the real background, so panels sit on translucent fills
+       and let terrain read through. */
+    --ui-surface-0: #0e1216;
+    --ui-surface-1: #171c21;
+    --ui-surface-2: #212830;
+    --ui-surface-3: #2c343d;
+
+    --ui-panel-bg: rgba(23, 28, 33, 0.92);
+    --ui-panel-blur: blur(calc(12px * var(--SCALE)));
+
+    --ui-border: #333c45;
+    --ui-border-strong: #46525d;
+
+    /* ---- text ---------------------------------------------------------- */
+    --ui-text-1: #e6ebef;   /* primary values, headings */
+    --ui-text-2: #a3aeb8;   /* labels, secondary data */
+    --ui-text-3: #6f7c87;   /* units, captions, disabled */
+
+    /* ---- accent ---------------------------------------------------------
+       Teal, continuing tar1090's existing #00596b identity rather than
+       inventing a new hue. Reads against both terrain green and water blue. */
+    --ui-accent: #2f9fb5;
+    --ui-accent-hover: #3cb4cc;
+    --ui-accent-quiet: rgba(47, 159, 181, 0.16);
+    --ui-on-accent: #06131a;
+
+    --ui-ok: #4cc38a;
+    --ui-warn: #e0a33a;
+    --ui-danger: #e05c4b;
+
+    /* ---- focus ----------------------------------------------------------
+       One visible focus treatment everywhere. Never removed. */
+    --ui-focus: #7ad4e6;
+    --ui-focus-ring: 0 0 0 calc(2px * var(--SCALE)) var(--ui-focus);
+
+    /* ---- type ----------------------------------------------------------- */
+    --ui-font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
+               Helvetica, Arial, sans-serif;
+    --ui-font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas,
+                    monospace;
+
+    --ui-fs-xs: calc(11px * var(--SCALE));
+    --ui-fs-sm: calc(12px * var(--SCALE));
+    --ui-fs-md: calc(13px * var(--SCALE));
+    --ui-fs-lg: calc(16px * var(--SCALE));
+    /* the step between lg and xl, for the summary bands: a step above the
+       detail rows without "-2368 ft/min" outgrowing a third of the panel */
+    --ui-fs-lg2: calc(18px * var(--SCALE));
+    --ui-fs-xl: calc(22px * var(--SCALE));
+    --ui-fs-2xl: calc(28px * var(--SCALE));
+    /* the expanded phone sheet's callsign: the headline of a full-screen
+       view */
+    --ui-fs-3xl: calc(36px * var(--SCALE));
+
+    --ui-lh-tight: 1.15;
+    --ui-lh: 1.4;
+
+    /* ---- space ----------------------------------------------------------
+       4px base grid. Use these, not arbitrary calc() values. */
+    --ui-s1: calc(2px * var(--SCALE));
+    --ui-s2: calc(4px * var(--SCALE));
+    --ui-s3: calc(6px * var(--SCALE));
+    --ui-s4: calc(8px * var(--SCALE));
+    --ui-s5: calc(12px * var(--SCALE));
+    --ui-s6: calc(16px * var(--SCALE));
+    --ui-s7: calc(24px * var(--SCALE));
+    --ui-s8: calc(32px * var(--SCALE));
+
+    /* ---- radius --------------------------------------------------------- */
+    --ui-r-sm: calc(4px * var(--SCALE));
+    --ui-r-md: calc(8px * var(--SCALE));
+    --ui-r-lg: calc(14px * var(--SCALE));
+    --ui-r-pill: 999px;
+
+    /* ---- control sizing -------------------------------------------------
+       ui-hit is the minimum touch target. Pointer-coarse devices get 44px;
+       mouse users get something tighter. Both scale with --SCALE. */
+    --ui-hit: calc(30px * var(--SCALE));
+    --ui-control-h: calc(28px * var(--SCALE));
+
+    /* ---- elevation ------------------------------------------------------ */
+    --ui-shadow-1: 0 calc(1px * var(--SCALE)) calc(3px * var(--SCALE)) rgba(0, 0, 0, 0.45);
+    --ui-shadow-2: 0 calc(4px * var(--SCALE)) calc(16px * var(--SCALE)) rgba(0, 0, 0, 0.55);
+
+    /* ---- motion --------------------------------------------------------- */
+    --ui-dur-fast: 120ms;
+    --ui-dur: 200ms;
+    --ui-ease: cubic-bezier(0.2, 0, 0.2, 1);
+
+    /* ---- stacking -------------------------------------------------------
+       Named layers so z-index stops being a guessing game. These start above
+       1000 because the OpenLayers layer switcher sits at 999 - a scale that
+       started at 10 put every panel underneath it. */
+    --ui-z-map-chrome: 1000;
+    --ui-z-panel: 1100;
+    --ui-z-sheet: 1200;
+    --ui-z-modal: 1300;
+    --ui-z-toast: 1400;
+}
+
+/* Bigger targets for touch, and for any viewport narrow enough to be a phone.
+   The width query also makes this testable by resizing a desktop window,
+   which pointer:coarse alone is not. */
+@media (pointer: coarse), (max-width: 600px) {
+    :root {
+        --ui-hit: calc(44px * var(--SCALE));
+        --ui-control-h: calc(40px * var(--SCALE));
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    :root {
+        --ui-dur-fast: 0ms;
+        --ui-dur: 0ms;
+    }
+}
+
+/* ==========================================================================
+   Primitives
+   ========================================================================== */
+
+/* ---- panel: any floating chrome over the map --------------------------- */
+.ui-panel {
+    /* so a max-width includes the panel's own padding and border - without
+       this a panel capped to the free map area still overlapped it by its
+       padding */
+    box-sizing: border-box;
+    background-color: var(--ui-panel-bg);
+    -webkit-backdrop-filter: var(--ui-panel-blur);
+    backdrop-filter: var(--ui-panel-blur);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-r-md);
+    box-shadow: var(--ui-shadow-2);
+    color: var(--ui-text-1);
+    font-family: var(--ui-font);
+    font-size: var(--ui-fs-md);
+    line-height: var(--ui-lh);
+}
+
+.ui-panel-header {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-s4);
+    padding: var(--ui-s4) var(--ui-s5);
+    border-bottom: 1px solid var(--ui-border);
+}
+
+.ui-panel-title {
+    flex: 1;
+    font-size: var(--ui-fs-md);
+    font-weight: 600;
+    color: var(--ui-text-1);
+}
+
+.ui-panel-body {
+    padding: var(--ui-s4) var(--ui-s5);
+}
+
+/* section label inside a panel: quiet, uppercase, above a rule */
+.ui-section {
+    font-size: var(--ui-fs-xs);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--ui-text-3);
+    padding-bottom: var(--ui-s2);
+    margin: var(--ui-s5) 0 var(--ui-s3);
+    border-bottom: 1px solid var(--ui-border);
+}
+
+.ui-section:first-child {
+    margin-top: 0;
+}
+
+/* ---- row: label on the left, value or control on the right ------------- */
+.ui-row {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-s4);
+    min-height: var(--ui-control-h);
+    padding: var(--ui-s1) 0;
+}
+
+.ui-row-label {
+    flex: 1;
+    color: var(--ui-text-2);
+    font-size: var(--ui-fs-sm);
+}
+
+
+/* ---- inline strip: a single-line control cluster ----------------------- */
+.ui-strip {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-s3);
+    padding: var(--ui-s3) var(--ui-s4);
+}
+
+.ui-strip-label {
+    font-size: var(--ui-fs-sm);
+    color: var(--ui-text-2);
+    white-space: nowrap;
+}
+
+/* ---- buttons ----------------------------------------------------------- */
+.ui-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--ui-s2);
+    min-width: var(--ui-hit);
+    min-height: var(--ui-hit);
+    padding: 0 var(--ui-s3);
+    box-sizing: border-box;
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-r-sm);
+    background-color: var(--ui-surface-2);
+    color: var(--ui-text-1);
+    font-family: var(--ui-font);
+    font-size: var(--ui-fs-md);
+    font-weight: 600;
+    line-height: 1;
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    transition: background-color var(--ui-dur-fast) var(--ui-ease),
+                border-color var(--ui-dur-fast) var(--ui-ease),
+                color var(--ui-dur-fast) var(--ui-ease);
+}
+
+.ui-btn:hover {
+    background-color: var(--ui-surface-3);
+    border-color: var(--ui-border-strong);
+}
+
+.ui-btn:focus-visible {
+    outline: none;
+    box-shadow: var(--ui-focus-ring);
+}
+
+/* on = this mode is currently active */
+.ui-btn.is-on {
+    background-color: var(--ui-accent);
+    border-color: var(--ui-accent);
+    color: var(--ui-on-accent);
+}
+
+.ui-btn.is-on:hover {
+    background-color: var(--ui-accent-hover);
+    border-color: var(--ui-accent-hover);
+}
+
+/* square icon/letter button, the map chrome workhorse */
+.ui-btn-square {
+    width: var(--ui-hit);
+    padding: 0;
+}
+
+/* quiet button: no chrome until interacted with */
+.ui-btn-quiet {
+    background-color: transparent;
+    border-color: transparent;
+}
+
+.ui-btn-quiet:hover {
+    background-color: var(--ui-surface-2);
+    border-color: var(--ui-border);
+}
+
+/* ---- button group: buttons that read as one control ------------------- */
+.ui-btn-group {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-s2);
+}
+
+.ui-btn-group-tight {
+    gap: 1px;
+}
+
+.ui-btn-group-tight .ui-btn {
+    border-radius: 0;
+}
+
+.ui-btn-group-tight .ui-btn:first-child {
+    border-radius: var(--ui-r-sm) 0 0 var(--ui-r-sm);
+}
+
+.ui-btn-group-tight .ui-btn:last-child {
+    border-radius: 0 var(--ui-r-sm) var(--ui-r-sm) 0;
+}
+
+/* ---- inputs ------------------------------------------------------------ */
+.ui-input {
+    height: var(--ui-control-h);
+    box-sizing: border-box;
+    padding: 0 var(--ui-s3);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-r-sm);
+    background-color: var(--ui-surface-0);
+    color: var(--ui-text-1);
+    font-family: var(--ui-font);
+    font-size: var(--ui-fs-md);
+    font-variant-numeric: tabular-nums;
+}
+
+.ui-input:focus-visible {
+    outline: none;
+    border-color: var(--ui-accent);
+    box-shadow: var(--ui-focus-ring);
+}
+
+.ui-input::placeholder {
+    color: var(--ui-text-3);
+}
+
+/* numeric input without the browser stepper */
+.ui-input-num {
+    width: calc(56px * var(--SCALE));
+    text-align: right;
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+
+.ui-input-num::-webkit-outer-spin-button,
+.ui-input-num::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    appearance: none;
+    margin: 0;
+}
+
+/* ---- data presentation ------------------------------------------------- */
+.ui-num {
+    font-variant-numeric: tabular-nums;
+}
+
+.ui-mono {
+    font-family: var(--ui-font-mono);
+    font-variant-numeric: tabular-nums;
+}
+
+
+/* ---- misc -------------------------------------------------------------- */
+
+.ui-scroll {
+    overflow: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: var(--ui-border-strong) transparent;
+}
+
+
+/* ==========================================================================
+   Migration compatibility
+   Temporary bridges while surfaces move onto the primitives above. Each of
+   these should disappear as its surface is rebuilt.
+   ========================================================================== */
+
+/* Letter buttons still wrap their glyph in .buttonText, which carries its own
+   margin and line-height from style.css. Flex centring handles it now. */
+.ui-btn .buttonText {
+    margin: 0;
+    font-size: inherit;
+    line-height: 1;
+}
+
+/* style.css sets colour on these; the primitive owns colour now. */
+.ui-btn.activeButton,
+.ui-btn.inActiveButton {
+    color: inherit;
+}
+
+.ui-btn.is-on {
+    color: var(--ui-on-accent);
+}
+
+/* ==========================================================================
+   Responsive layout
+   The breakpoint lives in two places by necessity - the media queries here
+   and isMobile() in script.js. Both are 600px. script.js also puts
+   .is-mobile-layout on <html> so CSS can follow the same decision the JS
+   made rather than re-deriving it.
+   ========================================================================== */
+
+/* ---- safe areas -------------------------------------------------------
+   The viewport is viewport-fit=cover, so chrome must inset itself out from
+   under notches and home indicators. Zero on everything without them. */
+#header_top {
+    padding-top: env(safe-area-inset-top);
+    padding-right: env(safe-area-inset-right);
+}
+
+#header_side {
+    padding-top: env(safe-area-inset-top);
+    padding-right: env(safe-area-inset-right);
+}
+
+#mobile_summary {
+    padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* ---- collapsible side chrome ------------------------------------------
+   A phone can't carry twelve buttons down its edge. Show the ones needed to
+   get anywhere - sidebar, settings, follow - and put the rest behind "more".
+   Desktop is unaffected: .chrome-more is hidden and nothing collapses. */
+.chrome-more {
+    display: none;
+}
+
+.is-mobile-layout .chrome-more {
+    display: inline-flex;
+}
+
+.is-mobile-layout #header_side .chrome-secondary {
+    display: none;
+}
+
+.is-mobile-layout #header_side.is-expanded .chrome-secondary {
+    display: inline-flex;
+}
+
+.is-mobile-layout #header_side.is-expanded .chrome-more {
+    background-color: var(--ui-accent);
+    border-color: var(--ui-accent);
+    color: var(--ui-on-accent);
+}
+
+/* the spacers only make sense when the full column is showing */
+.is-mobile-layout #header_side .buttonSpacer {
+    display: none;
+}
+
+.is-mobile-layout #header_side.is-expanded .buttonSpacer {
+    display: block;
+}
+
+/* ---- altitude colour legend -------------------------------------------
+   It's a fixed-aspect image with numeric ticks; below ~600px the ticks
+   collapse into noise, so it's dropped rather than shown illegibly. */
+.is-mobile-layout #altitude_chart {
+    display: none;
+}
+
+/* ---- sidebar as an overlay --------------------------------------------
+   Under 900px the side-by-side split leaves the map uselessly narrow. The
+   sidebar becomes a full-bleed overlay instead, and the map keeps its size
+   underneath. */
+@media (max-width: 900px) {
+    #sidebar_container {
+        position: absolute;
+        inset: 0;
+        width: 100% !important;
+        max-width: none !important;
+        z-index: var(--ui-z-panel);
+        background-color: var(--ui-surface-1);
+        padding-top: env(safe-area-inset-top);
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    /* dragging the split makes no sense when there is no split */
+    #splitter {
+        display: none !important;
+    }
+}
+
+/* ---- checkbox ----------------------------------------------------------
+   A box that reads as checked or not. Driven by .is-on like the buttons, so
+   there is one active-state convention across the whole UI. */
+.ui-checkbox {
+    flex: none;
+    width: calc(16px * var(--SCALE));
+    height: calc(16px * var(--SCALE));
+    box-sizing: border-box;
+    border: 1px solid var(--ui-border-strong);
+    border-radius: var(--ui-r-sm);
+    background-color: var(--ui-surface-0);
+    cursor: pointer;
+    position: relative;
+}
+
+.ui-checkbox:focus-visible {
+    outline: none;
+    box-shadow: var(--ui-focus-ring);
+}
+
+.ui-checkbox.is-on {
+    background-color: var(--ui-accent);
+    border-color: var(--ui-accent);
+}
+
+/* the tick, drawn rather than shipped as a glyph so it scales cleanly */
+.ui-checkbox.is-on::after {
+    content: "";
+    position: absolute;
+    left: 25%;
+    top: 12%;
+    width: 34%;
+    height: 60%;
+    border: solid var(--ui-on-accent);
+    border-width: 0 calc(2px * var(--SCALE)) calc(2px * var(--SCALE)) 0;
+    transform: rotate(40deg);
+}
+
+.ui-btn:disabled {
+    opacity: 0.35;
+    cursor: default;
+}
+
+.ui-btn:disabled:hover {
+    background-color: transparent;
+    border-color: transparent;
+}
+
+/* ==========================================================================
+   Map label picker
+   ========================================================================== */
+
+#label_picker {
+    position: absolute;
+    /* below the top button row and the layer switcher (both end at 40px), and
+       left of the side button column (32px wide) - covering either of those
+       hides the controls you need while adjusting labels */
+    top: calc(46px * var(--SCALE));
+    right: calc(40px * var(--SCALE));
+    z-index: var(--ui-z-panel);
+    display: flex;
+    flex-direction: column;
+    width: calc(300px * var(--SCALE));
+    max-width: calc(100vw - calc(52px * var(--SCALE)));
+    max-height: calc(100vh - calc(58px * var(--SCALE)));
+}
+
+#label_picker .ui-panel-body {
+    min-height: 0;
+}
+
+.label-picker-presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--ui-s2);
+}
+
+.label-picker-presets .ui-btn {
+    font-weight: 400;
+    font-size: var(--ui-fs-sm);
+}
+
+.label-picker-row {
+    gap: var(--ui-s4);
+}
+
+/* on a phone the picker is a bottom sheet rather than a floating panel */
+.is-mobile-layout #label_picker {
+    top: auto;
+    right: 0;
+    left: 0;
+    bottom: 0;
+    width: auto;
+    max-width: none;
+    max-height: 75vh;
+    border-radius: var(--ui-r-lg) var(--ui-r-lg) 0 0;
+    padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* ==========================================================================
+   Selected aircraft infoblock - summary header
+   The detail below is still the original label/value sections; this is the
+   part you read first: who it is, where it's going, and the three numbers
+   that matter.
+   ========================================================================== */
+
+/* The hex quietly on top, then the callsign and the route sharing
+   a line: callsign left, route right. This is the desktop panel and the
+   expanded phone sheet; the collapsed sheet rearranges it (see Mobile bottom
+   sheet). The callsign is at most eight characters and always fits, so it
+   is the route that trims when a long one (cities, several hops) runs out
+   of room. */
+.ib-summary {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas:
+        "hex  hex"
+        "call route";
+    align-items: baseline;
+    gap: var(--ui-s3) var(--ui-s5);
+    padding: var(--ui-s5);
+}
+
+.ib-callsign {
+    grid-area: call;
+    font-size: var(--ui-fs-2xl);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    line-height: var(--ui-lh-tight);
+    color: var(--ui-text-1);
+    white-space: nowrap;
+}
+
+/* plain quiet text rather than a bordered chip, so it starts on the same
+   inset as the callsign under it */
+.ib-hex {
+    grid-area: hex;
+    justify-self: start;
+    font-size: var(--ui-fs-xs);
+    color: var(--ui-text-2);
+    white-space: nowrap;
+}
+
+/* on desktop the panel's buttons sit in the top-right corner, level with
+   the hex line; a little more room under it keeps the route clear of them */
+html:not(.is-mobile-layout) #selected_infoblock .ib-hex {
+    margin-bottom: var(--ui-s4);
+}
+
+/* the second thing read, so it gets size and the accent */
+.ib-route {
+    grid-area: route;
+    min-width: 0;
+    font-size: var(--ui-fs-lg);
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: var(--ui-accent-hover);
+    text-align: right;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* the arrow between the airports, set by setSelectedRoute: smaller than the
+   codes, and dimmer, so the airports carry the line */
+.ib-route-arrow {
+    margin: 0 0.35em;
+    font-size: 0.7em;
+    vertical-align: 0.1em;
+    opacity: 0.75;
+}
+
+/* the collapsed sheet's model line; see Mobile bottom sheet */
+.ib-model {
+    display: none;
+}
+
+/* aggregator credits, when shown: a line of their own under the rest. Not a
+   named area, so when hidden it leaves no empty row and no gap. */
+.ib-summary > #creditsSelected {
+    grid-column: 1 / -1;
+}
+
+/* ---- the three numbers ------------------------------------------------- */
+.ib-stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1px;
+    margin: 0 var(--ui-s5) var(--ui-s4);
+    border-radius: var(--ui-r-sm);
+    overflow: hidden;
+    /* an odd stat count leaves an empty cell; matching the tile colour makes
+       the block read as one surface rather than as a hole */
+    background-color: var(--ui-surface-2);
+}
+
+.ib-stat {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--ui-s1);
+    /* the band runs edge to edge, so the tiles take the same side inset as
+       the panel's other text - at 6px the outer tiles sat closer to the
+       screen edge than anything else, worse on a phone with curved edges */
+    padding: var(--ui-s3) var(--ui-s5);
+    background-color: var(--ui-surface-2);
+}
+
+.ib-stat-label {
+    /* these are the panel's headline figures, so every part of them sits a
+       step above the detail rows below */
+    font-size: var(--ui-fs-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--ui-text-3);
+    line-height: var(--ui-lh-tight);
+    /* one line, always: a label that wrapped pushed its value below the
+       others and the row stopped reading as a set of tiles */
+    white-space: nowrap;
+}
+
+.ib-stat-value {
+    font-size: var(--ui-fs-lg2);
+    font-weight: 600;
+    color: var(--ui-text-1);
+    white-space: nowrap;
+    /* a freak value should trim rather than spill out of its tile */
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ---- collapsible detail groups -----------------------------------------
+   Native <details>, so keyboard and touch work without any JS. The open
+   state is remembered per group (see initInfoblockGroups in script.js). */
+.ib-group {
+    border-top: 1px solid var(--ui-border);
+}
+
+.ib-group-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--ui-s3);
+    background-color: var(--ui-surface-2);
+    min-height: var(--ui-control-h);
+    padding: var(--ui-s3) var(--ui-s5);
+    font-size: var(--ui-fs-xs);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--ui-text-2);
+    cursor: pointer;
+    user-select: none;
+    list-style: none;
+}
+
+/* the default disclosure triangle, replaced by our own chevron below */
+.ib-group-summary::-webkit-details-marker {
+    display: none;
+}
+
+.ib-group-summary::marker {
+    content: "";
+}
+
+/* The chevron was a rotated bordered box, whose visible ink is its
+   bottom-right corner and therefore sits below the box's own centre - it read
+   as misaligned with the label. A glyph centres on its own line box. */
+.ib-group-summary::after {
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    content: "\f078";      /* chevron-down */
+    font-size: calc(10px * var(--SCALE));
+    line-height: 1;
+    color: var(--ui-text-3);
+    transition: transform var(--ui-dur-fast) var(--ui-ease);
+}
+
+.ib-group[open] > .ib-group-summary::after {
+    transform: rotate(180deg);
+}
+
+.ib-group-summary:hover {
+    color: var(--ui-text-1);
+    background-color: var(--ui-surface-2);
+}
+
+.ib-group-summary:focus-visible {
+    outline: none;
+    box-shadow: var(--ui-focus-ring);
+}
+
+/* style.css gives every .infoBlockSection background: var(--BGCOLOR1), which
+   is lighter than the panel - that is the mismatch between an expanded
+   group's header and its content. Inside the infoblock they are transparent
+   and the header bar is the only filled surface. */
+#selected_infoblock .infoBlockSection {
+    background: transparent;
+    margin-bottom: 0;
+    border-radius: 0;
+}
+
+/* Every group holds label/value pairs, but only Position wrapped them in a
+   .infoSectionTable - the rest are plain divs, so the grid was reaching one
+   section out of nine. */
+.ib-group > .infoBlockSection {
+    padding: var(--ui-s4) var(--ui-s5);
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--ui-s4);
+    align-items: start;
+}
+
+/* a wrapper that only groups pairs would otherwise become one cell holding
+   all of them; display: contents lets its children join the grid. JS hides it
+   with an inline style, which still wins. */
+.ib-group > .infoBlockSection > #selected_showTrace_hide {
+    display: contents;
+}
+
+/* Position keeps its table, which already grids itself - don't nest a grid */
+.ib-group > .infoBlockSection > .infoSectionTable {
+    grid-column: 1 / -1;
+}
+
+/* Two things left blank cells in the grid, which read as holes beside the
+   pair that followed them.
+
+   .rSpacer is an empty 6px div that added vertical breathing room in the old
+   single-column layout. As a grid item it takes a whole cell; the grid's gap
+   does that job now. */
+.ib-group .infoBlockSection .rSpacer {
+    display: none;
+}
+
+/* And a pair whose label is filled from JS - the aircraft category label -
+   renders as an empty cell whenever there is nothing to put in it. */
+.ib-group .infoBlockSection > div:has(> .infoHeading:only-child > span:empty) {
+    display: none;
+}
+
+/* a primitive row used inside the (not yet migrated) settings columns:
+   keep the label on one line and let the control wrap under it when the
+   column is too narrow, rather than squeezing both */
+.settingsOptionContainer.ui-row {
+    flex-wrap: wrap;
+    margin-bottom: var(--ui-s2);
+}
+
+.settingsOptionContainer.ui-row > .ui-row-label {
+    flex: 1 0 auto;
+    white-space: nowrap;
+}
+
+/* ==========================================================================
+   Mobile bottom sheet
+   The sheet holds the real #selected_infoblock, so there is one summary
+   layout for both phone and desktop. Collapsed shows the summary header and
+   the stat tiles; expanded shows the whole block.
+   ========================================================================== */
+
+#mobile_summary {
+    display: none;             /* shown by showMobileSheet */
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: var(--ui-z-sheet);
+    background-color: var(--ui-surface-1);
+    border-top: 1px solid var(--ui-border);
+    border-radius: var(--ui-r-lg) var(--ui-r-lg) 0 0;
+    box-shadow: var(--ui-shadow-2);
+    padding-bottom: env(safe-area-inset-bottom);
+}
+
+#mobile_summary_handle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* a full touch target of dead space above the summary was wasteful; the
+       whole collapsed sheet is tappable to expand, so the chevron only has to
+       be visible */
+    min-height: calc(26px * var(--SCALE));
+    color: var(--ui-text-3);
+    font-size: var(--ui-fs-md);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+
+#mobile_summary_handle:hover {
+    color: var(--ui-text-1);
+}
+
+/* the infoblock, living inside the sheet rather than floating over the map */
+#mobile_summary #infoblock-container {
+    /* style.css gives this height: 100%, which leaves dead space below the
+       summary when the sheet is collapsed */
+    height: auto;
+    overflow: visible;
+}
+
+#mobile_summary #selected_infoblock {
+    /* the desktop card's float, frame and shadow have no place inside the
+       sheet, which is already a surface */
+    position: static;
+    inset: auto;
+    width: auto;
+    height: auto;
+    max-height: none;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    background-color: transparent;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    overflow: visible;
+}
+
+/* ---- collapsed: summary, stats and a thumbnail --------------------------
+   An allow-list, not a hide-list: everything in the block is hidden except
+   the summary header, the stat tiles and the photo. Listing what to hide
+   missed the parts of the infoblock that aren't inside a group (History, the
+   colour legend, Pos. epoch) and would miss anything added later. */
+#mobile_summary:not(.mobile-expanded) #infoblock-container > *:not(.ib-summary):not(.ib-stats):not(#photo_block) {
+    display: none;
+}
+
+/* the model/country band belongs to the expanded view; the collapsed bar
+   stays to callsign, route, the three numbers and the thumbnail */
+#mobile_summary:not(.mobile-expanded) .ib-stats-two {
+    display: none;
+}
+
+/* Summary and picture side by side, then the numbers across the full width.
+   The stats used to share a row with the photo column, which stopped them
+   short of the edge. */
+#mobile_summary:not(.mobile-expanded) #infoblock-container {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+        "summary photo"
+        "stats   stats";
+    align-items: start;
+    column-gap: var(--ui-s4);
+}
+
+#mobile_summary:not(.mobile-expanded) .ib-stats {
+    grid-area: stats;
+}
+
+#mobile_summary:not(.mobile-expanded) #photo_block {
+    grid-area: photo;
+    display: block;
+    margin: 0 var(--ui-s5) 0 0;
+}
+
+/* Collapsed identity: callsign, model, route, one per line, left-aligned
+   beside the thumbnail. No hex - not worth the room in a bar this small.
+   A column rather than the header's grid, so a line with nothing in it (no
+   model, no route) leaves no gap behind. */
+#mobile_summary:not(.mobile-expanded) .ib-summary {
+    grid-area: summary;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--ui-s2);
+    /* its own top padding would add to the handle above it */
+    padding-top: 0;
+}
+
+#mobile_summary:not(.mobile-expanded) .ib-hex {
+    display: none;
+}
+
+#mobile_summary:not(.mobile-expanded) .ib-callsign {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#mobile_summary:not(.mobile-expanded) .ib-model:not(:empty) {
+    display: block;
+    font-size: var(--ui-fs-md);
+    color: var(--ui-text-2);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#mobile_summary:not(.mobile-expanded) .ib-route {
+    text-align: left;
+}
+
+/* just the picture: no credit line or placeholder in a collapsed bar */
+#mobile_summary:not(.mobile-expanded) #copyrightInfo,
+#mobile_summary:not(.mobile-expanded) #placeholder-photo {
+    display: none;
+}
+
+/* rounded on the box as well as the image: the box clips, and it is what
+   shows while the picture is still loading */
+#mobile_summary:not(.mobile-expanded) #photo_container {
+    border-radius: var(--ui-r-sm);
+}
+
+#mobile_summary:not(.mobile-expanded) #selected_photo img {
+    display: block;
+    height: calc(84px * var(--SCALE));
+    width: auto;
+    max-width: calc(150px * var(--SCALE));
+    object-fit: cover;
+    border-radius: var(--ui-r-sm);
+}
+
+#mobile_summary:not(.mobile-expanded) #infoblock_close {
+    display: none;
+}
+
+/* ---- expanded: the whole block, full screen and scrollable ------------- */
+#mobile_summary.mobile-expanded {
+    top: 0;
+    border-radius: 0;
+    border-top: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-top: env(safe-area-inset-top);
+}
+
+#mobile_summary.mobile-expanded #mobile_summary_handle {
+    display: none;
+}
+
+/* A full-screen view gets a headline: the same header, with a much larger
+   callsign and the route a step below it */
+#mobile_summary.mobile-expanded .ib-callsign {
+    font-size: var(--ui-fs-3xl);
+}
+
+#mobile_summary.mobile-expanded .ib-route {
+    font-size: var(--ui-fs-xl);
+    letter-spacing: 0;
+}
+
+
+
+/* the expanded sheet has its own collapse control at the top */
+#mobile_summary.mobile-expanded #infoblock_close {
+    display: none;
+}
+
+#mobile_summary.mobile-expanded #selected_photo img,
+#mobile_summary.mobile-expanded #photo_container td {
+    max-width: 100%;
+    height: auto;
+}
+
+#mobile_expanded_close {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    min-height: var(--ui-hit);
+    background-color: var(--ui-surface-1);
+    border-bottom: 1px solid var(--ui-border);
+    color: var(--ui-text-2);
+    font-size: var(--ui-fs-lg);
+    cursor: pointer;
+}
+
+#mobile_summary.mobile-expanded #mobile_expanded_close {
+    display: flex;
+}
+
+/* ==========================================================================
+   Settings panel
+   Restyled onto the primitives. The markup is generated by the Toggle class
+   in early.js, so these rules take over its class names rather than
+   replacing the structure.
+   ========================================================================== */
+
+#settings_infoblock {
+    /* Anchored under the cog that opens it, on the right, rather than at the
+       far left. It is a child of #map_container, so absolute positioning here
+       measures from the map edge and clears the side button column - the same
+       anchoring the label picker uses. */
+    position: absolute;
+    top: calc(46px * var(--SCALE));
+    right: calc(40px * var(--SCALE));
+    left: auto;
+    max-height: calc(100vh - calc(58px * var(--SCALE)));
+    max-width: calc(100% - calc(52px * var(--SCALE)));
+
+    /* panel look, matching every other floating surface */
+    background-color: var(--ui-panel-bg);
+    -webkit-backdrop-filter: var(--ui-panel-blur);
+    backdrop-filter: var(--ui-panel-blur);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-r-md);
+    box-shadow: var(--ui-shadow-2);
+    color: var(--ui-text-1);
+    font-family: var(--ui-font);
+    font-size: var(--ui-fs-md);
+    padding: var(--ui-s6);
+    z-index: var(--ui-z-modal);
+    overscroll-behavior: contain;
+}
+
+/* columns as a grid, so they reflow instead of staying table-cells */
+#settings_infoblock > #settingsLeft,
+#settings_infoblock > #settingsRight {
+    display: inline-block;
+    vertical-align: top;
+    width: calc(210px * var(--SCALE));
+    max-width: 100%;
+}
+
+.settingsOptionContainer {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-s3);
+    min-height: var(--ui-control-h);
+    padding: 0;
+}
+
+.settingsText {
+    display: block;
+    line-height: var(--ui-lh);
+    font-size: var(--ui-fs-sm);
+    color: var(--ui-text-2);
+    cursor: pointer;
+}
+
+/* the same checkbox as everywhere else, drawn rather than two PNGs */
+.settingsCheckbox {
+    flex: none;
+    width: calc(16px * var(--SCALE));
+    height: calc(16px * var(--SCALE));
+    box-sizing: border-box;
+    margin: 0;
+    border: 1px solid var(--ui-border-strong);
+    border-radius: var(--ui-r-sm);
+    background-color: var(--ui-surface-0);
+    cursor: pointer;
+    position: relative;
+}
+
+.settingsCheckbox:focus-visible {
+    outline: none;
+    box-shadow: var(--ui-focus-ring);
+}
+
+.settingsCheckboxChecked {
+    background-color: var(--ui-accent);
+    border-color: var(--ui-accent);
+}
+
+.settingsCheckboxChecked::after {
+    content: "";
+    position: absolute;
+    left: 25%;
+    top: 12%;
+    width: 34%;
+    height: 60%;
+    border: solid var(--ui-on-accent);
+    border-width: 0 calc(2px * var(--SCALE)) calc(2px * var(--SCALE)) 0;
+    transform: rotate(40deg);
+}
+
+.formButton {
+    min-height: var(--ui-hit);
+    padding: 0 var(--ui-s4);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-r-sm);
+    background-color: var(--ui-surface-2);
+    color: var(--ui-text-1);
+    font-family: var(--ui-font);
+    font-size: var(--ui-fs-sm);
+    cursor: pointer;
+}
+
+.formButton:hover {
+    background-color: var(--ui-surface-3);
+    border-color: var(--ui-border-strong);
+}
+
+.settingsCloseBox {
+    /* the close glyph is a font icon here, not artwork - no invert needed */
+    filter: none;
+    color: var(--ui-text-2);
+    font-size: var(--ui-fs-xl);
+}
+
+.settingsCloseBox:hover {
+    color: var(--ui-text-1);
+}
+
+/* on a phone the panel is a full-screen sheet rather than a floating box */
+.is-mobile-layout #settings_infoblock {
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    max-height: none;
+    max-width: none;
+    border: 0;
+    border-radius: 0;
+    padding-top: calc(var(--ui-s6) + env(safe-area-inset-top));
+    padding-bottom: calc(var(--ui-s6) + env(safe-area-inset-bottom));
+}
+
+/* ==========================================================================
+   Aircraft table
+   Row backgrounds are set inline from tableColors (altitude-derived), so
+   these rules deliberately avoid the background property on rows.
+   ========================================================================== */
+
+#planesTable {
+    font-family: var(--ui-font);
+    font-size: var(--ui-fs-sm);
+    /* digits line up column to column */
+    font-variant-numeric: tabular-nums;
+    border-collapse: collapse;
+}
+
+.aircraft_table_header {
+    background-color: var(--ui-surface-2);
+    color: var(--ui-text-2);
+    box-shadow: none;
+    border-bottom: 1px solid var(--ui-border-strong);
+}
+
+.aircraft_table_header td {
+    padding: var(--ui-s3) var(--ui-s3);
+    font-size: var(--ui-fs-xs);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+}
+
+.aircraft_table_header td:hover {
+    color: var(--ui-text-1);
+    background-color: var(--ui-surface-3);
+}
+
+#planesTable tbody td {
+    padding: var(--ui-s2) var(--ui-s3);
+}
+
+/* an inset ring rather than a background, so the altitude colour still shows */
+#planesTable tbody tr:hover td {
+    box-shadow: inset 0 1px 0 var(--ui-border-strong),
+                inset 0 -1px 0 var(--ui-border-strong);
+}
+
+.icaoCodeColumn {
+    font-family: var(--ui-font-mono);
+}
+
+/* ---- range input -------------------------------------------------------
+   Replaces the jQuery UI slider. Track and thumb need per-engine pseudo
+   elements; there is no shorthand that covers both. */
+.ui-range {
+    -webkit-appearance: none;
+    appearance: none;
+    display: block;
+    width: 100%;
+    height: var(--ui-hit);
+    margin: 0;
+    background: transparent;
+    cursor: pointer;
+}
+
+.ui-range:focus-visible {
+    outline: none;
+}
+
+/* track */
+.ui-range::-webkit-slider-runnable-track {
+    height: calc(4px * var(--SCALE));
+    border-radius: var(--ui-r-pill);
+    background-color: var(--ui-surface-3);
+}
+
+.ui-range::-moz-range-track {
+    height: calc(4px * var(--SCALE));
+    border-radius: var(--ui-r-pill);
+    background-color: var(--ui-surface-3);
+}
+
+/* thumb - big enough to grab with a thumb, hence the hit token */
+.ui-range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: calc(16px * var(--SCALE));
+    height: calc(16px * var(--SCALE));
+    margin-top: calc(-6px * var(--SCALE));
+    border: 0;
+    border-radius: 50%;
+    background-color: var(--ui-accent);
+}
+
+.ui-range::-moz-range-thumb {
+    width: calc(16px * var(--SCALE));
+    height: calc(16px * var(--SCALE));
+    border: 0;
+    border-radius: 50%;
+    background-color: var(--ui-accent);
+}
+
+.ui-range:hover::-webkit-slider-thumb {
+    background-color: var(--ui-accent-hover);
+}
+
+.ui-range:hover::-moz-range-thumb {
+    background-color: var(--ui-accent-hover);
+}
+
+.ui-range:focus-visible::-webkit-slider-thumb {
+    box-shadow: var(--ui-focus-ring);
+}
+
+.ui-range:focus-visible::-moz-range-thumb {
+    box-shadow: var(--ui-focus-ring);
+}
+
+/* ---- tabs --------------------------------------------------------------
+   Replaces jQuery UI tabs. The markup is still a <ul> of links, so these
+   rules undo the list formatting and make the links read as a button row. */
+.ui-tablist {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--ui-s2);
+    margin: 0 0 var(--ui-s3);
+    padding: 0;
+    list-style: none;
+}
+
+.ui-tablist > li {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.ui-tab {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--ui-control-h);
+    padding: 0 var(--ui-s4);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-r-sm);
+    background-color: var(--ui-surface-2);
+    color: var(--ui-text-2);
+    font-size: var(--ui-fs-sm);
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.ui-tab:hover {
+    background-color: var(--ui-surface-3);
+    color: var(--ui-text-1);
+}
+
+.ui-tab:focus-visible {
+    outline: none;
+    box-shadow: var(--ui-focus-ring);
+}
+
+.ui-tab.is-on {
+    background-color: var(--ui-accent);
+    border-color: var(--ui-accent);
+    color: var(--ui-on-accent);
+}
+
+/* ---- reorderable list (table columns) ---------------------------------- */
+.ui-reorder-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.ui-reorder-item {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-s3);
+    list-style: none;
+}
+
+.ui-reorder-item > .settingsOptionContainer {
+    flex: 1;
+    min-width: 0;
+}
+
+/* source and flag filter chips; these <li>s carry an inline background colour
+   from the altitude palette, so only the text colour is set here */
+.filterItem {
+    color: var(--ui-text-1);
+}
+
+/* a chip's inline background is its data colour, so selection is shown with
+   a ring and weight rather than by changing the fill */
+.filterItem.is-on {
+    outline: calc(2px * var(--SCALE)) solid var(--ui-focus);
+    outline-offset: calc(-2px * var(--SCALE));
+    font-weight: 700;
+}
+
+/* ---- sidebar splitter --------------------------------------------------
+   #splitter is position: absolute with left: 0, so it needs a positioned
+   ancestor to sit on the sidebar's edge. jQuery UI's .ui-resizable supplied
+   that on the container; without it the handle escaped to the top-left of
+   the page, which is why it could not be grabbed at the border.
+
+   The visible handle is a small tab, but the draggable area is the whole
+   left edge of the sidebar - jQuery UI's stylesheet provided that
+   full-height strip too, and it went with the library. */
+#sidebar_container {
+    position: relative;
+}
+
+#splitter {
+    /* without this a touch drag becomes a page pan and the pointer is
+       cancelled mid-gesture */
+    touch-action: none;
+}
+
+#splitter::before {
+    content: "";
+    position: absolute;
+    top: calc(-7px * var(--SCALE));
+    left: 0;
+    width: calc(14px * var(--SCALE));
+    height: 100vh;
+    cursor: ew-resize;
+}
+
+/* while dragging, don't let the pointer select text across the page */
+body.is-resizing {
+    user-select: none;
+    cursor: ew-resize;
+}
+
+/* ==========================================================================
+   Remaining form controls
+   The last surfaces still carrying browser defaults or pre-refresh colours:
+   the units select, the search/jump/altimeter inputs, and the KML export
+   buttons. Styled by their existing class names so no markup changes.
+   ========================================================================== */
+
+select {
+    height: var(--ui-control-h);
+    box-sizing: border-box;
+    /* right padding leaves room for the drawn arrow below */
+    padding: 0 calc(20px * var(--SCALE)) 0 var(--ui-s3);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-r-sm);
+    background-color: var(--ui-surface-2);
+    color: var(--ui-text-1);
+    font-family: var(--ui-font);
+    font-size: var(--ui-fs-sm);
+    cursor: pointer;
+    /* the native arrow varies wildly between engines; draw one instead */
+    -webkit-appearance: none;
+    appearance: none;
+    background-image: linear-gradient(45deg, transparent 50%, var(--ui-text-3) 50%),
+                      linear-gradient(135deg, var(--ui-text-3) 50%, transparent 50%);
+    background-position: right calc(11px * var(--SCALE)) center,
+                         right calc(7px * var(--SCALE)) center;
+    background-size: calc(4px * var(--SCALE)) calc(4px * var(--SCALE));
+    background-repeat: no-repeat;
+}
+
+select:hover {
+    background-color: var(--ui-surface-3);
+    border-color: var(--ui-border-strong);
+}
+
+select:focus-visible {
+    outline: none;
+    border-color: var(--ui-accent);
+    box-shadow: var(--ui-focus-ring);
+}
+
+.searchInput {
+    width: calc(120px * var(--SCALE));
+    height: var(--ui-control-h);
+    box-sizing: border-box;
+    padding: 0 var(--ui-s3);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-r-sm);
+    background-color: var(--ui-surface-0);
+    color: var(--ui-text-1);
+    font-family: var(--ui-font);
+    font-size: var(--ui-fs-sm);
+    font-variant-numeric: tabular-nums;
+}
+
+.searchInput:focus-visible {
+    outline: none;
+    border-color: var(--ui-accent);
+    box-shadow: var(--ui-focus-ring);
+}
+
+.searchInput::placeholder {
+    color: var(--ui-text-3);
+}
+
+.exportButton {
+    width: 100%;
+    min-height: var(--ui-hit);
+    margin-bottom: var(--ui-s3);
+    padding: 0 var(--ui-s4);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-r-sm);
+    background-color: var(--ui-surface-2);
+    color: var(--ui-text-1);
+    font-family: var(--ui-font);
+    font-size: var(--ui-fs-sm);
+    cursor: pointer;
+}
+
+.exportButton:hover {
+    background-color: var(--ui-surface-3);
+    border-color: var(--ui-border-strong);
+}
+
+/* ==========================================================================
+   Top button row
+   U / H / T / replay / layers were four different things: letter buttons,
+   a background-image SVG, and an OpenLayers control with its own base64 PNG
+   on a teal fill. They are all icon buttons now, one size, one row.
+   ========================================================================== */
+
+/* The row and the layer control are anchored separately from the side column,
+   so their offsets are derived rather than guessed. With button size h and gap
+   g, the side column occupies [R-g-h, R-g], which puts the layer control at
+   h+2g and this row at 2h+2g. These were fixed pixel values worked out for
+   the 30px desktop button, so on touch - where --ui-hit is 44px - the layer
+   control landed underneath the side column. */
+#header_top {
+    right: calc(2 * var(--ui-hit) + 2 * var(--ui-s2));
+    /* style.css fixes this at 38px, but the row is taller than that once the
+       buttons grow for touch - and #tempTrailsBar hangs off its bottom at
+       top: 100%, so it landed on top of the buttons */
+    height: auto;
+}
+
+#header_top .buttonContainer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--ui-s2);
+    /* inline-block spans separated by source whitespace were doing the
+       spacing before, which is why the row never quite lined up */
+    margin: var(--ui-s2);
+}
+
+/* replay: drop the background image for the same glyph treatment as the rest */
+#RP.replayButton {
+    background-image: none;
+}
+
+#RP .buttonText::before {
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    content: "\f1da";       /* clock-rotate-left */
+    font-size: calc(15px * var(--SCALE));
+}
+
+/* ---- the layer switcher control ---------------------------------------
+   Sized and coloured to match .ui-btn-square, and lifted into the top row
+   rather than floating a few pixels below it. */
+.layer-switcher {
+    /* #header_top carries .infoHeading's 2px margin plus the row's 4px, so the
+       buttons start 6px down; the control is anchored separately and has to
+       match that by hand. Right offset clears the side column (32px) by one
+       gap. */
+    top: calc(var(--ui-s1) + var(--ui-s2) - 1px) !important;
+    right: calc(var(--ui-hit) + 2 * var(--ui-s2)) !important;
+    z-index: var(--ui-z-map-chrome);
+    border-radius: var(--ui-r-sm);
+}
+
+.layer-switcher > button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    float: none;
+    width: var(--ui-hit);
+    height: var(--ui-hit);
+    padding: 0;
+    box-sizing: border-box;
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-r-sm);
+    /* the control ships a base64 PNG of a layers icon on a teal fill */
+    background-image: none;
+    background-color: var(--ui-surface-2);
+    color: var(--ui-text-1);
+    cursor: pointer;
+    transition: background-color var(--ui-dur-fast) var(--ui-ease),
+                border-color var(--ui-dur-fast) var(--ui-ease);
+}
+
+.layer-switcher > button::before {
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    content: "\f5fd";       /* layer-group */
+    font-size: calc(15px * var(--SCALE));
+}
+
+.layer-switcher > button:hover,
+.layer-switcher > button:focus {
+    background-color: var(--ui-surface-3);
+    border-color: var(--ui-border-strong);
+    /* ol.css sets both a colour and an outline on .ol-control button:hover,
+       which greyed the glyph out on hover. Only the surface should change. */
+    color: var(--ui-text-1);
+    outline: none;
+}
+
+/* .ol-control included to match the specificity of the library's own
+   .layer-switcher.shown.layer-switcher-activation-mode-click > button, which
+   otherwise wins and paints the open toggle #eee */
+.layer-switcher.shown.ol-control > button {
+    background-color: var(--ui-accent);
+    border-color: var(--ui-accent);
+    color: var(--ui-on-accent);
+}
+
+.layer-switcher .panel {
+    background: var(--ui-panel-bg);
+    -webkit-backdrop-filter: var(--ui-panel-blur);
+    backdrop-filter: var(--ui-panel-blur);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-r-md);
+    color: var(--ui-text-1);
+    font-family: var(--ui-font);
+    font-size: var(--ui-fs-sm);
+}
+
+/* ==========================================================================
+   Infoblock, second pass
+   The summary was a callsign and three tiles above an unchanged label/value
+   list. Taking the parts of FR24's panel that fit the data tar1090 has: a
+   tight identity line, a full-bleed photo with its credit over the image, a
+   prominent route, and detail as a two-column grid of label-over-value rather
+   than label-left/value-right.
+   ========================================================================== */
+
+/* ---- detail rows as a two-column grid ---------------------------------
+   Every row in these tables is a <tr> holding one <td> with a label and a
+   value, so making the row group a two-column grid puts two pairs per line
+   with no markup change. */
+#selected_infoblock .infoSectionTable {
+    display: block;
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#selected_infoblock .infoSectionTable > tbody {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--ui-s4) var(--ui-s4);
+}
+
+#selected_infoblock .infoSectionTable tr {
+    display: block;
+    min-width: 0;
+}
+
+/* the rule above outranks .hidden, which several of these rows rely on -
+   receiver id, the airline row, the photo link */
+#selected_infoblock .infoSectionTable tr.hidden {
+    display: none;
+}
+
+#selected_infoblock .infoSectionTable td {
+    display: block;
+    padding: 0;
+    min-width: 0;
+}
+
+#selected_infoblock .infoHeading {
+    display: block;
+    float: none;
+    margin: 0;
+    font-size: var(--ui-fs-xs);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    line-height: var(--ui-lh-tight);
+    color: var(--ui-text-3);
+}
+
+#selected_infoblock .infoData {
+    display: block;
+    float: none;
+    margin: 0;
+    text-align: left;
+    font-size: var(--ui-fs-lg);
+    color: var(--ui-text-1);
+    font-variant-numeric: tabular-nums;
+    overflow-wrap: anywhere;
+}
+
+/* ---- photo: full width, credit over the image -------------------------- */
+#selected_infoblock #photo_container {
+    position: relative;
+    /* the desktop path sets a pixel height from the panel width; the image's
+       own aspect ratio should decide it so nothing is letterboxed */
+    height: auto !important;
+    margin: 0;
+    line-height: 0;
+}
+
+#selected_infoblock #selected_photo {
+    width: auto !important;
+    text-align: center;
+}
+
+#selected_infoblock #selected_photo img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 0;
+}
+
+#selected_infoblock #copyrightInfo {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    margin: 0;
+    padding: var(--ui-s4) var(--ui-s3) var(--ui-s1);
+    font-size: var(--ui-fs-xs);
+    color: var(--ui-text-2);
+    text-align: right;
+    /* a scrim so the credit stays readable over any photo */
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.65), transparent);
+    pointer-events: none;
+}
+
+/* identity block sits directly under the photo with no extra frame */
+#selected_infoblock #reg_info {
+    padding: 0 var(--ui-s5) var(--ui-s4);
+}
+
+/* the one label/value pair outside any group, which had no inset at all */
+#selected_infoblock .ib-epoch {
+    padding: var(--ui-s4) var(--ui-s5);
+}
+
+/* the History row is a collapsible section like the groups, so it gets the
+   same header bar treatment */
+#selected_infoblock #history_collapse {
+    padding: 0;
+}
+
+
+
+/* ==========================================================================
+   Infoblock: fill the space, no inner gutters
+   The panel floated 10px off the map edges with rounded corners, and its
+   content was inset twice - once by #infoblock-container's padding and again
+   by each section's own. Now the panel is flush against the map area and the
+   inset is applied once, so bands (the stat row, the photo, header bars)
+   reach the panel's full width while text keeps a single 12px inset.
+   ========================================================================== */
+
+#selected_infoblock {
+    /* a card floating over the map, not docked to the edge - it is the
+       content that fills the card, which is what the inner gutters were in
+       the way of */
+    left: var(--ui-s5);
+    top: var(--ui-s5);
+    bottom: var(--ui-s5);
+    height: auto;
+    border-radius: var(--ui-r-md);
+    border: 1px solid var(--ui-border);
+    background-color: var(--ui-panel-bg);
+    -webkit-backdrop-filter: var(--ui-panel-blur);
+    backdrop-filter: var(--ui-panel-blur);
+    box-shadow: var(--ui-shadow-2);
+    overflow: hidden;
+    z-index: var(--ui-z-panel);
+}
+
+#selected_infoblock #infoblock-container {
+    padding-left: 0;
+    padding-right: 0;
+    /* keeps the scroll gutter from shifting content as groups open and close */
+    scrollbar-gutter: stable;
+    scrollbar-color: var(--ui-border-strong) transparent;
+}
+
+/* bands span the whole panel, and sit 1px apart so they read as one block */
+.ib-stats {
+    margin: 0 0 1px;
+    border-radius: 0;
+}
+
+.ib-stats-two {
+    margin-bottom: var(--ui-s4);
+}
+
+#selected_infoblock #photo_container {
+    margin: 0;
+}
+
+/* text keeps one inset */
+#selected_infoblock #reg_info {
+    padding: var(--ui-s4) var(--ui-s5);
+}
+
+
+
+#selected_infoblock #photo_block {
+    margin-bottom: var(--ui-s4);
+}
+
+/* the History toggle is a collapsible header like the groups; it was a
+   full-width grey button with an emoji plus/minus */
+
+
+
+
+/* second stat band: two fields wide instead of three */
+.ib-stats-two {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+/* these two carry prose rather than numbers, so they wrap instead of
+   overflowing the tile - and a model name at headline size would dominate */
+.ib-stats-two .ib-stat-value {
+    font-size: var(--ui-fs-lg);
+    font-weight: 600;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
+/* The desktop panel is narrow enough that a climb or descent rate
+   ("-3200 ft/min") overflowed its tile and trimmed. There the headline
+   figures come down to the prose tiles' size, and only the band's outer
+   edges keep the text inset; between tiles the padding halves. */
+html:not(.is-mobile-layout) #selected_infoblock .ib-stat-value {
+    font-size: var(--ui-fs-lg);
+}
+
+html:not(.is-mobile-layout) #selected_infoblock .ib-stat {
+    padding-left: var(--ui-s3);
+    padding-right: var(--ui-s3);
+}
+
+html:not(.is-mobile-layout) #selected_infoblock .ib-stat:first-child {
+    padding-left: var(--ui-s5);
+}
+
+html:not(.is-mobile-layout) #selected_infoblock .ib-stat:last-child {
+    padding-right: var(--ui-s5);
+}
+
+/* the layer switcher's own stylesheet lightens the button on hover while the
+   panel is open, which flipped the icon against the accent fill */
+.layer-switcher.shown.ol-control > button:hover,
+.layer-switcher.shown.ol-control > button:focus {
+    background-color: var(--ui-accent-hover);
+    border-color: var(--ui-accent-hover);
+    color: var(--ui-on-accent);
+    outline: none;
+}
+
+
+/* Values the database has nothing for were rendering as a label with blank
+   space under it - owner/operator and type description most often. Every
+   other field falls back to n/a, so these do too. Done in CSS because the
+   fields are populated from a dozen places. */
+#selected_infoblock .infoData:empty::after,
+#selected_infoblock .ib-stat-value:empty::after,
+#selected_infoblock .infoData > span:empty::after {
+    content: "n/a";
+    color: var(--ui-text-3);
+}
+
+
+/* a group whose content is a stack, not label/value pairs */
+.ib-group > .infoBlockSection.ib-single-column {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--ui-s2);
+}
+
+/* ==========================================================================
+   Infoblock header buttons
+   ========================================================================== */
+
+.ib-header-btn {
+    position: absolute;
+    /* close sits at the edge; anything else stacks to its left by one button
+       plus a gap */
+    right: var(--ui-s4);
+    top: var(--ui-s4);
+    z-index: 4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--ui-hit);
+    height: var(--ui-hit);
+    padding: 0;
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-r-sm);
+    background-color: var(--ui-surface-2);
+    color: var(--ui-text-2);
+    font-size: var(--ui-fs-md);
+    cursor: pointer;
+}
+
+.ib-header-btn:hover {
+    background-color: var(--ui-surface-3);
+    border-color: var(--ui-border-strong);
+    color: var(--ui-text-1);
+}
+
+.ib-header-btn.active {
+    background-color: var(--ui-accent);
+    border-color: var(--ui-accent);
+    color: var(--ui-on-accent);
+}
+
+/* ==========================================================================
+   History / playback controls
+   A floating panel centred in the map area rather than a column of stacked
+   rows in the sidebar - it drives playback on the map, so it belongs over it.
+   ========================================================================== */
+
+.history-panel {
+    position: absolute;
+    /* centred in the map area not covered by the infoblock */
+    left: calc(50% + var(--ib-offset, 0px) / 2);
+    transform: translateX(-50%);
+    bottom: calc(48px * var(--SCALE));
+    z-index: var(--ui-z-panel);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: var(--ui-s3) var(--ui-s5);
+    /* absolutely positioned, so it would otherwise shrink-wrap and wrap its
+       controls into a tall narrow column */
+    width: max-content;
+    max-width: calc(100% - var(--ib-offset, 0px) - var(--ui-s7));
+    padding: var(--ui-s4) var(--ui-s5);
+}
+
+/* one cluster per thing being controlled: the day, the leg, the speed */
+.history-group {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-s3);
+}
+
+/* a divider between clusters, rather than relying on the gap alone */
+.history-group + .history-group {
+    padding-left: var(--ui-s5);
+    border-left: 1px solid var(--ui-border);
+}
+
+.history-label {
+    font-size: var(--ui-fs-xs);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--ui-text-3);
+    white-space: nowrap;
+}
+
+/* JS writes these and bakes its own caption into the text, so they get no
+   separate label - "Legs: All", "Time: 2026-08-27 ..." */
+.history-status {
+    font-size: var(--ui-fs-sm);
+    color: var(--ui-text-2);
+    white-space: nowrap;
+}
+
+.history-footer {
+    display: flex;
+    align-items: baseline;
+    gap: var(--ui-s5);
+    flex: 1 0 100%;
+    padding-top: var(--ui-s2);
+    border-top: 1px solid var(--ui-border);
+}
+
+.history-hint {
+    font-size: var(--ui-fs-xs);
+    color: var(--ui-text-3);
+    margin-left: auto;
+}
+
+.history-panel .ui-input {
+    width: auto;
+}
+
+/* ==========================================================================
+   Replay bar
+   Was a full-bleed 10px-tall strip pinned to the bottom edge, whose grid rows
+   overflowed it. Now a floating panel centred in the map area like the rest.
+   The grid areas are kept - only the frame changes.
+   ========================================================================== */
+
+#replayBar {
+    box-sizing: border-box;
+    left: calc(50% + var(--ib-offset, 0px) / 2);
+    right: auto;
+    transform: translateX(-50%);
+    bottom: calc(24px * var(--SCALE));
+    width: auto;
+    max-width: calc(100% - var(--ib-offset, 0px) - var(--ui-s7));
+    height: auto;
+    padding: var(--ui-s4) var(--ui-s6);
+    background: var(--ui-panel-bg);
+    -webkit-backdrop-filter: var(--ui-panel-blur);
+    backdrop-filter: var(--ui-panel-blur);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-r-md);
+    box-shadow: var(--ui-shadow-2);
+    color: var(--ui-text-1);
+    font-family: var(--ui-font);
+    font-size: var(--ui-fs-sm);
+    z-index: var(--ui-z-panel);
+    /* the rows were fixed heights that the content outgrew */
+    grid-template-rows: auto auto auto;
+    grid-template-columns: auto auto minmax(calc(160px * var(--SCALE)), 1fr) auto;
+    gap: var(--ui-s2) var(--ui-s5);
+    grid-template-areas:
+        "timezone dateHint      timeHint speedHint"
+        "play     datepicker    hours    speedSelect"
+        ".        dateHintLocal minutes  loading";
+}
+
+#replayBar p {
+    margin: 0;
+    font-size: var(--ui-fs-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--ui-text-3);
+    white-space: nowrap;
+}
+
+#replayBar #replayPlay {
+    min-height: var(--ui-hit);
+    padding: 0 var(--ui-s5);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-r-sm);
+    background-color: var(--ui-surface-2);
+    color: var(--ui-text-1);
+    font-family: var(--ui-font);
+    font-size: var(--ui-fs-sm);
+    font-weight: 600;
+    cursor: pointer;
+}
+
+#replayBar #replayPlay:hover {
+    background-color: var(--ui-surface-3);
+    border-color: var(--ui-border-strong);
+}
+
+#hourSelect,
+#minuteSelect,
+#replaySpeedSelect {
+    width: 100%;
+}
+
+
+/* the history toggle sits one button to the left of the close control */
+#show_trace.ib-header-btn {
+    right: calc(var(--ui-s4) + var(--ui-hit) + var(--ui-s2));
+}
+
+/* ---- history panel: close control and a stable width ------------------- */
+.history-close {
+    position: absolute;
+    right: var(--ui-s2);
+    top: var(--ui-s2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: calc(24px * var(--SCALE));
+    height: calc(24px * var(--SCALE));
+    padding: 0;
+    border: 0;
+    border-radius: var(--ui-r-sm);
+    background: transparent;
+    color: var(--ui-text-3);
+    font-size: var(--ui-fs-md);
+    cursor: pointer;
+}
+
+.history-close:hover {
+    background-color: var(--ui-surface-2);
+    color: var(--ui-text-1);
+}
+
+/* room for the close control */
+.history-panel {
+    padding-right: calc(var(--ui-s5) + 24px * var(--SCALE));
+}
+
+/* This line carries either "Legs: All" or "No Data available for
+   2026-08-25"; without a floor the whole panel resized every time you paged
+   a day. Sized to the longer string. */
+/* #leg_sel carries either "Legs: All" or "No Data available for 2026-08-25",
+   so the cluster needs a floor or the panel resized every time you paged a
+   day. The floor is on the cluster rather than the text, so the arrows stay
+   next to what they act on and the slack falls after them. */
+.history-group-leg {
+    min-width: calc(250px * var(--SCALE));
+}
+
+/* on a phone the clusters stack, so the dividers become horizontal */
+.is-mobile-layout .history-group + .history-group {
+    padding-left: 0;
+    border-left: 0;
+    padding-top: var(--ui-s3);
+    border-top: 1px solid var(--ui-border);
+    width: 100%;
+}
+
+
+/* History mode is a desktop affair: its controls are a wide panel of small
+   buttons that does not work on a phone, and the panel floated at whatever
+   position the map area gave it. So the entry point is hidden there rather
+   than offering a view that does not hold up. !important because both
+   elements have their display set inline from JS. */
+.is-mobile-layout #show_trace,
+.is-mobile-layout #history_collapse {
+    display: none !important;
+}
+
+/* ---- replay bar on a phone --------------------------------------------
+   The four-column grid assumes desktop width. Stacked instead, so the
+   sliders get the full width they need to be usable with a thumb. Two
+   labels are dropped: the timezone caption duplicates the date line, and the
+   local-date line is secondary to the UTC one the controls work in. */
+.is-mobile-layout #replayBar {
+    left: var(--ui-s5);
+    right: var(--ui-s5);
+    transform: none;
+    width: auto;
+    max-width: none;
+    padding: var(--ui-s5);
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto;
+    gap: var(--ui-s3);
+    grid-template-areas:
+        "dateHint"
+        "datepicker"
+        "timeHint"
+        "hours"
+        "minutes"
+        "speedHint"
+        "speedSelect"
+        "play";
+}
+
+.is-mobile-layout #replayTimeZone,
+.is-mobile-layout #replayDateHintLocal,
+.is-mobile-layout #replayLoading {
+    display: none;
+}
+
+/* full width, and tall enough to grab */
+.is-mobile-layout #replayDatepicker,
+.is-mobile-layout #replayPlay {
+    width: 100%;
+    justify-self: stretch;
+}
+
+.is-mobile-layout #hourSelect,
+.is-mobile-layout #minuteSelect,
+.is-mobile-layout #replaySpeedSelect {
+    width: 100%;
+}
+
+.is-mobile-layout #replayBar p {
+    justify-self: start;
+}
+
+/* ==========================================================================
+   Photo: reserve the space before it arrives
+   The panel used to reflow when the picture finished loading. The container
+   holds a 16:9 box from the start - which is the ratio planespotters'
+   thumbnail_large actually is (498x280), so cover-fitting crops nothing in
+   practice - with a pulse in the empty space until an image is there.
+   ========================================================================== */
+
+#selected_infoblock #photo_container {
+    aspect-ratio: 16 / 9;
+    background-color: var(--ui-surface-2);
+    overflow: hidden;
+}
+
+#selected_infoblock #selected_photo,
+#selected_infoblock #selected_photo a {
+    display: block;
+    height: 100%;
+}
+
+#selected_infoblock #selected_photo img {
+    height: 100%;
+    object-fit: cover;
+}
+
+/* the waiting state: a slow pulse rather than a spinner, so it reads as
+   "something is coming" without drawing the eye */
+#selected_infoblock #photo_container::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(100deg,
+        var(--ui-surface-2) 30%,
+        var(--ui-surface-3) 50%,
+        var(--ui-surface-2) 70%);
+    background-size: 300% 100%;
+    animation: ui-photo-wait 1.4s ease-in-out infinite;
+}
+
+/* once there is an image or the fallback icon, stop waiting */
+#selected_infoblock #photo_container:has(img)::after,
+#selected_infoblock #photo_container:has(#placeholder-photo)::after {
+    content: none;
+}
+
+@keyframes ui-photo-wait {
+    0%   { background-position: 100% 0; }
+    100% { background-position: 0 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #selected_infoblock #photo_container::after {
+        animation: none;
+    }
+}
+
+/* ---- fallback icon ----------------------------------------------------- */
+#selected_infoblock #placeholder-photo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    /* it was a fixed 130px tall box with a 96px glyph, which left it sitting
+       off-centre in the reserved space */
+    height: 100%;
+    font-size: calc(56px * var(--SCALE));
+    color: var(--ui-text-3);
+    opacity: 0.5;
+}
+
+/* ==========================================================================
+   Layer switcher list and the OpenAIP panel
+   Two different looks and two different type scales sitting side by side.
+   Both onto the panel language, at the OpenAIP sizes.
+   ========================================================================== */
+
+.layer-switcher .panel {
+    padding: var(--ui-s4) var(--ui-s5);
+    max-height: 80vh;
+    /* a couple of pixels of label was enough to put a scrollbar along the
+       bottom of the list */
+    overflow-x: hidden;
+}
+
+.layer-switcher ul {
+    margin: 0;
+    padding-left: 0;
+}
+
+/* the library's markup is <li><input><label>, siblings - so the row has to be
+   the flex container, not the label */
+.layer-switcher li {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0 var(--ui-s3);
+    min-height: var(--ui-control-h);
+    margin-top: 0;
+}
+
+/* a group's nested list belongs on its own line, not beside the label */
+.layer-switcher li > ul {
+    flex: 1 0 100%;
+}
+
+.layer-switcher li label {
+    display: block;
+    flex: 1;
+    min-width: 0;
+    padding: 0;
+    margin: 0;
+    font-size: var(--ui-fs-sm);
+    color: var(--ui-text-1);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+}
+
+.layer-switcher li.group > label {
+    flex: 1 0 100%;
+    font-size: var(--ui-fs-xs);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--ui-text-3);
+    border-bottom: 1px solid var(--ui-border);
+    padding-bottom: var(--ui-s1);
+    margin-top: var(--ui-s4);
+}
+
+/* the library positions inputs absolutely and pads the label around them */
+.layer-switcher li input {
+    position: static;
+    left: auto;
+    flex: none;
+    width: calc(13px * var(--SCALE));
+    height: calc(13px * var(--SCALE));
+    margin: 0;
+    accent-color: var(--ui-accent);
+    cursor: pointer;
+}
+
+.layer-switcher.layer-switcher-group-select-style-none li.group > label,
+.layer-switcher li.layer-switcher-base-group > label {
+    padding-left: 0;
+}
+
+/* ---- OpenAIP panel: same frame as every other panel -------------------- */
+#openaip_vector_panel {
+    box-sizing: border-box;
+    padding: var(--ui-s4) var(--ui-s5);
+    background-color: var(--ui-panel-bg);
+    -webkit-backdrop-filter: var(--ui-panel-blur);
+    backdrop-filter: var(--ui-panel-blur);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-r-md);
+    box-shadow: var(--ui-shadow-2);
+    color: var(--ui-text-1);
+    font-family: var(--ui-font);
+    z-index: var(--ui-z-panel);
+    max-height: 80vh;
+}
+
+.openaip-panel-title {
+    font-size: var(--ui-fs-md);
+    font-weight: 600;
+    color: var(--ui-text-1);
+    margin-bottom: var(--ui-s3);
+}
+
+.openaip-panel-section {
+    font-size: var(--ui-fs-xs);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--ui-text-3);
+    border-bottom: 1px solid var(--ui-border);
+    margin-top: var(--ui-s4);
+    margin-bottom: var(--ui-s2);
+    padding-bottom: var(--ui-s1);
+}
+
+.openaip-panel-row {
+    gap: var(--ui-s3);
+    padding: var(--ui-s1) 0;
+    font-size: var(--ui-fs-sm);
+    color: var(--ui-text-1);
+}
+
+.openaip-panel-row input[type="checkbox"] {
+    accent-color: var(--ui-accent);
+}
+
+.openaip-opacity-label,
+
+/* nested inside the layer list on a phone: no frame of its own */
+.is-mobile-layout #openaip_vector_panel {
+    background: transparent;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    box-shadow: none;
+    border-radius: 0;
+}
+
+
+/* ---- group fold arrows -------------------------------------------------
+   Each collapsible group in the layer list has its own small button. The
+   library gives it a dark PNG chevron, invisible on a dark panel, and the
+   rules for the switcher's own toggle were catching it too - which is what
+   turned them into little accent-coloured squares. Its own glyph, quiet, and
+   in the row rather than absolutely positioned over the heading. */
+.layer-switcher .group > button {
+    position: static;
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: calc(14px * var(--SCALE));
+    height: calc(14px * var(--SCALE));
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background-color: transparent;
+    background-image: none;
+    color: var(--ui-text-3);
+    font-size: calc(9px * var(--SCALE));
+    cursor: pointer;
+}
+
+.layer-switcher .group > button::before {
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    content: "\f078";      /* chevron-down; the library rotates it when closed */
+}
+
+.layer-switcher .group > button:hover {
+    color: var(--ui-text-1);
+    background-color: transparent;
+}
+
+/* with the arrow in the row, the heading takes the rest of it rather than a
+   line of its own */
+.layer-switcher li.group.layer-switcher-fold > label {
+    flex: 1;
+}
+
+/* ==========================================================================
+   Zoom control
+   style.css replaced OpenLayers' +/- with two PNGs and transparent text. The
+   glyphs are text again, styled like the letter buttons in the side chrome,
+   so the map's own controls belong to the same set.
+   ========================================================================== */
+
+.ol-zoom {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ui-s2);
+    background-color: transparent;
+    border-radius: 0;
+}
+
+.ol-zoom .ol-zoom-in,
+.ol-zoom .ol-zoom-out {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    width: var(--ui-hit);
+    height: var(--ui-hit);
+    margin: 0;
+    padding: 0;
+    background-color: var(--ui-surface-2);
+    color: var(--ui-text-1);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-r-sm);
+    font-family: var(--ui-font);
+    font-size: calc(17px * var(--SCALE));
+    font-weight: 600;
+    line-height: 1;
+    cursor: pointer;
+    transition: background-color var(--ui-dur-fast) var(--ui-ease),
+                border-color var(--ui-dur-fast) var(--ui-ease);
+}
+
+.ol-zoom .ol-zoom-in:hover,
+.ol-zoom .ol-zoom-out:hover,
+.ol-zoom .ol-zoom-in:focus,
+.ol-zoom .ol-zoom-out:focus {
+    background-color: var(--ui-surface-3);
+    border-color: var(--ui-border-strong);
+    /* ol.css sets a colour and an outline on .ol-control button:hover */
+    color: var(--ui-text-1);
+    outline: none;
+}
+
+.ol-zoom .ol-zoom-in:focus-visible,
+.ol-zoom .ol-zoom-out:focus-visible {
+    box-shadow: var(--ui-focus-ring);
+}
+
+/* ---- map attribution and scale line --------------------------------------
+   OpenLayers put the attribution flush in the bottom-right corner on a
+   translucent grey strip, where the zoom buttons covered the end of it, and
+   the scale line on a white one. Both are now the same dark chip: the
+   attribution centred along the bottom edge, the scale line in the
+   bottom-left corner level with it. One fixed height for the pair so they
+   line up, and so the phone layout can stack them exactly. */
+.ol-attribution,
+.ol-scale-line {
+    --map-chip-h: calc(18px * var(--SCALE));
+}
+
+.ol-attribution,
+.ol-attribution.ol-uncollapsible {
+    left: 50%;
+    right: auto;
+    bottom: var(--ui-s4);
+    transform: translateX(-50%);
+    box-sizing: border-box;
+    height: var(--map-chip-h);
+    max-width: calc(100% - 2 * var(--ui-s4));
+    background-color: var(--ui-panel-bg);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-r-sm);
+}
+
+/* the list is a flex item of the chip, so it needs min-width: 0 to shrink
+   and trim with an ellipsis instead of spilling past a narrow map */
+.ol-attribution ul {
+    min-width: 0;
+    padding: 0 var(--ui-s3);
+    font-family: var(--ui-font);
+    font-size: var(--ui-fs-xs);
+    line-height: var(--ui-lh-tight);
+    color: var(--ui-text-3);
+    text-shadow: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ol-attribution a {
+    color: var(--ui-text-2);
+}
+
+.ol-attribution a:hover {
+    color: var(--ui-text-1);
+}
+
+.ol-scale-line {
+    left: var(--ui-s4);
+    bottom: var(--ui-s4);
+    box-sizing: border-box;
+    height: var(--map-chip-h);
+    padding: 0 var(--ui-s2);
+    display: flex;
+    align-items: center;
+    background-color: var(--ui-panel-bg);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-r-sm);
+}
+
+/* the inner box's width is the scale itself, set by OpenLayers - only its
+   colours and type change */
+.ol-scale-line-inner {
+    margin: 0;
+    border-color: var(--ui-text-3);
+    color: var(--ui-text-2);
+    font-family: var(--ui-font);
+    font-size: var(--ui-fs-xs);
+    line-height: var(--ui-lh-tight);
+}
+
+/* A phone is too narrow for the attribution to sit centred beside the scale
+   line, so the scale line steps up to sit just above it, centred the same
+   way so the two read as one stack. */
+.is-mobile-layout .ol-scale-line {
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: calc(var(--ui-s4) + var(--map-chip-h) + var(--ui-s2));
+}
+
+/* ---- trail-seconds bar -------------------------------------------------
+   It sits in the top row, to the left of the T button that reveals it,
+   rather than hanging below the row - where it read as a stray box. The row
+   is anchored to the right, so the bar appearing extends the row leftwards
+   and the buttons stay where they are. */
+#tempTrailsBar {
+    position: static;
+    flex: none;
+    /* the row's flex gap already spaces it from the T button */
+    margin: 0;
+    /* exactly the button height: any taller and the row grows, which pushes
+       the buttons out of line with the separately-anchored layer control */
+    height: var(--ui-hit);
+    padding: 0 var(--ui-s3);
+}
+
+/* On a phone the row is too narrow for the bar and five 44px buttons - the
+   bar alone is ~200px - so it wraps onto its own line beneath them. Ordered
+   after the buttons so they keep the first line, and right-aligned with them
+   rather than floating loose. */
+.is-mobile-layout #header_top .buttonContainer {
+    flex-wrap: wrap;
+}
+
+.is-mobile-layout #tempTrailsBar {
+    order: 1;
+    margin-top: var(--ui-s2);
+}
+
+/* ==========================================================================
+   Airband audio player (atc.js)
+   A start/stop button and a status box, centred at the top of the map area.
+   The box's border says what the audio is doing - green playing, yellow
+   muted, red failing - and its dot lights while someone transmits, muted
+   or not. On a phone the pair moves to the top-left corner, stacked, since
+   the top row has no room for them.
+   ========================================================================== */
+
+.atc-player {
+    position: absolute;
+    /* level with the top row's buttons: its .infoHeading margin (2px) plus
+       the row's own inset */
+    top: calc(env(safe-area-inset-top) + 2px * var(--SCALE) + var(--ui-s2));
+    /* centred in the map area not covered by the infoblock */
+    left: calc(50% + var(--ib-offset, 0px) / 2);
+    transform: translateX(-50%);
+    z-index: var(--ui-z-map-chrome);
+    display: flex;
+    align-items: center;
+    gap: var(--ui-s2);
+}
+
+/* the rule above would otherwise outrank the hidden attribute */
+.atc-player[hidden] {
+    display: none;
+}
+
+.atc-status-wrap {
+    position: relative;
+    display: flex;
+    min-width: 0;
+}
+
+.atc-status {
+    justify-content: flex-start;
+    gap: var(--ui-s3);
+    min-width: calc(120px * var(--SCALE));
+    max-width: calc(280px * var(--SCALE));
+    padding: 0 var(--ui-s4);
+}
+
+.atc-title {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--ui-text-2);
+}
+
+.atc-dot {
+    flex: none;
+    width: calc(8px * var(--SCALE));
+    height: calc(8px * var(--SCALE));
+    border-radius: 50%;
+    background-color: var(--ui-text-3);
+    transition: background-color var(--ui-dur-fast) var(--ui-ease),
+                box-shadow var(--ui-dur-fast) var(--ui-ease);
+}
+
+/* ---- what the audio is doing: the border -------------------------------- */
+.atc-player[data-state="playing"] .atc-status {
+    border-color: var(--ui-ok);
+}
+
+.atc-player[data-state="playing"].is-muted .atc-status {
+    border-color: var(--ui-warn);
+}
+
+.atc-player[data-state="error"] .atc-status {
+    border-color: var(--ui-danger);
+}
+
+.atc-player[data-state="error"] .atc-title {
+    color: var(--ui-danger);
+}
+
+/* muted while stopped: it will start muted, so say so quietly */
+.atc-player[data-state="stopped"].is-muted .atc-dot {
+    background-color: var(--ui-warn);
+    opacity: 0.6;
+}
+
+.atc-player[data-state="connecting"] .atc-dot {
+    animation: atc-connecting 1s ease-in-out infinite alternate;
+}
+
+@keyframes atc-connecting {
+    from { opacity: 0.25; }
+    to   { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .atc-player[data-state="connecting"] .atc-dot {
+        animation: none;
+    }
+}
+
+/* ---- someone is transmitting: the dot and the title light up ------------ */
+.atc-player.is-active .atc-dot {
+    background-color: var(--ui-ok);
+    box-shadow: 0 0 0 calc(3px * var(--SCALE)) rgba(76, 195, 138, 0.3);
+}
+
+.atc-player.is-active .atc-title {
+    color: var(--ui-text-1);
+}
+
+/* the stream doesn't allow the level to be measured: a hollow dot, so an
+   unlit one isn't read as silence */
+.atc-player.atc-no-level[data-state="playing"] .atc-dot {
+    background-color: transparent;
+    box-shadow: inset 0 0 0 calc(1.5px * var(--SCALE)) var(--ui-text-3);
+}
+
+/* ---- volume: a slider under the box, while hovering it (desktop) --------
+   The wrap reaches down over the slider so moving onto it keeps it open. */
+.atc-volume {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    box-sizing: border-box;
+    width: 100%;
+    margin: var(--ui-s2) 0 0;
+    padding: var(--ui-s2) var(--ui-s3);
+    background-color: var(--ui-panel-bg);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-r-sm);
+    accent-color: var(--ui-accent);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--ui-dur-fast) var(--ui-ease);
+}
+
+.atc-status-wrap::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    height: var(--ui-s2);
+}
+
+.atc-status-wrap:hover .atc-volume,
+.atc-status-wrap:focus-within .atc-volume {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* ---- phone: top-left, stacked; the hardware keys are the volume --------- */
+.is-mobile-layout .atc-player {
+    left: calc(env(safe-area-inset-left) + var(--ui-s2));
+    transform: none;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.is-mobile-layout .atc-status {
+    /* clear of the column of buttons down the right edge */
+    max-width: calc(100vw - 2 * var(--ui-hit) - 5 * var(--ui-s2));
+}
+
+.is-mobile-layout .atc-volume,
+.is-mobile-layout .atc-status-wrap::after {
+    display: none;
+}

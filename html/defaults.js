@@ -234,18 +234,46 @@ let BingMapsAPIKey = null;
 //
 let MapboxAPIKey = null;
 
-let pf_data = ["chunks/pf.json"]
+// Provide an OpenAIP API key here to enable the advanced OpenAIP vector layer.
+// The vector layer supports per-category filtering (show/hide individual airspace types).
+// Create a free account and generate a key at https://www.openaip.net/
+//
+// Be sure to quote your key:
+//   OpenAIPAPIKey = "your key here";
+//
+let OpenAIPAPIKey = null;
+
+// Default visibility for each OpenAIP vector layer category.
+// Set any of these to false to hide that category by default.
+let openAIPVectorCategories = {
+    airspaces_danger:    false,  // restricted, danger, prohibited
+    airspaces_alert:     true,   // alert, warning, tfr
+    airspaces_ctr:       true,   // ctr, atz, matz, htz
+    airspaces_tma:       true,   // tma, cta, tiz, tia, trp
+    airspaces_military:  true,   // tra, tsa, mtr, mta, mrt, adiz
+    airspaces_rmz_tmz:   true,   // rmz, tmz
+    airspaces_gliding:   false,  // gliding_sector, vfr_sector
+    airspaces_other:     false,  // fir, uir, awy, lta, uta, matz, atz, and others
+    airports:            true,
+    navaids:             false,
+    obstacles:           false,
+    hotspots:            false,
+    reporting_points:    false,
+};
+
+// Fill opacity for the OpenAIP vector airspace areas (1–10).
+// Outlines scale with the slider but are always much stronger than the fill.
+let openAIPVectorFillOpacity = 8; // slider value (1–10)
+
 
 let mapOrientation = 0; // This determines what is up, normally north (0 degrees)
 
 // NO LONGER USED
-let utcTimes = null;
 
 // Use UTC for live labels
-let utcTimesLive = false;
-
-// Use UTC for historic labels
-let utcTimesHistoric = true;
+// show times in UTC everywhere (labels, track timestamps, trace headers)
+// rather than the browser's local timezone
+let useUTC = false;
 
 // Only display labels when zoomed in this far:
 let labelZoom = 0;
@@ -302,11 +330,16 @@ let altitudeFilter = false;
 let mlatTimeout = 30;
 
 // enable/disable mouseover/hover aircraft information
-let enableMouseover = true;
 
 // enable/disable temporary aircraft trails
 let tempTrails = false;
 let tempTrailsTimeout = 90;
+// upper limit for the "Trail seconds" input in the UI
+let tempTrailsMax = 1200;
+// viewport width at or below which the phone layout is used;
+// ?mobileWidth=N overrides it, which is how the phone path gets tested
+// on a desktop browser that will not make its window narrow enough
+let mobileBreakpoint = 600;
 let squareMania = false;
 
 // Columns that have a // in front of them are shown.
@@ -374,8 +407,7 @@ let baroUseQNH = false;
 let windLabelsSlim = false;
 let showLabelUnits = true;
 
-let wideInfoBlock = false;
-let baseInfoBlockWidth = 200;
+let baseInfoBlockWidth = 330;
 
 // enable DWD Radolan (NEXRAD like weather for Germany)
 let enableDWD = true;
@@ -394,7 +426,6 @@ let jaeroLabel = "ADS-C"; // relabel the ADS-C data if used for other purposes (
 let seenTimeout = 58; // in seconds
 let seenTimeoutMlat = 58; // in seconds
 
-let darkModeDefault = true; // turn on dark mode by default (change in browser possible)
 
 let tableInView = false; // only show aircraft in current view (V button)
 
@@ -416,7 +447,6 @@ let icaoBlacklist = null;
 let OutlineMlatColor = null;
 
 let tableColorsDark;
-let tableColorsLight;
 let tableColors = {
     unselected: {
         adsb:      "#d8f4ff",
@@ -472,3 +502,28 @@ let DefaultCenterLat = 40.56;
 let DefaultCenterLon = -73.66
 
 let MergeNonIcao = false; // set to true to merge non icao hex with the icao hex (remove the ~)
+
+// -- Airband / ATC audio ---------------------------------
+// A small player at the top of the map for an airband audio stream, for
+// example an Icecast mount fed by RTLSDR-Airband. Empty turns the feature
+// off entirely and nothing is shown. The player never starts by itself.
+//
+// If this page is served over https, the stream has to be https as well -
+// browsers refuse to play an http stream on an https page. A reverse proxy
+// route on the same host as tar1090 is the simplest way to get there.
+//
+//   atcStreamUrl = "https://example.com/atc/stream.mp3";
+let atcStreamUrl = "";
+
+// Icecast's status JSON, read every few seconds while playing to show the
+// current title - with RTLSDR-Airband's frequency tags, the channel that
+// is active. Empty looks for status-json.xsl next to the stream, which is
+// where Icecast serves it; set to false to show no title.
+let atcStatusUrl = "";
+
+// Shown in the player until the stream has a title
+let atcStreamName = "ATC";
+
+// How loud the audio has to be (RMS, 0 - 1) to count as a transmission.
+// Airband audio is silent between transmissions, so this can be low.
+let atcActivityThreshold = 0.01;

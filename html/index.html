@@ -6,18 +6,26 @@
     <meta charset="utf-8"/>
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="tar1090">
+    <meta name="theme-color" content="#0e1216">
 
-    <meta name="viewport" content="user-scalable=no, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, minimal-ui" />
+    <meta name="viewport" content="user-scalable=no, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, minimal-ui, viewport-fit=cover" />
 
     <!-- HEAD_ANCHOR -->
 
     <!-- CSS_ANCHOR -->
-    <link rel="stylesheet" href="libs/jquery-ui-1.13.2.min.css" type="text/css">
     <link rel="stylesheet" href="libs/ol-8.2.0.css" type="text/css" />
     <link rel="stylesheet" href="libs/ol-layerswitcher-4.1.1.css" type="text/css"/>
     <link rel="stylesheet" href="style.css" type="text/css" />
+    <link rel="stylesheet" href="ui.css" type="text/css" />
+
+    <link href="/fontawesome/css/fontawesome.css" rel="stylesheet" />
+    <link href="/fontawesome/css/solid.css" rel="stylesheet" />
 
     <link rel="icon" type="image/png" href="images/tar1090-favicon.png">
+    <link rel="apple-touch-icon" href="images/icon-180.png">
+    <link rel="manifest" href="manifest.json">
 
     <title>tar1090</title>
   </head>
@@ -26,67 +34,22 @@
     <!-- BODY_ANCHOR -->
     <div id="layout_container">
 
-      <div id="highlighted_infoblock" style="pointer-events: none">
-        <div class="highlightedTitle infoBlockSection">
-          <div>
-            <span class="identLarge"><span id="highlighted_callsign">n/a</span></span>
-          </div>
-          <div>
-            <span class="identSmall"><span id="highlighted_pf_route"></span></span>
-          </div>
-        </div>
-        <div class="infoBlockSection">
-          <div>
-            <div class="infoHeading"><span>Reg.: </span></div>
-            <div class="infoData"><span id="highlighted_registration">n/a</span></div>
-          </div>
-          <div>
-            <div class="infoHeading"><span>Type code: </span></div>
-            <div class="infoData"><span id="highlighted_icaotype">n/a</span></div>
-          </div>
-          <div class="rSpacer">
-          </div>
-          <div>
-            <!-- <div class="infoHeading"><span>Airline: </span></div> -->
-            <div class="infoHeading"><span id="highlighted_airline">n/a</span></div>
-          </div>
-          <div>
-              <div id="routeRowHighlight" class="infoHeading"><span title="Reported flight origin and destination according to adsbdb.com">Route</span>:</div>
-              <div class="infoData"><span id="highlighted_route"></span></div>
-          </div>
-          <div class="rSpacer">
-          </div>
-          <div>
-            <div class="infoHeading"><span>Altitude: </span></div>
-            <div class="infoData"><span id="highlighted_altitude">n/a</span></div>
-          </div>
-          <div>
-            <div class="infoHeading"><span>Speed: </span></div>
-            <div class="infoData"><span id="highlighted_speed">n/a</span></div>
-          </div>
-          <div class="rSpacer">
-          </div>
-          <div>
-            <div class="infoHeading"><span>Source: </span></div>
-            <div class="infoData"><span id="highlighted_source">n/a</span></div>
-          </div>
-          <div>
-            <div class="infoHeading"><span>RSSI: </span></div>
-            <div class="infoData"><span id="highlighted_rssi">n/a</span></div>
-          </div>
-        </div>
-      </div>
-
-
       <div id="selected_infoblock" style="display: none">
-        <div id="infoblock_close" class="infoblockCloseBox"></div>
+        <button id="show_trace" type="button" class="ib-header-btn" title="History: show this aircraft's recorded track and play it back">
+          <i class="fa-solid fa-route"></i>
+        </button>
+        <button id="infoblock_close" type="button" class="ib-header-btn" title="Close">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
         <div id="infoblock-container">
 
-          <div class="highlightedTitle infoBlockSection">
-            <div>
-              <span class="identLarge" title="Callsign: Typically the air traffic control callsign or the aircraft's registration, as entered into the transponder by the pilot" id="selected_callsign">n/a</span>
-            </div>
-            <div id="selected_icao" title="ICAO hex ID: The aircraft's unique ICAO identification number shown in hexadecimal format as set in the aircrafts transponder (can be wrong, we will still display the data with the wrong hex)">
+          <div class="ib-summary">
+            <span class="ib-callsign" title="Callsign: Typically the air traffic control callsign or the aircraft's registration, as entered into the transponder by the pilot" id="selected_callsign">n/a</span>
+            <span class="ib-hex ui-mono" id="selected_icao" title="ICAO hex ID: The aircraft's unique ICAO identification number shown in hexadecimal format as set in the aircrafts transponder (can be wrong, we will still display the data with the wrong hex)">
+            </span>
+            <span class="ib-model" id="selected_model_compact" title="Aircraft model"></span>
+            <div id="routeRow" class="ib-route hidden" title="Reported flight origin and destination according to adsbdb.com">
+              <span id="selected_route"></span>
             </div>
             <div style="display: none" id="creditsSelected">
               <table class="infoSectionTable">
@@ -148,34 +111,44 @@
               <span><a class="link" target="_blank" href="https://en.wikipedia.org/wiki/Aviation_transponder_interrogation_modes#ICAO_24-bit_address" rel="noreferrer">What is a hex ID?</a></span>
             </div>
           </div>
-          <div id=reg_info class="infoBlockSection">
+          <div id="photo_block">
+            <div id="photo_container">
+              <div title="Aircraft Photo" id="selected_photo"></div>
+              <div id="copyrightInfo"></div>
+            </div>
+          </div>
+          <div class="ib-stats">
+            <div class="ib-stat">
+              <span class="ib-stat-label" id="selected_altitude1_title" title="The uncorrected pressure-derived height of the aircraft above mean sea level (based on barometric pressure)">Baro. alt</span>
+              <span class="ib-stat-value ui-num" id="selected_altitude1"></span>
+            </div>
+            <div class="ib-stat">
+              <span class="ib-stat-label" title="Rate of climb or descent">V/S</span>
+              <span class="ib-stat-value ui-num" id="selected_vert_rate">n/a</span>
+            </div>
+            <div class="ib-stat">
+              <span class="ib-stat-label" title="The speed of the aircraft over the ground.">Speed</span>
+              <span class="ib-stat-value ui-num" id="selected_speed1">n/a</span>
+            </div>
+          </div>
+          <div class="ib-stats ib-stats-two">
+            <div class="ib-stat">
+              <span class="ib-stat-label" title="Full model name">Model</span>
+              <span class="ib-stat-value" title="Year of Manufacture / Full Type" id="selected_typelong"></span>
+            </div>
+            <div class="ib-stat">
+              <span class="ib-stat-label" title="Country of registration">Country</span>
+              <span class="ib-stat-value" title="Country of registration" id="selected_country">n/a</span>
+            </div>
+          </div>
+          <div id=reg_info class="infoBlockSection infoBlockSectionRoundedTop">
             <table class="infoSectionTable">
-              <tr id=pf_info_container class=>
-                <td>
-                  <div>
-                    <span class="identMedium" id="selected_pf_info"> </span>
-                  </div>
-                </td>
-              </tr>
-              <tr id=photo_container>
-                <td>
-                  <div title="Aircraft Photo" id="selected_photo"></div>
-                  <div id="copyrightInfo"></div>
-                </td>
-              </tr>
               <tr>
                 <td>
                   <div class="infoHeading">
                     <span title="Registration: The alphanumeric registration code assigned by the country in which the aircraft is registered.">Reg.: </span>
                   </div>
                   <div class="infoData"><span id="selected_registration">n/a</span></div>
-                </td>
-              </tr>
-              <tr>
-                <td>
-                  <div class="infoData">
-                    <span title="Country of registration" id="selected_country">n/a</span>
-                  </div>
                 </td>
               </tr>
               <tr id="selected_airline_row" class="hidden">
@@ -188,25 +161,13 @@
               </tr>
               <tr>
                 <td>
-                  <div class="infoHeading">
-                    <span title="Database flags (military / PIA / LAD)">DB flags: </span>
-                  </div>
-                  <div class="infoData"><span id="selected_dbFlags">n/a</span></div>
-                </td>
-              </tr>
-              <tr>
-                <td>
                   <span class="infoHeading" title="ICAO type code (A320/B738)">Type: </span>
                   <span class="infoData" id="selected_icaotype"></span>
                 </td>
               </tr>
               <tr>
                 <td>
-                  <span class="infoData" title="Year of Manufacture / Full Type" id="selected_typelong"></span>
-                </td>
-              </tr>
-              <tr>
-                <td>
+                  <div class="infoHeading"><span title="Registered owner or operator">Owner / operator</span></div>
                   <span class="infoData" title="" id="selected_ownop"></span>
                 </td>
               </tr>
@@ -226,16 +187,7 @@
                   </div>
                 </td>
               </tr>
-              <tr id="routeRow" class="hidden">
-                <td>
-                  <div class="infoHeading">
-                    <span title="Reported flight origin and destination according to adsbdb.com">Route</span>:
-                  </div>
-                  <div class="infoData">
-                    <span id="selected_route"></span>
-                  </div>
-                </td>
-              </tr>
+              
               <tr id="photoLinkRow" class="hidden">
                 <td>
                   <div class="infoHeading">
@@ -245,61 +197,9 @@
               </tr>
             </table>
           </div>
-          <button id="show_trace" type="button" class="greyButton">History</button>
-          <div id="history_collapse" class="infoBlockSection" style="display: none">
-            <div class="identSmall" id="trace_date">UTC day:
-            </div>
-            <div class="rSpacer">
-            </div>
-            <div>
-              <input id=histDatePicker class="identSmall datepicker" value="Pick a date">
-            </div>
-            <div class="rSpacer">
-            </div>
-            <div>
-              <button class="formButton" id="trace_back_1d">previous</button>
-              <button class="formButton" id="trace_jump_1d">next</button>
-            </div>
-            <div class="rSpacer">
-            </div>
-            <div class="identSmall" id="leg_sel">
-            </div>
-            <div class="rSpacer">
-            </div>
-            <div>
-              <button class="formButton" id="leg_prev">previous</button>
-              <button class="formButton" id="leg_next">next</button>
-            </div>
-            <div class="rSpacer">
-            </div>
-            <div class="identSmall" id="trace_time">
-            </div>
-            <div class="rSpacer">
-            </div>
-            <div>
-              <button class="formButton" id="tStop">stop</button>
-              <button class="formButton" id="t1x">1x</button>
-              <button class="formButton" id="t5x">5x</button>
-            </div>
-            <div class="rSpacer">
-            </div>
-            <div>
-              <button class="formButton" id="t10x">10x</button>
-              <button class="formButton" id="t20x">20x</button>
-              <button class="formButton" id="t40x">40x</button>
-            </div>
-            <div class="rSpacer">
-            </div>
-            <div>
-              Click on the trace line to start playback!
-            </div>
-          </div>
-          <div class="sectionTitle">
-            <div class="section-title-content">
-              SPATIAL
-            </div>
-          </div>
-          <div id=spatial_block class="infoBlockSection">
+          <details class="ib-group" data-group="position" open>
+            <summary class="ib-group-summary">Position</summary>
+            <div id=spatial_block class="infoBlockSection">
             <table class="infoSectionTable">
               <tr id=receiver_id_div class="infoBlockSection hidden">
                 <td>
@@ -309,33 +209,11 @@
               </tr>
               <tr>
                 <td>
-                  <span class="infoHeading" title="The speed of the aircraft over the ground.">Groundspeed:</span>
-                  <span class="infoData" id="selected_speed1">n/a</span>
-                </td>
-              </tr>
-              <tr>
-                <td>
-                  <span class="infoHeading" id="selected_altitude1_title" title="The uncorrected pressure-derived height of the aircraft above mean sea level (based on barometric pressure)">Baro. Altitude</span>:
-                  <span class="infoData" id="selected_altitude1"></span>
-                </td>
-              </tr>
-              <tr>
-                <td>
                   <span class="infoHeading" id="selected_altitude_geom1_title" title="The geometric GPS derived altitude referenced to WGS84 ellipsoid (or reference EGM96 when enabled in the settings)">WGS84 Altitude</span>:
                   <span class="infoData" id="selected_altitude_geom1"></span>
                 </td>
               </tr>
-              <tr>
-                <td>
-                  <div class="infoHeading">
-                    <span title="Rate of climb or descent">Vert. Rate</span>:
-                  </div>
-                  <div class="infoData">
-                    <span id="selected_vert_rate">n/a</span>
-                  </div>
-                </td>
-              </tr>
-
+              
               <tr>
                 <td>
                   <div class="infoHeading">
@@ -370,14 +248,13 @@
 
             </table>
           </div>
+          </details>
+
               <!-- SPATIAL -->
 
-          <div class="sectionTitle">
-            <div class="section-title-content">
-              Signal
-            </div>
-          </div>
-          <div class="infoBlockSection">
+          <details class="ib-group" data-group="signal">
+            <summary class="ib-group-summary">Signal</summary>
+            <div class="infoBlockSection">
 
             <div>
               <div class="infoHeading">
@@ -432,14 +309,13 @@
                 </div>
               </div>
             </div>
-          </div> <!-- Signal -->
-
-          <div class="sectionTitle">
-            <div class="section-title-content">
-              FMS SEL
-            </div>
           </div>
-          <div class="infoBlockSection">
+          </details>
+ <!-- Signal -->
+
+          <details class="ib-group" data-group="fms">
+            <summary class="ib-group-summary">Autopilot / FMS</summary>
+            <div class="infoBlockSection">
             <div>
               <div class="infoHeading">
                 <span title="The selected altitude in the aircraft's flight management system">Sel. Alt.</span>:
@@ -456,14 +332,13 @@
                 <span id="selected_nav_heading">n/a</span>
               </div>
             </div>
-          </div> <!-- FMS SEL -->
-
-          <div class="sectionTitle">
-            <div class="section-title-content">
-              Wind
-            </div>
           </div>
-          <div class="infoBlockSection">
+          </details>
+ <!-- FMS SEL -->
+
+          <details class="ib-group" data-group="wind">
+            <summary class="ib-group-summary">Wind &amp; air</summary>
+            <div class="infoBlockSection">
             <div>
               <div class="infoHeading">
                 <span title="Calculated Wind speed">Speed</span>:
@@ -488,13 +363,12 @@
                 <span id="selected_temp">n/a</span>
               </div>
             </div>
-          </div> <!-- Wind -->
-          <div class="sectionTitle">
-            <div class="section-title-content">
-              Speed
-            </div>
           </div>
-          <div class="infoBlockSection">
+          </details>
+ <!-- Wind -->
+          <details class="ib-group" data-group="speed">
+            <summary class="ib-group-summary">Speed</summary>
+            <div class="infoBlockSection">
             <div>
               <div class="infoHeading">
                 <span title="The speed of the aircraft over the ground">Ground:</span>
@@ -528,13 +402,12 @@
               </div>
             </div>
           </div>
+          </details>
 
-          <div class="sectionTitle">
-            <div class="section-title-content">
-              Altitude
-            </div>
-          </div>
-          <div class="infoBlockSection">
+
+          <details class="ib-group" data-group="altitude">
+            <summary class="ib-group-summary">Altitude</summary>
+            <div class="infoBlockSection">
             <div>
               <div class="infoHeading">
                 <span id="selected_altitude2_title" title="The uncorrected pressure-derived height of the aircraft above mean sea level (based on barometric pressure)">Barometric</span>:
@@ -576,13 +449,12 @@
               </div>
             </div>
           </div>
+          </details>
 
-          <div class="sectionTitle">
-            <div class="section-title-content">
-              Direction
-            </div>
-          </div>
-          <div class="infoBlockSection">
+
+          <details class="ib-group" data-group="direction">
+            <summary class="ib-group-summary">Heading &amp; track</summary>
+            <div class="infoBlockSection">
             <div>
               <div class="infoHeading">
                 <span title="Direction the aircraft is traveling over the ground">Ground Track</span>:
@@ -632,14 +504,20 @@
               </div>
             </div>
           </div>
+          </details>
 
-          <div class="sectionTitle">
-            <div class="section-title-content">
-              Stuff
-            </div>
-          </div>
-          <div class="infoBlockSection">
+
+          <details class="ib-group" data-group="other">
+            <summary class="ib-group-summary">Other</summary>
+            <div class="infoBlockSection">
+            
             <div>
+              <div class="infoHeading">
+                <span title="Database flags (military / PIA / LADD)">DB flags</span>
+              </div>
+              <div class="infoData"><span id="selected_dbFlags">n/a</span></div>
+            </div>
+<div>
               <div class="infoHeading">
                 <span title="The enabled navigation modes as reported by the aircraft (i.e., auto-pilot, Traffic Collision Avoidance System, altitude hold, approach, LNAV approach, and/or VNAV approach)">Nav. Modes</span>:
               </div>
@@ -669,13 +547,12 @@
               </div>
             </div>
           </div>
+          </details>
 
-          <div class="sectionTitle">
-            <div class="section-title-content">
-              Accuracy
-            </div>
-          </div>
-          <div class="infoBlockSection">
+
+          <details class="ib-group" data-group="accuracy">
+            <summary class="ib-group-summary">Accuracy</summary>
+            <div class="infoBlockSection">
             <div>
               <div class="infoHeading">
                 <span title="Navigation accuracy category of the position (95% bound on positions)">NAC<sub>P</sub></span>:
@@ -719,11 +596,13 @@
 
 
           </div>
+          </details>
+
 
           <div class="bottom-info-container">
             <div class="bottom-info-text"> Learn more about Mode S data type by hovering over each data label.</div>
           </div>
-          <div>
+          <div class="ib-epoch">
               <div class="infoHeading">
                   <span >Pos. epoch</span>:
               </div>
@@ -732,14 +611,14 @@
               </div>
           </div>
 
-          <div class="sectionTitle">
-            <div class="section-title-content">
-              Export KML
+          <details class="ib-group" data-group="export">
+            <summary class="ib-group-summary">Export KML</summary>
+            <div class="infoBlockSection ib-single-column">
+              <button id="export_kml_geom" class="exportButton" onclick='exportKML("geom")'>geometric altitude (EGM96)</button>
+              <button id="export_kml_geom_avg" class="exportButton" onclick='exportKML("geom_avg")'>baro + avg.(EGM96 - baro)</button>
+              <button id="export_kml_baro" class="exportButton" onclick='exportKML("baro")'>uncorrected pressure alt.</button>
             </div>
-          </div>
-          <button id="export_kml_geom" onclick='exportKML("geom")'>geometric altitude (EGM96)</button>
-          <button id="export_kml_geom_avg" onclick='exportKML("geom_avg")'>baro + avg.(EGM96 - baro)</button>
-          <button id="export_kml_baro" onclick='exportKML("baro")'>uncorrected pressure alt.</button>
+          </details>
 
         </div>
       </div> <!-- selected_infoblock -->
@@ -755,20 +634,39 @@
         <div id="iconTestCanvas" style="background-color:#D2D2D2;display:none;">
         </div>
 
+        <!-- Mobile bottom sheet: shown instead of sidebar when screen is narrow -->
+        <!-- Mobile bottom sheet. It holds the real #selected_infoblock, moved in
+             by showMobileSheet, so the phone cannot drift from the desktop layout.
+             Collapsed shows only its summary header; expanded shows everything. -->
+        <div id="mobile_summary" style="display:none">
+          <div id="mobile_expanded_close" onclick="collapseMobileSheet()" title="Collapse"><i class="fa-solid fa-chevron-down"></i></div>
+          <div id="mobile_summary_handle" onclick="toggleMobileExpand()" title="Expand"><i class="fa-solid fa-chevron-up"></i></div>
+        </div>
         <div id="settings_infoblock">
-          <div id="settings_close" class="settingsCloseBox"></div>
+          <div id="settings_close" class="settingsCloseBox">
+            <i class="fa-solid fa-circle-xmark"></i>
+          </div>
           <div class="settingsOptionContainer">
             <div class="settingsText">Text and Icon size:</div>
           </div>
-          <div style="display: block; width: 100%;" id="userScaleSlider"></div>
+          <input type="range" id="userScaleSlider" class="ui-range" aria-label="Text and icon size">
           <div class="settingsOptionContainer">
             <div class="settingsText">Icon size multiplier:</div>
           </div>
-          <div style="display: block; width: 100%;" id="iconScaleSlider"></div>
+          <input type="range" id="iconScaleSlider" class="ui-range" aria-label="Icon size multiplier">
           <div class="rSpacer">
             <hr />
           </div>
           <div id="settingsLeft" class="settingsColumn">
+            <div class="settingsOptionContainer ui-row">
+              <span class="ui-row-label">Map dimming</span>
+              <span id="mapdim_levels" class="ui-btn-group ui-btn-group-tight">
+                <button type="button" class="ui-btn" data-dim="0">Off</button>
+                <button type="button" class="ui-btn" data-dim="1">Low</button>
+                <button type="button" class="ui-btn" data-dim="2">Med</button>
+                <button type="button" class="ui-btn" data-dim="3">High</button>
+              </span>
+            </div>
             <div class="settingsOptionContainer">
               <label for="units_selector"><span class="infoBlockTitleText">Units:&nbsp;&nbsp;</span></label>
               <select name="units_selector" id="units_selector">
@@ -798,42 +696,147 @@
         </div>
         <div id="header_top" class="infoHeading">
           <div class="buttonContainer">
-            <span id="U" title="only show the U2 and other military planes" class="button inActiveButton" onclick="toggleMilitary();"><span class="buttonText">U</span></span>
-            <span id="H" title="(H)ome / Reset Map" class="button inActiveButton" onclick="resetMap();"><span class="buttonText">H</span></span>
-            <span id="T" title="All (T)racks" class="button inActiveButton" onclick="selectAllPlanes();"><span class="buttonText">T</span></span>
-            <span id="RP" title="Repla(Y)" class="button inActiveButton replayButton" onclick="showReplayBar();" style="display: none"><span class="buttonText"></span></span>
+            <div id="tempTrailsBar" class="ui-panel ui-strip" style="display: none">
+              <label class="ui-strip-label" for="tempTrailsInput">Trail seconds</label>
+              <input id="tempTrailsInput" class="ui-input ui-input-num" type="number" min="0" max="1200" step="5" value="0" title="0 = full tracks, otherwise only show the last X seconds of each track">
+              <button id="tempTrailsApply" class="ui-btn ui-btn-square" type="button" title="Apply trail length"><span class="fa-solid fa-check"></span></button>
+            </div>
+            <span id="T" title="All (T)racks" class="ui-btn ui-btn-square inActiveButton" onclick="selectAllPlanes();"><span class="buttonText">T</span></span>
+            <span id="U" title="only show the U2 and other military planes" class="ui-btn ui-btn-square inActiveButton" onclick="toggleMilitary();"><span class="buttonText">U</span></span>
+            <span id="H" title="(H)ome / Reset Map" class="ui-btn ui-btn-square inActiveButton" onclick="resetMap();"><span class="buttonText">H</span></span>
+            <span id="RP" title="Repla(Y)" class="ui-btn ui-btn-square inActiveButton replayButton" onclick="showReplayBar();" style="display: none"><span class="buttonText"></span></span>
+          </div>
+        </div>
+        <!-- Airband audio player: hidden unless atcStreamUrl is set -->
+        <div id="atc_player" class="atc-player" hidden>
+          <button id="atc_toggle" class="ui-btn ui-btn-square atc-toggle" type="button" title="Start the airband audio">
+            <span class="fa-solid fa-play"></span>
+          </button>
+          <div class="atc-status-wrap">
+            <button id="atc_status" class="ui-btn atc-status" type="button" title="Mute" aria-pressed="false">
+              <span class="atc-dot" aria-hidden="true"></span>
+              <span id="atc_title" class="atc-title"></span>
+            </button>
+            <input id="atc_volume" class="atc-volume" type="range" min="0" max="1.5" step="0.05" value="1" title="Volume" aria-label="Volume" list="atc_volume_marks">
+            <datalist id="atc_volume_marks"><option value="1"></option></datalist>
           </div>
         </div>
         <div id="header_side" class="infoHeading">
           <div class="buttonContainer">
-            <div id="toggle_sidebar_control">
-              <button id="toggle_sidebar_button" class="show_sidebar sidebar_button " title="Toggle Sidebar"></button>
+            <div id="toggle_sidebar_control" class="ui-btn ui-btn-square">
+              <span id="toggle_sidebar_button" class="show_sidebar fa-solid fa-chevron-right" alt="Toggle Sidebar"></span>
             </div>
-            <div id="expand_sidebar_control">
-              <button id="expand_sidebar_button" class="sidebar_button" title="Expand Sidebar" style="display: none;"></button>
+            <div id="expand_sidebar_control" class="ui-btn ui-btn-square" style="display: none;">
+              <span id="expand_sidebar_button" class="fa-solid fa-chevron-right" alt="Expand Sidebar"></span>
             </div>
-            <div id="fullscreenButton" class="svgButton fullscreenButton"></div>
-            <div id="settingsCog" class="svgButton settingsCog"></div>
-            <div id="L" title="Toggle (L)abels" class="button inActiveButton" onclick="toggleLabels();"><span class="buttonText">L</span></div>
-            <div id="O" title="Toggle Label Extensi(O)ns" class="button inActiveButton" onclick="toggleExtendedLabels();"><span class="buttonText">O</span></div>
-            <div id="K" title="Toggle Trac(K) Labels" class="button inActiveButton" onclick="toggleTrackLabels();"><span class="buttonText">K</span></div>
+            <div id="settingsCog" class="ui-btn ui-btn-square settingsCog">
+              <span id="settingsCog" class="fa-solid fa-gear"></span>
+            </div>
+            <div id="L" title="Toggle (L)abels" class="chrome-secondary ui-btn ui-btn-square inActiveButton" onclick="toggleLabels();"><span class="buttonText">L</span></div>
+            <div id="O" title="Toggle Label Extensi(O)ns" class="chrome-secondary ui-btn ui-btn-square inActiveButton" onclick="toggleExtendedLabels();"><span class="buttonText">O</span></div>
+            <div id="K" title="Toggle Trac(K) Labels" class="chrome-secondary ui-btn ui-btn-square inActiveButton" onclick="toggleTrackLabels();"><span class="buttonText">K</span></div>
             <div class="buttonSpacer">
             </div>
-            <div style="display: none" id="B" title="Toggle Map (B)rightness" class="button inActiveButton" onclick="toggles['MapDim'].toggle();"><span class="buttonText">B</span></div>
+            <div style="display: none" id="B" title="Toggle Map (B)rightness" class="chrome-secondary ui-btn ui-btn-square inActiveButton" onclick="cycleMapDim();"><span class="buttonText">B</span></div>
             <div class="buttonSpacer">
             </div>
-            <div style="display: none" id="V" title="Table: only show aircraft in current (V)iew" class="button inActiveButton" onclick="toggleTableInView();"><span class="buttonText">V</span></div>
-            <div id="M" title="Toggle (M)ultiSelect" class="button inActiveButton" onclick="toggleMultiSelect();"><span class="buttonText">M</span></div>
+            <div style="display: none" id="V" title="Table: only show aircraft in current (V)iew" class="chrome-secondary ui-btn ui-btn-square inActiveButton" onclick="toggleTableInView();"><span class="buttonText">V</span></div>
+            <div id="M" title="Toggle (M)ultiSelect" class="chrome-secondary ui-btn ui-btn-square inActiveButton" onclick="toggleMultiSelect();"><span class="buttonText">M</span></div>
             <div class="buttonSpacer">
             </div>
-            <div id="P" title="(P)ersistence mode" class="button inActiveButton" onclick="togglePersistence();"><span class="buttonText">P</span></div>
-            <div id="I" title="(I)solate: only show selected aircraft" class="button inActiveButton" onclick="toggleIsolation();"><span class="buttonText">I</span></div>
+            <div id="P" title="(P)ersistence mode" class="chrome-secondary ui-btn ui-btn-square inActiveButton" onclick="togglePersistence();"><span class="buttonText">P</span></div>
+            <div id="I" title="(I)solate: only show selected aircraft" class="chrome-secondary ui-btn ui-btn-square inActiveButton" onclick="toggleIsolation();"><span class="buttonText">I</span></div>
             <div class="buttonSpacer">
             </div>
-            <div id="R" title="Follow a (R)andom plane!" class="button inActiveButton" onclick="followRandomPlane();"><span class="buttonText">R</span></div>
-            <div id="F" title="(F)ollow" class="button inActiveButton" onclick="toggleFollow();"><span class="buttonText">F</span></div>
+            <div id="R" title="Follow a (R)andom plane!" class="chrome-secondary ui-btn ui-btn-square inActiveButton" onclick="followRandomPlane();"><span class="buttonText">R</span></div>
+            <div id="F" title="(F)ollow" class="ui-btn ui-btn-square inActiveButton" onclick="toggleFollow();"><span class="buttonText">F</span></div>
+            <div id="chrome_more" class="ui-btn ui-btn-square chrome-more" title="More controls" onclick="toggleChromeMore();"><span class="fa-solid fa-ellipsis"></span></div>
           </div>
         </div>
+        <!-- History / playback controls. Grouped by what they act on: the day
+             being viewed, the leg within it, and playback speed. All ids are
+             the originals so the existing handlers still bind. -->
+        <div id="history_collapse" class="ui-panel history-panel" style="display: none">
+          <button id="history_close" type="button" class="history-close" title="Leave history mode"><i class="fa-solid fa-xmark"></i></button>
+
+          <div class="history-group">
+            <span class="history-label" id="trace_date">UTC day</span>
+            <input id="histDatePicker" class="ui-input" type="date" aria-label="Trace date">
+            <span class="ui-btn-group ui-btn-group-tight">
+              <button class="ui-btn ui-btn-square" id="trace_back_1d" title="Previous day"><i class="fa-solid fa-chevron-left"></i></button>
+              <button class="ui-btn ui-btn-square" id="trace_jump_1d" title="Next day"><i class="fa-solid fa-chevron-right"></i></button>
+            </span>
+          </div>
+
+          <div class="history-group history-group-leg">
+            <span class="history-status" id="leg_sel">Legs: All</span>
+            <span class="ui-btn-group ui-btn-group-tight">
+              <button class="ui-btn ui-btn-square" id="leg_prev" title="Previous leg"><i class="fa-solid fa-chevron-left"></i></button>
+              <button class="ui-btn ui-btn-square" id="leg_next" title="Next leg"><i class="fa-solid fa-chevron-right"></i></button>
+            </span>
+          </div>
+
+          <div class="history-group">
+            <span class="history-label">Speed</span>
+            <span id="replay_speeds" class="ui-btn-group ui-btn-group-tight">
+              <button class="ui-btn" id="tStop" title="Stop playback">Stop</button>
+              <button class="ui-btn" id="t1x">1x</button>
+              <button class="ui-btn" id="t5x">5x</button>
+              <button class="ui-btn" id="t10x">10x</button>
+              <button class="ui-btn" id="t20x">20x</button>
+              <button class="ui-btn" id="t40x">40x</button>
+            </span>
+          </div>
+
+          <div class="history-footer">
+            <span class="history-status" id="trace_time"></span>
+            <span class="history-hint">Click the trace line to start playback</span>
+          </div>
+        </div>
+        <div id="label_picker" class="ui-panel" style="display: none">
+          <div class="ui-panel-header">
+            <span class="ui-panel-title">Map labels</span>
+            <button id="label_picker_close" class="ui-btn ui-btn-square ui-btn-quiet" type="button" title="Close labels panel"><span class="fa-solid fa-xmark"></span></button>
+          </div>
+          <div class="ui-panel-body ui-scroll">
+            <div class="ui-section">Presets</div>
+            <div id="label_picker_presets" class="label-picker-presets">
+              <button type="button" class="ui-btn" data-preset="minimal">Minimal</button>
+              <button type="button" class="ui-btn" data-preset="standard">Standard</button>
+              <button type="button" class="ui-btn" data-preset="compact">Compact</button>
+              <button type="button" class="ui-btn" data-preset="detailed">Detailed</button>
+              <button type="button" class="ui-btn" data-preset="wind">Wind</button>
+            </div>
+            <div class="ui-section">Fields, top to bottom as drawn</div>
+            <div id="label_picker_body"></div>
+          </div>
+        </div>
+        <div id="openaip_vector_panel" style="display:none">
+          <div class="openaip-panel-title">openAIP Layer Filter</div>
+          <div class="openaip-panel-section">Fill Opacity</div>
+          <div class="openaip-opacity-row">
+            <span class="openaip-opacity-label">Low</span>
+            <input type="range" id="oaip_fill_opacity" min="1" max="10" step="1" value="8"
+                   oninput="setOpenAIPFillOpacity(this.value)" style="flex:1">
+            <span class="openaip-opacity-label">High</span>
+          </div>
+          <div class="openaip-panel-section">Airspaces</div>
+          <label class="openaip-panel-row"><input type="checkbox" id="oaip_airspaces_danger"   onchange="toggleOpenAIPCategory('airspaces_danger',   this.checked)"> <span class="oaip-swatch" style="background:#dc1e1e"></span> Restricted / Danger / Prohibited</label>
+          <label class="openaip-panel-row"><input type="checkbox" id="oaip_airspaces_alert"    onchange="toggleOpenAIPCategory('airspaces_alert',    this.checked)"> <span class="oaip-swatch" style="background:#dc6414"></span> Alert / Warning</label>
+          <label class="openaip-panel-row"><input type="checkbox" id="oaip_airspaces_ctr"      onchange="toggleOpenAIPCategory('airspaces_ctr',      this.checked)"> <span class="oaip-swatch" style="background:#1e50dc"></span> CTR / ATZ (Control Zones)</label>
+          <label class="openaip-panel-row"><input type="checkbox" id="oaip_airspaces_tma"      onchange="toggleOpenAIPCategory('airspaces_tma',      this.checked)"> <span class="oaip-swatch" style="background:#3080cc"></span> TMA / CTA (Control Areas)</label>
+          <label class="openaip-panel-row"><input type="checkbox" id="oaip_airspaces_military" onchange="toggleOpenAIPCategory('airspaces_military', this.checked)"> <span class="oaip-swatch" style="background:#b414b4"></span> Military (TRA / TSA)</label>
+          <label class="openaip-panel-row"><input type="checkbox" id="oaip_airspaces_rmz_tmz"  onchange="toggleOpenAIPCategory('airspaces_rmz_tmz',  this.checked)"> <span class="oaip-swatch" style="background:#dc8c14"></span> Radio Mandatory (RMZ / TMZ)</label>
+          <label class="openaip-panel-row"><input type="checkbox" id="oaip_airspaces_gliding"  onchange="toggleOpenAIPCategory('airspaces_gliding',  this.checked)"> <span class="oaip-swatch" style="background:#3ca03c"></span> Gliding / VFR Sectors</label>
+          <label class="openaip-panel-row"><input type="checkbox" id="oaip_airspaces_other"    onchange="toggleOpenAIPCategory('airspaces_other',    this.checked)"> <span class="oaip-swatch" style="background:#888888"></span> Other / FIR / Airways</label>
+          <div class="openaip-panel-section">Points</div>
+          <label class="openaip-panel-row"><input type="checkbox" id="oaip_airports"          onchange="toggleOpenAIPCategory('airports',          this.checked)"> <span class="oaip-swatch" style="background:#007b7b"></span> Airports</label>
+          <label class="openaip-panel-row"><input type="checkbox" id="oaip_navaids"           onchange="toggleOpenAIPCategory('navaids',           this.checked)"> <span class="oaip-swatch" style="background:#6600cc"></span> Navaids</label>
+          <label class="openaip-panel-row"><input type="checkbox" id="oaip_obstacles"         onchange="toggleOpenAIPCategory('obstacles',         this.checked)"> <span class="oaip-swatch" style="background:#cc5500"></span> Obstacles</label>
+          <label class="openaip-panel-row"><input type="checkbox" id="oaip_hotspots"          onchange="toggleOpenAIPCategory('hotspots',          this.checked)"> <span class="oaip-swatch" style="background:#007700"></span> Hotspots (Thermals)</label>
+          <label class="openaip-panel-row"><input type="checkbox" id="oaip_reporting_points"  onchange="toggleOpenAIPCategory('reporting_points',  this.checked)"> <span class="oaip-swatch" style="background:#666666"></span> Reporting Points</label>
+        </div>
+
         <div id="altitude_chart" class="ol-unselectable ol-control altitudeFeet">
           <button id="altitude_chart_button"></button>
         </div>
@@ -841,13 +844,13 @@
           <button id="replayPlay" >Play</button>
           <p id="replayDateHint" >Date:</p>
           <p id="replayDateHintLocal" ></p>
-          <input type="text" class="datepicker" id="replayDatepicker" >
+          <input type="date" class="ui-input" id="replayDatepicker" aria-label="Replay date">
           <p id="replayTimeHint"  >Time:</p>
-          <p id="hourSelect"></p>
-          <p id="minuteSelect"></p>
+          <input type="range" id="hourSelect" class="ui-range" aria-label="Replay hour">
+          <input type="range" id="minuteSelect" class="ui-range" aria-label="Replay minute">
           <p id="replayTimeZone">UTC Date:</p>
           <p id="replaySpeedHint">Speed:</p>
-          <p id="replaySpeedSelect"></p>
+          <input type="range" id="replaySpeedSelect" class="ui-range" aria-label="Replay speed">
           <p id="replayLoading"></p>
           <p></p>
         </div> <!-- replayBar -->
@@ -855,14 +858,18 @@
       </div> <!-- map_container-->
 
       <div id="sidebar_container" style="display: none; height: 100%;">
-        <div id="splitter" class="ui-resizable-handle ui-resizable-w" style="display: none;"></div>
+        <div id="splitter" title="Drag to resize, double-click to fit">
+          <i class="fa-solid fa-left-right"></i>
+        </div>
         <div id="sidebar_canvas">
 
           <div id="sidebar-table">
             <table style="width: 100%">
               <tr>
                 <td>
-                  <button id="shrink_sidebar_button" class="shrink_sidebar hidden sidebar_button" title="Show Map"></button>
+                  <div id="shrink_sidebar_control" class="button-fa hidden buttonContainer" style="display: none;">
+                    <span id="shrink_sidebar_button" class="show_sidebar fa-solid fa-chevron-right hidden" alt="Show Map"></span>
+                  </div>
                 </td>
               </tr>
 
@@ -1075,8 +1082,6 @@
     <!-- JS_ANCHOR1 -->
     <script src="libs/jquery-3.6.1.min.js"></script>
     <script src="libs/elm-pep-01.js"></script>
-    <script src="libs/jquery-ui-1.13.2.min.js"></script>
-    <script src="libs/jquery.ui.touch-punch-1.0.8.js"></script>
     <script src="libs/zstddec-tar1090-0.0.5.js"></script>
 
     <!-- ol-custom bundling created using https://github.com/wiedehopf/ol-rollup-->
@@ -1099,6 +1104,7 @@
     <script>let spriteSrc = 'images/sprites.png';</script>
     <script src="planeObject.js"></script>
     <script src="script.js"></script>
+    <script src="atc.js"></script>
 
     <link rel="preload" as="image" crossOrigin="anonymous" href="images/sprites.png">
 

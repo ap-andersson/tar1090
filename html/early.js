@@ -350,7 +350,7 @@ if (usp.has('pTracks')) {
 }
 
 function getDay(date) {
-    if ((utcTimesLive && !showTrace) || (utcTimesHistoric && showTrace))
+    if (useUTC)
         return date.getUTCDate();
     else
         return date.getDate();

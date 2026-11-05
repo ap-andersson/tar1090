@@ -45,7 +45,6 @@ let SelectedPlane = null;
 let sp = null;
 let SelPlanes = [];
 let SelectedAllPlanes = false;
-let HighlightedPlane = null;
 let FollowSelected = false;
 let followPos = [];
 let loadStart = new Date().getTime();
@@ -60,6 +59,30 @@ let multiSelect = false;
 let uat_data = null;
 g.enableLabels = false;
 g.extendedLabels = 0;
+// ordered list of map label field ids, see labelFieldDefs in planeObject.js
+g.labelFields = ['callsign', 'route'];
+// map dimming level, 0-3
+g.mapDimLevel = 1;
+
+// ---- map dimming levels -------------------------------------------------
+//
+// Replaces the MapDim + darkerColors pair of checkboxes. The multipliers
+// reproduce what those two produced in combination, plus one darker step:
+//
+//   0 off     quarter dim   (what unchecked MapDim did - never fully off)
+//   1 low     full dim      (MapDim on, darkerColors off)
+//   2 medium  1.25x dim     (MapDim on, darkerColors on)
+//   3 high    1.5x dim
+//
+// Level 2 and up also darkens the aircraft colours, which is what
+// darkerColors did in planeObject.
+const mapDimLevels = [
+    { key: 0, label: 'Off',  dim: 0.25, contrast: 0.25, darkerMarkers: false },
+    { key: 1, label: 'Low',  dim: 1.0,  contrast: 1.0,  darkerMarkers: false },
+    { key: 2, label: 'Med',  dim: 1.25, contrast: 1.1,  darkerMarkers: true },
+    { key: 3, label: 'High', dim: 1.5,  contrast: 1.2,  darkerMarkers: true },
+];
+
 let mapIsVisible = true;
 let onlyMilitary = false;
 let onlySelected = false;
@@ -893,9 +916,20 @@ function processQueryToggles() {
     }
 }
 
+// Which speed is running was not shown anywhere - the buttons all looked the
+// same whatever was selected.
+const replaySpeedButtons = {0: '#tStop', 1: '#t1x', 5: '#t5x', 10: '#t10x', 20: '#t20x', 40: '#t40x'};
+
+function markReplaySpeed(speed) {
+    jQuery('#replay_speeds .ui-btn').removeClass('is-on');
+    const button = replaySpeedButtons[speed];
+    if (button)
+        jQuery(button).addClass('is-on');
+}
+
 function replaySpeedChange(arg) {
     traceOpts.replaySpeed = arg;
-    console.log(arg);
+    markReplaySpeed(arg);
     if (traceOpts.animate)
         return;
     legShift(0);
@@ -905,20 +939,14 @@ function initPage() {
 
     if (globeIndex) {
         function setGlobeTableLimit() {
-            let mult = 1 + 4 * toggles['moreTableLines1'].state + 16 * (toggles['moreTableLines2'] && toggles['moreTableLines2'].state);
+            // one table density now; moreTableLines1/2 were removed as settings
+            let mult = 1 + 16 * (toggles['moreTableLines2'] && toggles['moreTableLines2'].state);
             globeTableLimit = globeTableLimitBase * mult;
             if (toggles['allTableLines'] && toggles['allTableLines'].state)
                 globeTableLimit = 1e9;
             if (onMobile)
                 globeTableLimit /= 2;
         };
-        new Toggle({
-            key: "moreTableLines1",
-            display: "More Table Lines",
-            container: "#sidebar-table",
-            init: false,
-            setState: setGlobeTableLimit,
-        });
         new Toggle({
             key: "moreTableLines2",
             display: "Even More Table Lines",
@@ -1023,6 +1051,12 @@ function earlyInitPage() {
         g.enableLabels=true;
     }
 
+    if (usp.has('debugTracks')) {
+        debugTracks = true;
+    }
+    if (usp.has('debugAll')) {
+        debugAll = true;
+    }
     if (usp.has('debugFetch')) {
         debugFetch = true;
     }
@@ -1093,6 +1127,18 @@ function earlyInitPage() {
         let tmp = parseInt(usp.get('tempTrails'));
         if (tmp > 0)
             tempTrailsTimeout = tmp;
+    } else {
+        // no URL parameter: fall back to the saved "trail seconds" setting
+        const stored = parseInt(loStore['tempTrailsTimeout']);
+        if (stored > 0) {
+            tempTrails = true;
+            tempTrailsTimeout = Math.min(stored, tempTrailsMax);
+        }
+    }
+    if (usp.has('mobileWidth')) {
+        const width = parseInt(usp.get('mobileWidth'));
+        if (width > 0)
+            mobileBreakpoint = width;
     }
     if (usp.has('squareMania')) {
         squareMania = true;
@@ -1145,7 +1191,7 @@ function earlyInitPage() {
     }
 
     const slideBase = 0.6;
-    jQuery('#iconScaleSlider').slider({
+    initRange('#iconScaleSlider', {
         value: Math.pow(iconScale, 1 / slideBase),
         step: 0.02,
         min: 0.1,
@@ -1158,7 +1204,7 @@ function earlyInitPage() {
         },
     });
 
-    jQuery('#userScaleSlider').slider({
+    initRange('#userScaleSlider', {
         value: Math.pow(userScale, 1 / slideBase),
         step: 0.02,
         min: 0.5,
@@ -1265,13 +1311,11 @@ function earlyInitPage() {
     if (loStore['enableLabels'] == 'true' || usp.has('enableLabels')) {
         toggleLabels();
     }
-    if (usp.has('extendedLabels')) {
-        g.extendedLabels = parseInt(usp.getFloat('extendedLabels'));
-        toggleExtendedLabels({ noIncrement: true });
-    } else if (loStore['extendedLabels']) {
-        g.extendedLabels = parseInt(loStore['extendedLabels']);
-        toggleExtendedLabels({ noIncrement: true });
-    }
+    initMapDim();
+    tidyInfoblockLabels();
+    initInfoblockGroups();
+    initLabelPicker();
+    loadLabelFields();
     if (loStore['trackLabels'] == "true" || usp.has('trackLabels')) {
         toggleTrackLabels();
     }
@@ -1290,13 +1334,7 @@ function earlyInitPage() {
         buttonActive('#P', noVanish);
     }
 
-    jQuery('#tabs').tabs({
-        active: loStore['active_tab'],
-        activate: function (event, ui) {
-            loStore['active_tab'] = jQuery("#tabs").tabs("option", "active");
-        },
-        collapsible: true
-    });
+    initTabs('#tabs', 'active_tab');
 
     // Set page basics
     document.title = PageName;
@@ -1319,8 +1357,8 @@ function earlyInitPage() {
     });
 
     // Set up event handlers for buttons
-    jQuery("#expand_sidebar_button").click(expandSidebar);
-    jQuery("#shrink_sidebar_button").click(showMap);
+    jQuery("#expand_sidebar_control").click(expandSidebar);
+    jQuery("#shrink_sidebar_control").click(showMap);
 
     jQuery("#altimeter_form").submit(onAltimeterChange);
     jQuery("#altimeter_set_standard").click(onAltimeterSetStandard);
@@ -1345,24 +1383,15 @@ function earlyInitPage() {
     jQuery("#jump_form").submit(onJump);
 
     jQuery("#show_trace").click(toggleShowTrace);
+    // the panel's own close leaves history mode, same as the header button
+    jQuery("#history_close").click(toggleShowTrace);
     jQuery("#trace_back_1d").click(function() {shiftTrace(-1)});
     jQuery("#trace_jump_1d").click(function() {shiftTrace(1)});
 
-    jQuery("#histDatePicker").datepicker({
-        maxDate: '+1d',
-        dateFormat: "yy-mm-dd",
-        onSelect: function(date){
-            setTraceDate({string: date});
-            shiftTrace();
-            jQuery("#histDatePicker").blur();
-        },
-        autoSize: true,
-        onClose: !onMobile ? null : function(dateText, inst){
-            jQuery("#histDatePicker").attr("disabled", false);
-        },
-        beforeShow: !onMobile ? null : function(input, inst){
-            jQuery("#histDatePicker").attr("disabled", true);
-        },
+    initDatePicker("#histDatePicker", function(date) {
+        setTraceDate({string: date});
+        shiftTrace();
+        jQuery("#histDatePicker").blur();
     });
 
     jQuery("#replayPlay").click(function(){
@@ -1384,21 +1413,35 @@ function earlyInitPage() {
         jQuery('#settings_infoblock').toggle();
     });
 
-    if (onMobile) {
-        jQuery('#fullscreenButton').on('click', function() {
-            if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen();
-            } else if (document.exitFullscreen) {
-                document.exitFullscreen();
-            }
-        });
-    } else {
-        jQuery('#fullscreenButton').hide();
-    }
+    // the Toggle class only binds the checkbox itself; make the label clickable
+    // too, which matters most on a phone where a 16px box is a poor target
+    jQuery('#settings_infoblock').on('click', '.settingsText', function() {
+        jQuery(this).siblings('.settingsCheckbox').first().trigger('click');
+    });
 
     jQuery('#settings_close').on('click', function() {
         jQuery('#settings_infoblock').hide();
     });
+
+    // OpenAIP vector layer filter panel
+    if (OpenAIPAPIKey) {
+        // Load category visibility from localStorage, falling back to defaults.
+        for (const key of Object.keys(openAIPVectorCategories)) {
+            const stored = loStore['openaip_cat_' + key];
+            if (stored === 'true')  openAIPVectorCategories[key] = true;
+            if (stored === 'false') openAIPVectorCategories[key] = false;
+            const cb = document.getElementById('oaip_' + key);
+            if (cb) cb.checked = openAIPVectorCategories[key];
+        }
+
+        // Load saved fill opacity.
+        const storedOpacity = loStore['openaip_fill_opacity'];
+        if (storedOpacity !== undefined) openAIPVectorFillOpacity = parseInt(storedOpacity, 10);
+        const opacitySlider = document.getElementById('oaip_fill_opacity');
+        if (opacitySlider) opacitySlider.value = openAIPVectorFillOpacity;
+
+        // Layer visibility wiring is done later in initMap() once layers_group exists.
+    }
 
     jQuery('#groundvehicle_filter').on('click', function() {
         filterGroundVehicles(true);
@@ -1475,11 +1518,11 @@ jQuery('#selected_altitude_geom1')
         setState: function(state) {
             baroUseQNH = state;
             if (baroUseQNH) {
-                jQuery('#selected_altitude1_title').updateText('Corr. baro-alt');
+                jQuery('#selected_altitude1_title').updateText('Corr. alt');
                 jQuery('#selected_altitude2_title').updateText('Corr. baro.');
                 jQuery('#infoblock_altimeter').removeClass('hidden');
             } else {
-                jQuery('#selected_altitude1_title').updateText('Baro. altitude');
+                jQuery('#selected_altitude1_title').updateText('Baro. alt');
                 jQuery('#selected_altitude2_title').updateText('Barometric');
                 jQuery('#infoblock_altimeter').addClass('hidden');
             }
@@ -1498,64 +1541,29 @@ jQuery('#selected_altitude_geom1')
         toggles['geomUseEGM'].toggle(true, 'init');
     }
 
+    // one setting for every time shown in the UI, replacing the separate
+    // live and historic ones. Carry over whichever the user already had -
+    // live is the view they spend most time in.
+    if (loStore['useUTC'] == undefined) {
+        if (loStore['utcTimesLive'] != undefined)
+            loStore['useUTC'] = loStore['utcTimesLive'];
+        else if (loStore['utcTimesHistoric'] != undefined)
+            loStore['useUTC'] = loStore['utcTimesHistoric'];
+    }
+
     new Toggle({
-        key: "utcTimesLive",
-        display: "Live track labels: UTC",
+        key: "useUTC",
+        display: "Times in UTC",
         container: "#settingsLeft",
-        init: utcTimesLive,
+        init: useUTC,
         setState: function(state) {
-            utcTimesLive = state;
+            useUTC = state;
             remakeTrails();
             refreshSelected();
         }
     });
 
-    new Toggle({
-        key: "utcTimesHistoric",
-        display: "Historic track labels: UTC",
-        container: "#settingsLeft",
-        init: utcTimesHistoric,
-        setState: function(state) {
-            utcTimesHistoric = state;
-            remakeTrails();
-            refreshSelected();
-        }
-    });
-
-    new Toggle({
-        key: "windLabelsSlim",
-        display: "Smaller wind labels",
-        container: "#settingsLeft",
-        init: windLabelsSlim,
-        setState: function(state) {
-            windLabelsSlim = state;
-            if (!loadFinished)
-                return;
-            for (let key in g.planesOrdered) {
-                g.planesOrdered[key].updateMarker();
-            }
-        }
-    });
-
-    new Toggle({
-        key: "showLabelUnits",
-        display: "Label units",
-        container: "#settingsLeft",
-        init: showLabelUnits,
-        setState: function(state) {
-            showLabelUnits = state;
-            if (!loadFinished)
-                return;
-            for (let key in g.planesOrdered) {
-                g.planesOrdered[key].updateMarker();
-            }
-            remakeTrails();
-            refreshSelected();
-        }
-    });
-
-
-    jQuery('#tStop').on('click', function() { traceOpts.replaySpeed = 0; gotoTime(traceOpts.showTime); });
+    jQuery('#tStop').on('click', function() { traceOpts.replaySpeed = 0; markReplaySpeed(0); gotoTime(traceOpts.showTime); });
     jQuery('#t1x').on('click', function() { replaySpeedChange(1); });
     jQuery('#t5x').on('click', function() { replaySpeedChange(5); });
     jQuery('#t10x').on('click', function() { replaySpeedChange(10); });
@@ -1569,30 +1577,6 @@ jQuery('#selected_altitude_geom1')
         init: false,
         setState: function(state) {
             updateAddressBar();
-        }
-    });
-
-    new Toggle({
-        key: "debugTracks",
-        display: "Debug Tracks",
-        container: "#settingsRight",
-        init: false,
-        setState: function(state) {
-            debugTracks = state;
-            remakeTrails();
-        }
-    });
-
-    new Toggle({
-        key: "debugAll",
-        display: "Debug show all",
-        container: "#settingsRight",
-        init: false,
-        setState: function(state) {
-            if (state)
-                debugAll = true;
-            else
-                debugAll = false;
         }
     });
 
@@ -1671,24 +1655,18 @@ jQuery('#selected_altitude_geom1')
         display: "Sidebar visible",
         container: null,
         checkbox: null,
-        button: '#toggle_sidebar_button',
+        button: '#toggle_sidebar_control',
         init: (onMobile ? false : true),
         setState: function (state) {
             if (state) {
                 jQuery("#sidebar_container").show();
-                jQuery("#expand_sidebar_button").show();
+                jQuery("#expand_sidebar_control").show();
                 jQuery("#toggle_sidebar_button").removeClass("show_sidebar");
                 jQuery("#toggle_sidebar_button").addClass("hide_sidebar");
                 if (!g.sidebar_initiated) {
                     g.sidebar_initiated = true;
                     // Set up map/sidebar splitter
-                    jQuery("#sidebar_container").resizable({
-                        handles: {
-                            w: '#splitter'
-                        },
-                        minWidth: 150,
-                        maxWidth: (jQuery(window).innerWidth() *0.8),
-                    });
+                    initSidebarResize();
 
                     jQuery("#splitter").dblclick(function() {
                         jQuery('#legend').hide();
@@ -1703,10 +1681,14 @@ jQuery('#selected_altitude_geom1')
                 if (!hideButtons) {
                     jQuery('#splitter').show();
                 }
+                // On mobile skip the split view — go straight to fullscreen
+                if (isMobile() && loadFinished) {
+                    expandSidebar({preventDefault: function(){}});
+                }
             } else {
                 if (loadFinished) {
                     jQuery("#sidebar_container").hide();
-                    jQuery("#expand_sidebar_button").hide();
+                    jQuery("#expand_sidebar_control").hide();
                     jQuery("#toggle_sidebar_button").removeClass("hide_sidebar");
                     jQuery("#toggle_sidebar_button").addClass("show_sidebar");
                 }
@@ -1721,35 +1703,6 @@ jQuery('#selected_altitude_geom1')
         planespottingAPI = false;
         planespottersAPI = false;
     }
-    new Toggle({
-        key: "planespottingAPI",
-        display: "Pictures planespotting.be",
-        container: "#settingsRight",
-        init: planespottingAPI,
-        setState: function(state) {
-            planespottingAPI = state;
-            if (state) {
-                toggles['planespottersAPI'] && toggles['planespottersAPI'].toggle(false);
-            }
-            setPictureVisibility();
-            refreshSelected();
-        }
-    });
-    new Toggle({
-        key: "planespottersAPI",
-        display: "Pictures planespotters.net",
-        container: "#settingsRight",
-        init: planespottersAPI,
-        setState: function(state) {
-            planespottersAPI = state;
-            if (state) {
-                toggles['planespottingAPI'] && toggles['planespottingAPI'].toggle(false);
-            }
-            setPictureVisibility();
-            refreshSelected();
-        }
-    });
-
     if (routeApiUrl) {
         if (location.protocol == 'http:' && routeApiUrl == "https://adsb.im/api/0/routeset") {
             // adsb.im API provider kindly asks that tar1090 uses http for the route API if possible
@@ -1762,13 +1715,8 @@ jQuery('#selected_altitude_geom1')
             init: useRouteAPI,
             setState: function(state) {
                 useRouteAPI = state;
-                if (useRouteAPI) {
-                    jQuery('#routeRow').show();
-                    jQuery('#routeRowHighlighted').show();
-                } else {
-                    jQuery('#routeRow').hide();
-                    jQuery('#routeRowHighlighted').hide();
-                }
+                if (loadFinished)
+                    refreshSelected();
             }
         });
         if (useIataAirportCodes == false) {
@@ -1793,36 +1741,9 @@ jQuery('#selected_altitude_geom1')
         }
     });
 
-    new Toggle({
-        key: "wideInfoblock",
-        display: "Wide Infoblock",
-        container: "#settingsRight",
-        init: wideInfoBlock,
-        setState: function(state) {
-            wideInfoBlock = state;
-            adjustInfoBlock();
-        }
-    });
-
     if (onMobile) {
-        enableMouseover = false;
         (typeof hideById != 'undefined') && (hideById) && (hideById('tracking_leaderboard_container'));
     }
-
-    new Toggle({
-        key: "enableMouseover",
-        display: "Enable mouse-over block",
-        container: "#settingsRight",
-        init: enableMouseover,
-        setState: function(state) {
-            enableMouseover = state;
-            if (loadFinished) {
-                checkPointermove();
-            }
-        }
-    });
-
-
 
     jQuery('#selectall_checkbox').on('click', function() {
         if (jQuery('#selectall_checkbox').hasClass('settingsCheckboxChecked')) {
@@ -1831,6 +1752,17 @@ jQuery('#selected_altitude_geom1')
             selectAllPlanes();
         }
     })
+
+    jQuery('#tempTrailsInput').val(tempTrails ? tempTrailsTimeout : 0);
+    jQuery('#tempTrailsApply').on('click', tempTrailsBarApply);
+    jQuery('#tempTrailsInput').on('keydown', function(e) {
+        if (e.key == 'Enter') {
+            tempTrailsBarApply();
+            jQuery('#tempTrailsInput').blur();
+        }
+        // don't let the map keyboard shortcuts eat what we're typing
+        e.stopPropagation();
+    });
 
     // Force map to redraw if sidebar container is resized - use a timer to debounce
     jQuery("#sidebar_container").on("resize", function() {
@@ -1894,7 +1826,7 @@ function initLegend(colors) {
 
 function initSourceFilter(colors) {
     const createFilter = function (color, text, key) {
-        return '<li class="ui-widget-content" style="background-color:' + color + ';" id="source-filter-' + key + '">' + text + '</li>';
+        return '<li class="filterItem" style="background-color:' + color + ';" id="source-filter-' + key + '">' + text + '</li>';
     };
 
     let html = '';
@@ -1913,27 +1845,14 @@ function initSourceFilter(colors) {
 
     document.getElementById('sourceFilter').innerHTML = html;
 
-    jQuery("#sourceFilter").selectable({
-        stop: function () {
-            sourcesFilter = [];
-            jQuery(".ui-selected", this).each(function () {
-                const index = jQuery("#sourceFilter li").index(this);
-                if (Array.isArray(sources[index]))
-                    sources[index].forEach(member => { sourcesFilter.push(member); });
-                else
-                    sourcesFilter.push(sources[index]);
-            });
-        }
-    });
-
-    jQuery("#sourceFilter").on("selectablestart", function (event, ui) {
-        event.originalEvent.ctrlKey = true;
+    initFilterChips("#sourceFilter", sources, function (picked) {
+        sourcesFilter = picked;
     });
 }
 
 function initFlagFilter(colors) {
     const createFilter = function (color, text, key) {
-        return '<li class="ui-widget-content" style="background-color:' + color + ';" id="flag-filter-' + key + '">' + text + '</li>';
+        return '<li class="filterItem" style="background-color:' + color + ';" id="flag-filter-' + key + '">' + text + '</li>';
     };
 
     let html = '';
@@ -1944,21 +1863,8 @@ function initFlagFilter(colors) {
 
     document.getElementById('flagFilter').innerHTML = html;
 
-    jQuery("#flagFilter").selectable({
-        stop: function () {
-            flagFilter = [];
-            jQuery(".ui-selected", this).each(function () {
-                const index = jQuery("#flagFilter li").index(this);
-                if (Array.isArray(flagFilterValues[index]))
-                    flagFilterValues[index].forEach(member => { flagFilter.push(member); });
-                else
-                    flagFilter.push(flagFilterValues[index]);
-            });
-        }
-    });
-
-    jQuery("#flagFilter").on("selectablestart", function (event, ui) {
-        event.originalEvent.ctrlKey = true;
+    initFilterChips("#flagFilter", flagFilterValues, function (picked) {
+        flagFilter = picked;
     });
 }
 
@@ -2176,13 +2082,7 @@ function setIntervalTimers() {
     //timers.reaper = setInterval(reaper, 40000);
 
     if (tempTrails) {
-        timers.trailReaper = window.setInterval(trailReaper, 10000);
-        trailReaper(now);
-    }
-    if (enable_pf_data && !pTracks && !globeIndex) {
-        jQuery('#pf_info_container').removeClass('hidden');
-        timers.pf_data = window.setInterval(fetchPfData, RefreshInterval*10.314);
-        fetchPfData();
+        setTempTrails(tempTrailsTimeout, {init: true});
     }
     if (actualOutline.enabled) {
         timers.drawOutline = window.setInterval(drawOutlineJson, actualOutline.refresh);
@@ -2398,10 +2298,15 @@ function startPage() {
 
     loadFinished = true;
 
+    initLayoutMode();
+
     setIntervalTimers();
 
-    if (tempTrails)
+    if (tempTrails || SelectedAllPlanes) {
+        // let selectAllPlanes() do the whole setup (it toggles off if already set)
+        SelectedAllPlanes = false;
         selectAllPlanes();
+    }
 
     if (replay) {
         showReplayBar();
@@ -2604,7 +2509,6 @@ function webglInit() {
             }
             if (loadFinished) {
                 refreshFilter();
-                checkPointermove();
             }
         },
     });
@@ -2705,6 +2609,69 @@ function ol_map_init() {
         });
     }
 
+    // Wire the OpenAIP vector panel to show/hide in sync with the layer switcher.
+    // These are declared at function scope so both if-blocks below can reference them.
+    let openAIPLayerVisible = false;
+    let updateOpenAIPPanelVisibility = null;
+
+    if (OpenAIPAPIKey) {
+        function positionOpenAIPPanel() {
+            const panel = document.getElementById('openaip_vector_panel');
+            const lsPanel = document.querySelector('.layer-switcher.shown .panel');
+            if (isMobile()) {
+                // On mobile: append panel inside the layer-switcher panel so it
+                // flows naturally below the layer list with the same width.
+                if (lsPanel && panel.parentNode !== lsPanel) {
+                    lsPanel.appendChild(panel);
+                }
+                panel.style.right = '';
+                panel.style.left = '';
+                panel.style.top = '';
+                panel.style.position = 'relative';
+                panel.style.width = '100%';
+                panel.style.boxSizing = 'border-box';
+                return;
+            }
+            // Desktop: if panel was moved into ls panel, return it to map_canvas
+            const mapCanvas = document.getElementById('map_canvas');
+            if (panel.parentNode !== mapCanvas) {
+                mapCanvas.appendChild(panel);
+                panel.style.position = '';
+                panel.style.width = '';
+            }
+            // Align to just left of the layer-switcher panel.
+            // To tweak the horizontal gap, adjust the + 12 below.
+            if (lsPanel && mapCanvas) {
+                const lsRect = lsPanel.getBoundingClientRect();
+                const mapRect = mapCanvas.getBoundingClientRect();
+                panel.style.right = (mapRect.right - lsRect.left + 12) + 'px';
+            } else {
+                panel.style.right = 'calc(80px * var(--SCALE))';
+            }
+        }
+
+        updateOpenAIPPanelVisibility = function() {
+            const layerSwitcherOpen = !!document.querySelector('.layer-switcher.shown');
+            const panel = jQuery('#openaip_vector_panel');
+            if (openAIPLayerVisible && layerSwitcherOpen) {
+                positionOpenAIPPanel();
+                panel.show();
+            } else {
+                panel.hide();
+            }
+        };
+
+        ol.control.LayerSwitcher.forEachRecursive(layers_group, function(lyr) {
+            if (lyr.get('name') === 'openaip_vector') {
+                openAIPLayerVisible = lyr.getVisible();
+                lyr.on('change:visible', function(evt) {
+                    openAIPLayerVisible = evt.target.getVisible();
+                    updateOpenAIPPanelVisibility();
+                });
+            }
+        });
+    }
+
     OLProj = OLMap.getView().getProjection();
     OLProjExtent = OLProj.getExtent();
 
@@ -2715,6 +2682,16 @@ function ol_map_init() {
         activationMode: 'click', // click sucks in the current implementation
         target: 'map_canvas',
     }));
+
+    // After LayerSwitcher is in the DOM, watch its .shown class to sync the OpenAIP panel.
+    if (OpenAIPAPIKey && updateOpenAIPPanelVisibility) {
+        const layerSwitcherEl = document.querySelector('.layer-switcher');
+        if (layerSwitcherEl) {
+            new MutationObserver(function() {
+                updateOpenAIPPanelVisibility();
+            }).observe(layerSwitcherEl, { attributes: true, attributeFilter: ['class'] });
+        }
+    }
 
     OLMap.on('movestart', function(event) {
         if (webgl) {
@@ -2827,12 +2804,12 @@ function ol_map_init() {
                 toggleIsolation();
             deselect(SelectedPlane);
             refreshFilter();
+            resumeTempTrails();
         }
         evt.stopPropagation();
     });
 
     // show the hover box
-    checkPointermove();
 }
 
 function initMapEarly() {
@@ -3020,25 +2997,11 @@ function initMap() {
 
         deselect(SelectedPlane);
         refreshFilter();
+        resumeTempTrails();
     });
 
 
 
-    new Toggle({
-        key: "darkerColors",
-        display: "Darker Colors",
-        container: "#settingsLeft",
-        init: darkerColors,
-        setState: function(state) {
-            darkerColors = state;
-            if (loadFinished) {
-                refreshFeatures();
-                remakeTrails();
-            }
-        }
-    });
-
-    tableColorsLight = tableColors;
     tableColorsDark = JSON.parse(JSON.stringify(tableColors));
     let darkVals = Object.values(tableColorsDark);
     for (let i in ['selected', 'unselected']) {
@@ -3052,49 +3015,7 @@ function initMap() {
             obj[key] = hslToRgb(hsl);
         }
     }
-    new Toggle({
-        key: "darkMode",
-        display: "Dark Mode",
-        container: "#settingsLeft",
-        init: darkModeDefault,
-        setState: function(state) {
-            let root = document.documentElement;
-            jQuery(".layer-switcher .panel").css("background", "var(--BGCOLOR1)");
-            jQuery(".layer-switcher .panel").css("border", "4px solid var(--BGCOLOR1)");
-            if (state) {
-                root.style.setProperty("--BGCOLOR1", '#313131');
-                root.style.setProperty("--BGCOLOR2", '#242424');
-                root.style.setProperty("--TXTCOLOR1","#BFBFBF");
-                root.style.setProperty("--TXTCOLOR2","#D8D8D8");
-                root.style.setProperty("--TXTCOLOR3","#a8a8a8");
-                //invert the "x" images
-                jQuery(".infoblockCloseBox").css('filter','invert(100%)');
-                jQuery(".infoblockCloseBox").css(' -webkit-filter','invert(100%)');
-                jQuery(".settingsCloseBox").css('filter','invert(100%)');
-                jQuery(".settingsCloseBox").css(' -webkit-filter','invert(100%)');
-                tableColors = tableColorsDark;
-            } else {
-                root.style.setProperty("--BGCOLOR1", '#F8F8F8');
-                root.style.setProperty("--BGCOLOR2", '#CCCCCC');
-                root.style.setProperty("--TXTCOLOR1","#003f4b");
-                root.style.setProperty("--TXTCOLOR2","#050505");
-                root.style.setProperty("--TXTCOLOR3","#003f4b");
-                jQuery(".infoblockCloseBox").css('filter','invert(0%)');
-                jQuery(".infoblockCloseBox").css(' -webkit-filter','invert(0%)');
-                jQuery(".settingsCloseBox").css('filter','invert(0%)');
-                jQuery(".settingsCloseBox").css(' -webkit-filter','invert(0%)');
-
-                tableColors = tableColorsLight;
-            }
-            if (loadFinished) {
-                TAR.planeMan.redraw();
-                refreshFilter();
-                initLegend(tableColors.unselected);
-                initSourceFilter(tableColors.unselected);
-                initFlagFilter(tableColors.unselected);
-            }
-        }
-    });
+    tableColors = tableColorsDark;
 
     initLegend(tableColors.unselected);
 
@@ -3104,34 +3025,6 @@ function initMap() {
         if (lyr.get('type') != 'base')
             return;
         lyr.dimKey = lyr.on('postrender', dim);
-    });
-
-    new Toggle({
-        key: "MapDim",
-        display: "Dim Map",
-        container: "#settingsLeft",
-        init: MapDim,
-        setState: function(state) {
-            /*
-            if (!state) {
-                ol.control.LayerSwitcher.forEachRecursive(layers_group, function(lyr) {
-                    if (lyr.get('type') != 'base')
-                        return;
-                    ol.Observable.unByKey(lyr.dimKey);
-                });
-            } else {
-                ol.control.LayerSwitcher.forEachRecursive(layers_group, function(lyr) {
-                    if (lyr.get('type') != 'base')
-                        return;
-                    lyr.dimKey = lyr.on('postrender', dim);
-                });
-            }
-            */
-            if (loadFinished) {
-                OLMap.render();
-            }
-            buttonActive('#B', state);
-        }
     });
 
     window.addEventListener('keydown', function(e) {
@@ -3201,7 +3094,7 @@ function initMap() {
                 break;
                 // misc
             case "b":
-                toggles['MapDim'].toggle();
+                cycleMapDim();
                 break;
             case "m":
                 toggleMultiSelect();
@@ -3444,8 +3337,21 @@ function displayPhoto() {
         adjustInfoBlock();
         return;
     }
+
     let new_html="";
-    let photoToPull = photos[0]["thumbnail"]["src"] || photos[0]["thumbnail"];
+
+    let photoToPull = "";
+    if (photos[0] && photos[0]["thumbnail_large"]) {
+        photoToPull = photos[0]["thumbnail_large"]["src"];
+    } else if(photos[0] && photos[0]["thumbnail"]) {
+        photoToPull = photos[0]["thumbnail"];
+    }
+
+    if (photoToPull === "") {
+        displaySil();
+        return;
+    }
+
     let linkToPicture = photos[0]["link"];
     //console.log(linkToPicture);
     new_html = '<a class=\"link\" href="'+linkToPicture+'" target="_blank" rel="noopener noreferrer"><img id="airplanePhoto" src=' +photoToPull+'></a>';
@@ -3570,7 +3476,7 @@ function refreshSelected() {
     if (showTrace) {
         if (selected.position_time) {
             const date = new Date(selected.position_time * 1000);
-            let timestamp = utcTimesHistoric ? (zuluTime(date) + NBSP + 'Z') : (lDateString(date) + ' ' + localTime(date) + NBSP + TIMEZONE);
+            let timestamp = useUTC ? (zuluTime(date) + NBSP + 'Z') : (lDateString(date) + ' ' + localTime(date) + NBSP + TIMEZONE);
             jQuery('#trace_time').updateText('Time:\n' + timestamp);
         } else {
             jQuery('#trace_time').updateText('Time:\n');
@@ -3645,6 +3551,8 @@ function refreshSelected() {
         typeLine = "n/a"
 
     jQuery('#selected_typelong').updateText(typeLine);
+    // the collapsed phone sheet has room for the model, not the year
+    jQuery('#selected_model_compact').updateText(selected.typeLong || selected.icaoType || "");
 
     if (selected.ownOp)
         jQuery('#selected_ownop').updateText(selected.ownOp);
@@ -3672,13 +3580,15 @@ function refreshSelected() {
         jQuery('#selected_squawk2').updateText(selected.squawk);
     }
 
-    if (useRouteAPI) {
-        if (selected.routeString) {
-            jQuery('#selected_route').updateText(selected.routeString);
-            jQuery('#selected_route').attr('title', selected.routeVerbose);
-        } else {
-            jQuery('#selected_route').updateText('n/a');
-        }
+    // The route line lives in the summary header now, so an aircraft with no
+    // route reads better with the line absent than with "n/a" under the
+    // callsign. #routeRow used to track only whether the setting was on.
+    if (useRouteAPI && selected.routeString) {
+        setSelectedRoute(selected.routeString);
+        jQuery('#selected_route').attr('title', selected.routeVerbose);
+        jQuery('#routeRow').show();
+    } else {
+        jQuery('#routeRow').hide();
     }
 
     let magResult = null;
@@ -3756,6 +3666,7 @@ function refreshSelected() {
         jQuery('#selected_temp').updateText('n/a');
 
     jQuery('#selected_speed1').updateText(format_speed_long(selected.gs, DisplayUnits));
+    if (isMobile()) showMobileSheet(selected);
     jQuery('#selected_speed2').updateText(format_speed_long(selected.gs, DisplayUnits));
     jQuery('#selected_ias').updateText(format_speed_long(selected.ias, DisplayUnits));
     jQuery('#selected_tas').updateText(format_speed_long(selected.tas, DisplayUnits));
@@ -3813,7 +3724,7 @@ function refreshSelected() {
         ((selected.messages == undefined && selected.receiverCount) || (globeIndex && binCraft))
         && !showTrace
     ) {
-        jQuery('#selected_message_count').prev().updateText('Receivers:');
+        jQuery('#selected_message_count').prev().updateText('Receivers');
         jQuery('#selected_message_count').prop('title', 'Number of receivers receiving this aircraft');
         if (selected.receiverCount >= 5 && selected.dataSource != 'mlat') {
             jQuery('#selected_message_count').updateText('> ' + selected.receiverCount);
@@ -3821,7 +3732,7 @@ function refreshSelected() {
             jQuery('#selected_message_count').updateText(selected.receiverCount);
         }
     } else {
-        jQuery('#selected_message_count').prev().updateText('Messages:');
+        jQuery('#selected_message_count').prev().updateText('Messages');
         jQuery('#selected_message_count').prop('title', 'The total number of messages received from this aircraft');
         jQuery('#selected_message_count').updateText(selected.messages);
     }
@@ -3925,104 +3836,6 @@ function refreshSelected() {
     }
 
     adjustInfoBlock();
-}
-
-let somethingHighlighted = false;
-function refreshHighlighted() {
-    // this is following nearly identical logic, etc, as the refreshSelected function, but doing less junk for the highlighted pane
-    let highlighted = HighlightedPlane;
-
-    if (!highlighted) {
-        if (somethingHighlighted)
-            jQuery('#highlighted_infoblock').hide();
-        somethingHighlighted = false;
-        return;
-    }
-    somethingHighlighted = true;
-
-    highlighted.checkVisible();
-
-    jQuery('#highlighted_infoblock').show();
-
-    let infoBox = jQuery('#highlighted_infoblock');
-
-    let marker = highlighted.marker || highlighted.glMarker;
-    let geom;
-    let markerCoordinates;
-    if (!marker || !(geom = marker.getGeometry()) || !(markerCoordinates = geom.getCoordinates()) ) {
-        jQuery('#highlighted_infoblock').hide();
-        return;
-    }
-    let markerPosition = OLMap.getPixelFromCoordinate(markerCoordinates);
-    if (!markerPosition)
-        return;
-
-    let mapSize = OLMap.getSize();
-    let infoBoxLeft = markerPosition[0];
-    let infoBoxTop = markerPosition[1];
-    if ((infoBoxLeft + 20 + infoBox.width()) < mapSize[0])
-        infoBoxLeft += 20;
-    else if ((infoBoxLeft - 20 - infoBox.width()) > 0)
-        infoBoxLeft -= (20 + infoBox.width());
-    else
-        infoBoxLeft = 0;
-    if ((infoBoxTop + 20 + infoBox.height()) < mapSize[1])
-        infoBoxTop += 20;
-    else if (infoBoxTop - (20 + infoBox.height()) > 0)
-        infoBoxTop -= (20 + infoBox.height());
-    else
-        infoBoxTop = 0;
-    infoBox.css("left", infoBoxLeft);
-    infoBox.css("top", infoBoxTop);
-
-    jQuery('#highlighted_callsign').text(highlighted.name);
-
-    if (highlighted.icaoType !== null) {
-        jQuery('#highlighted_icaotype').text(highlighted.icaoType);
-    } else {
-        jQuery('#highlighted_icaotype').text("n/a");
-    }
-
-    if (useRouteAPI) {
-        if (highlighted.routeString) {
-            jQuery('#highlighted_route').updateText(highlighted.routeString);
-        } else {
-            jQuery('#highlighted_route').updateText('n/a');
-        }
-    }
-
-    jQuery('#highlighted_source').text(format_data_source(highlighted.getDataSource()));
-
-    if (highlighted.registration !== null) {
-        jQuery('#highlighted_registration').text(highlighted.registration);
-    } else {
-        jQuery('#highlighted_registration').text("n/a");
-    }
-
-    let highlightedOperator = null;
-    if (highlighted.getAirline) {
-        highlightedOperator = highlighted.getAirline();
-    } else {
-        highlightedOperator = lookupAirlineForCallsign(highlighted.name, highlighted.registration);
-    }
-    if (highlightedOperator) {
-        jQuery('#highlighted_airline').text(highlightedOperator.n || 'n/a');
-    } else {
-        jQuery('#highlighted_airline').text('n/a');
-    }
-
-    jQuery('#highlighted_speed').text(format_speed_long(highlighted.gs, DisplayUnits));
-
-    jQuery("#highlighted_altitude").text(format_altitude_long(adjust_baro_alt(highlighted.altitude), highlighted.vert_rate, DisplayUnits));
-
-    jQuery('#highlighted_pf_route').text((highlighted.pfRoute ? highlighted.pfRoute : highlighted.icao.toUpperCase()));
-
-    jQuery('#highlighted_rssi').text(highlighted.rssi != null ? highlighted.rssi.toFixed(1) + ' dBFS' : "n/a");
-}
-
-function removeHighlight() {
-    HighlightedPlane = null;
-    refreshHighlighted();
 }
 
 function mstime() {
@@ -4605,35 +4418,56 @@ function refreshFeatures() {
     // ---- table sorting end ----
     //
 
+    // Column order and visibility. Reordering is up/down buttons rather than
+    // jQuery UI sortable's drag: it matches the label picker, and dragging a
+    // list item inside a scrolling panel is unreliable on touch.
+    const COL_PREFIX = 'dd_';
+
+    function moveColumn(id, delta) {
+        const order = columns.map(c => c.id);
+        const at = order.indexOf(id);
+        const to = at + delta;
+        if (at == -1 || to < 0 || to >= order.length)
+            return;
+        order.splice(to, 0, order.splice(at, 1)[0]);
+        loStore['columnOrder'] = JSON.stringify(order);
+        columns = createOrderedColumns();
+        planeMan.redraw();
+        createColumnToggles();
+    }
+
     function createColumnToggles() {
-        const prefix = 'dd_';
-        const sortableColumns = jQuery('#sortableColumns').sortable({
-            update: function (event, ui) {
-                const order = [];
-                jQuery('#sortableColumns li').each(function (e) {
-                    order.push(jQuery(this).attr('id').replace(prefix, ''));
-                });
+        const list = jQuery('#sortableColumns');
+        if (!list.length)
+            return;
 
-                loStore['columnOrder'] = JSON.stringify(order);
-                columns = createOrderedColumns();
+        // rebuilt in place on every reorder, so start from empty
+        list.addClass('ui-reorder-list').empty().off('click', '[data-move]');
 
-                planeMan.redraw();
-            }
-        });
-
-        for (let col of columns) {
-            sortableColumns.append(`<li class="ui-state-default" id="${prefix + col.id}"></li>`);
+        const last = columns.length - 1;
+        columns.forEach(function (col, index) {
+            list.append(`<li class="ui-reorder-item" id="${COL_PREFIX + col.id}"></li>`);
 
             new Toggle({
                 key: col.toggleKey,
                 display: col.text,
-                container: jQuery(`#${prefix + col.id}`),
+                container: jQuery(`#${COL_PREFIX + col.id}`),
                 init: col.visible,
                 setState: function (state) {
                     planeMan.setColumnVis(col.id, state);
                 }
             });
-        }
+
+            jQuery(`#${COL_PREFIX + col.id}`).append(
+                '<span class="ui-btn-group">'
+                + `<button type="button" class="ui-btn ui-btn-square ui-btn-quiet" data-col="${col.id}" data-move="-1" title="Move up"${index == 0 ? ' disabled' : ''}>\u2191</button>`
+                + `<button type="button" class="ui-btn ui-btn-square ui-btn-quiet" data-col="${col.id}" data-move="1" title="Move down"${index == last ? ' disabled' : ''}>\u2193</button>`
+                + '</span>');
+        });
+
+        list.on('click', '[data-move]', function () {
+            moveColumn(jQuery(this).attr('data-col'), parseInt(jQuery(this).attr('data-move')));
+        });
     }
 
     function createOrderedColumns() {
@@ -4677,6 +4511,11 @@ function deselect(plane) {
         }
         refreshSelected();
     }
+
+    // it was exempt from trimming while selected, so bring it back to the
+    // temp-trails window now rather than leaving a long track behind until
+    // the reaper's next tick
+    plane.reapTrail();
 
     plane.updateTick('redraw');
     updateAddressBar();
@@ -4768,18 +4607,21 @@ function selectPlaneByHex(hex, options) {
 
     pTracks || TAR.planeMan.refresh();
 
+    if (!newPlane)
+        resumeTempTrails();
+
     return newPlane !== undefined;
 }
 
 // loop through the planes and mark them as selected to show the paths for all planes
 function selectAllPlanes() {
-    HighlightedPlane = null;
     // if all planes are already selected, deselect them all
     if (SelectedAllPlanes) {
         deselectAllPlanes();
         return;
     }
     buttonActive('#T', true);
+    showTempTrailsBar(true);
     // If SelectedPlane has something in it, clear out the selected
     if (SelectedPlane)
         deselect(SelectedPlane);
@@ -4800,12 +4642,93 @@ function selectAllPlanes() {
     refreshFeatures();
 
     refreshSelected();
-    refreshHighlighted();
     pTracks || TAR.planeMan.refresh();
+}
+
+// "Trail seconds": 0 means keep the full track (classic all-tracks mode),
+// any other value only keeps the last X seconds of each track.
+function setTempTrails(seconds, options) {
+    options = options || {};
+    seconds = parseInt(seconds);
+    if (isNaN(seconds) || seconds < 0)
+        seconds = 0;
+    if (seconds > tempTrailsMax)
+        seconds = tempTrailsMax;
+
+    const previous = tempTrails ? tempTrailsTimeout : 0;
+
+    // Trails we already reaped are gone from the client, so asking for more
+    // history than we have can only be served by reloading (startup backfills
+    // from history_*.json). 0 means "keep everything", so it needs it too.
+    // Shortening just trims what we have, no reload needed.
+    const wantsMore = (seconds == 0) ? (previous != 0) : (seconds > previous);
+    if (!options.init && wantsMore) {
+        loStore['tempTrailsTimeout'] = seconds;
+        const params = new URLSearchParams(window.location.search);
+        if (seconds == 0) {
+            params.delete('tempTrails');
+            // keep showing all tracks after the reload
+            params.set('allTracks', '');
+        } else {
+            params.set('tempTrails', seconds);
+        }
+        window.location.search = params.toString();
+        return;
+    }
+
+    tempTrails = (seconds > 0);
+    if (tempTrails)
+        tempTrailsTimeout = seconds;
+
+    loStore['tempTrailsTimeout'] = seconds;
+    jQuery('#tempTrailsInput').val(seconds);
+
+    if (timers.trailReaper) {
+        clearInterval(timers.trailReaper);
+        timers.trailReaper = null;
+    }
+    if (tempTrails) {
+        timers.trailReaper = window.setInterval(trailReaper, 10000);
+        trailReaper();
+    }
+
+    if (!options.init) {
+        // going back to 0 can't bring already reaped positions back,
+        // but from here on the full track is kept again
+        refreshFeatures();
+        updateAddressBar();
+    }
+}
+
+function tempTrailsBarApply() {
+    setTempTrails(jQuery('#tempTrailsInput').val());
+}
+
+function showTempTrailsBar(show) {
+    if (show) {
+        jQuery('#tempTrailsInput').val(tempTrails ? tempTrailsTimeout : 0);
+        jQuery('#tempTrailsBar').css('display', 'flex');
+    } else {
+        jQuery('#tempTrailsBar').hide();
+    }
+}
+
+// with tempTrails enabled, showing all trails is the default state:
+// resume it once the user is done looking at an individual aircraft
+function resumeTempTrails() {
+    if (!tempTrails || SelectedAllPlanes || SelectedPlane || SelPlanes.length > 0)
+        return;
+    if (showTrace || onlySelected || multiSelect)
+        return;
+    selectAllPlanes();
 }
 
 // deselect all the planes
 function deselectAllPlanes(keepMain) {
+    if (isMobile()) {
+        jQuery('#mobile_summary').hide();
+        collapseMobileSheet();
+    }
     if (showTrace && !keepMain)
         return;
     if (!multiSelect && SelectedPlane)
@@ -4815,6 +4738,7 @@ function deselectAllPlanes(keepMain) {
 
     if (SelectedAllPlanes) {
         buttonActive('#T', false);
+        showTempTrailsBar(false);
         jQuery('#selectall_checkbox').removeClass('settingsCheckboxChecked');
         SelectedAllPlanes = false;
         refreshFilter();
@@ -4833,6 +4757,7 @@ function deselectAllPlanes(keepMain) {
     }
     refreshFilter();
     updateAddressBar();
+    resumeTempTrails();
 }
 
 function toggleFollow(override) {
@@ -4894,7 +4819,7 @@ function expandSidebar(e) {
     mapIsVisible = false;
     jQuery("#toggle_sidebar_control").hide();
     jQuery("#splitter").hide();
-    jQuery("#shrink_sidebar_button").show();
+    jQuery("#shrink_sidebar_control").show();
     jQuery("#sidebar_container").width("100%");
     TAR.planeMan.redraw();
     updateMapSize();
@@ -4902,12 +4827,27 @@ function expandSidebar(e) {
 }
 
 function showMap() {
+    if (isMobile()) {
+        // On mobile: shrink button goes straight to map-only (no split view)
+        jQuery('#sidebar_container').hide().css('width', '');
+        jQuery("#map_container").show();
+        mapIsVisible = true;
+        jQuery("#toggle_sidebar_control").show();
+        jQuery("#expand_sidebar_control").hide();
+        jQuery("#shrink_sidebar_control").hide();
+        jQuery("#toggle_sidebar_button").removeClass("hide_sidebar").addClass("show_sidebar");
+        // Keep toggle state in sync without triggering setState again
+        if (toggles['sidebar_visible']) toggles['sidebar_visible'].state = false;
+        TAR.planeMan.redraw();
+        updateMapSize();
+        return;
+    }
     jQuery('#sidebar_container').width(loStore['sidebar_width']).css('margin-left', '0');
     jQuery("#map_container").show()
     mapIsVisible = true;
     jQuery("#toggle_sidebar_control").show();
     jQuery("#splitter").show();
-    jQuery("#shrink_sidebar_button").hide();
+    jQuery("#shrink_sidebar_control").hide();
     TAR.planeMan.redraw();
     updateMapSize();
 }
@@ -4919,20 +4859,176 @@ function setPhotoHtml(source) {
     if (selectedPhotoCache == source)
         return;
     //console.log(source + ' ' + selectedPhotoCache);
+
+    // If setting empty picture, put in placeholder plane icon instead
+    if(source == "") {
+        source = "<div id=\"placeholder-photo\"><i class=\"fa-solid fa-plane\"></i></div>";
+    }
+
     selectedPhotoCache = source;
     jQuery('#selected_photo').html(source);
 }
 
-function adjustInfoBlock() {
-    if (wideInfoBlock ) {
-        infoBlockWidth = baseInfoBlockWidth + 40;
-    } else {
-        infoBlockWidth = baseInfoBlockWidth;
+
+// ---- Mobile bottom sheet ------------------------------------------------
+
+function isMobile() {
+    return window.innerWidth <= mobileBreakpoint;
+}
+
+// Layout mode is re-evaluated on resize and rotation, not just at load.
+// It also drives .is-mobile-layout on <html> so ui.css follows the same
+// decision instead of re-deriving the breakpoint.
+let layoutMode = null;
+let layoutModeTimeout = null;
+
+function applyLayoutMode(force) {
+    const mode = isMobile() ? 'mobile' : 'desktop';
+    if (mode == layoutMode && !force)
+        return;
+    layoutMode = mode;
+
+    document.documentElement.classList.toggle('is-mobile-layout', mode == 'mobile');
+
+    if (mode == 'desktop') {
+        // leaving phone width: collapse the "more" tray so it can't strand
+        // buttons in a hidden state on a wide screen
+        jQuery('#header_side').removeClass('is-expanded');
     }
+
+    const sidebar = toggles['sidebar_visible'];
+    let sidebarWanted = true;
+    if (sidebar && loadFinished) {
+        // A phone hides the sidebar, but that is a consequence of the window
+        // size, not a preference - pass init so it isn't written to loStore
+        // and the desktop preference survives.
+        sidebarWanted = (mode == 'mobile') ? false : (loStore['sidebar_visible'] != 'false');
+        if (sidebar.state != sidebarWanted)
+            sidebar.toggle(sidebarWanted, 'noSave');
+    }
+
+    if (mode == 'desktop' && sidebarWanted && !mapIsVisible && loadFinished) {
+        // the phone opens the sidebar fullscreen; a wide screen wants the split
+        // view back rather than a table covering the whole window
+        showMap();
+    }
+
+    if (loadFinished) {
+        refreshSelected();
+        updateMapSize();
+        TAR.altitudeChart.render();
+    }
+}
+
+function toggleChromeMore() {
+    jQuery('#header_side').toggleClass('is-expanded');
+}
+
+function initLayoutMode() {
+    applyLayoutMode(true);
+    window.addEventListener('resize', function() {
+        clearTimeout(layoutModeTimeout);
+        layoutModeTimeout = setTimeout(applyLayoutMode, 150);
+    });
+    window.addEventListener('orientationchange', function() {
+        clearTimeout(layoutModeTimeout);
+        layoutModeTimeout = setTimeout(function() { applyLayoutMode(true); }, 150);
+    });
+}
+
+// The sheet displays the real #selected_infoblock rather than a parallel copy
+// of the same fields, so the phone summary is the desktop summary by
+// construction. Collapsed vs expanded is a CSS concern.
+function showMobileSheet(selected) {
+    const sheet = jQuery('#mobile_summary');
+    const block = jQuery('#selected_infoblock');
+
+    if (!selected) {
+        collapseMobileSheet();
+        sheet.hide();
+        return;
+    }
+
+    if (!block.parent().is('#mobile_summary'))
+        block.appendTo(sheet);
+
+    // adjustInfoBlock sets desktop pixel sizes inline, on the block and on the
+    // photo; all of them have to go or stale values survive a desktop-to-phone
+    // resize
+    block.css({width: '', height: '', display: ''});
+    jQuery('#selected_photo, #airplanePhoto').css('width', '');
+    jQuery('#photo_container').css('height', '');
+    sheet.show();
+}
+
+function toggleMobileExpand() {
+    const sheet = document.getElementById('mobile_summary');
+    if (sheet.classList.contains('mobile-expanded')) {
+        collapseMobileSheet();
+    } else {
+        expandMobileSheet();
+    }
+}
+
+function expandMobileSheet() {
+    const sheet = jQuery('#mobile_summary');
+    sheet.addClass('mobile-expanded');
+    sheet.scrollTop(0);
+}
+
+function collapseMobileSheet() {
+    // the block stays in the sheet; only the amount shown changes
+    jQuery('#mobile_summary').removeClass('mobile-expanded');
+}
+
+// ---- end mobile bottom sheet -------------------------------------------
+
+// The panel shows the route with an arrow icon between the airports. The
+// string itself keeps its " - " for the aircraft table and the map labels.
+function setSelectedRoute(routeString) {
+    const el = document.getElementById('selected_route');
+    if (el.dataset.route === routeString)
+        return;
+    el.dataset.route = routeString;
+    el.replaceChildren();
+    routeString.split(/ -[ \n]/).forEach(function(part, i) {
+        if (i > 0) {
+            const arrow = document.createElement('i');
+            arrow.className = 'fa-solid fa-arrow-right ib-route-arrow';
+            el.append(arrow);
+        }
+        el.append(part);
+    });
+}
+
+// How much of the map's left edge the infoblock is covering. Panels that float
+// over the map centre themselves in what is left rather than in the whole map,
+// which otherwise puts them half behind the infoblock.
+function setInfoblockOffset(px) {
+    document.documentElement.style.setProperty('--ib-offset', Math.round(px) + 'px');
+}
+
+function adjustInfoBlock() {
+    infoBlockWidth = baseInfoBlockWidth;
     jQuery('#selected_infoblock').css("width", infoBlockWidth * globalScale + 'px');
 
-    jQuery('.ol-scale-line').css('left', (infoBlockWidth * globalScale + 8) + 'px');
-    jQuery('#replayBar').css('left', (infoBlockWidth * globalScale + 8) + 'px');
+    if (isMobile()) {
+        // the sheet owns the infoblock on a phone
+        setInfoblockOffset(0);
+        if (SelectedPlane && toggles['enableInfoblock'].state) {
+            showMobileSheet(SelectedPlane);
+        } else {
+            showMobileSheet(null);
+        }
+        return;
+    }
+
+    // Desktop behaviour unchanged below
+    jQuery('#mobile_summary').hide();
+    // Safety: if the infoblock was moved into the mobile sheet, return it
+    if (!jQuery('#selected_infoblock').parent().is('#map_container')) {
+        jQuery('#selected_infoblock').appendTo(jQuery('#map_container'));
+    }
 
     if (SelectedPlane && toggles['enableInfoblock'].state) {
 
@@ -4940,46 +5036,36 @@ function adjustInfoBlock() {
             jQuery("#sidebar_container").css('margin-left', '140pt');
         //jQuery('#sidebar_canvas').css('margin-bottom', jQuery('#selected_infoblock').height() + 'px');
         //
-        if (mapIsVisible && document.getElementById('map_canvas').clientWidth < parseFloat(jQuery('#selected_infoblock').css('width')) * 3) {
-            jQuery('#selected_infoblock').css('height', '290px');
-            jQuery('#selected_typedesc').parent().parent().hide();
-            jQuery('#credits').css('bottom', '295px');
-            jQuery('#credits').css('left', '5px');
-        } else {
-            jQuery('#selected_infoblock').css('height', '100%');
-            jQuery('#credits').css('bottom', '');
-            jQuery('#credits').css('left', '');
-        }
+        // There used to be a compact mode here that cut the block to 290px and
+        // hid the type description whenever the map was narrower than three
+        // panel widths. That suited a box floating over the map; the block is
+        // a docked full-height column now, and shrinking it just left the
+        // panel truncated mid-content. Widening the panel to 330px was enough
+        // to trip it on an ordinary window.
+        jQuery('#selected_infoblock').css('height', '');
+        jQuery('#credits').css('bottom', '');
+        jQuery('#credits').css('left', '');
 
         jQuery('#selected_infoblock').show();
+        // its left inset plus its width: where the panel's right edge lands
+        setInfoblockOffset(infoBlockWidth * globalScale + 12);
     } else {
         if (!mapIsVisible)
             jQuery("#sidebar_container").css('margin-left', '0');
         //jQuery('#sidebar_canvas').css('margin-bottom', 0);
 
-        jQuery('.ol-scale-line').css('left', '8px');
-        jQuery('#replayBar').css('left', '0px');
         jQuery('#credits').css('bottom', '');
         jQuery('#credits').css('left', '');
 
         jQuery('#selected_infoblock').hide();
+        setInfoblockOffset(0);
     }
 
-    let photoWidth = document.getElementById('photo_container').clientWidth;
-    let refWidth = infoBlockWidth * globalScale - 29;
-    if (Math.abs(photoWidth / refWidth - 1) > 0.05)
-        photoWidth = refWidth;
-
-    jQuery('#airplanePhoto').css("width", photoWidth + 'px');
-    jQuery('#selected_photo').css("width", photoWidth + 'px');
-
-    if (showPictures) {
-        if (planespottersAPI || planespottingAPI) {
-            jQuery('#photo_container').css('height', photoWidth * 0.883 + 'px');
-        } else {
-            jQuery('#photo_container').css('height', '40px');
-        }
-    }
+    // The photo used to be sized here in pixels, derived from the panel width,
+    // with the container given a fixed 0.78 aspect. CSS sizes it now - full
+    // container width, height from the image's own aspect - so a photo that
+    // isn't 0.78 is no longer letterboxed, and the inline width no longer
+    // beats the stylesheet.
 }
 
 function initializeUnitsSelector() {
@@ -5073,14 +5159,226 @@ function filterBlockedMLAT(switchFilter) {
     PlaneFilter.blockedMLAT = blockedMLATFilter;
 }
 
-function buttonActive(id, state) {
-    if (state) {
-        jQuery(id).addClass('activeButton');
-        jQuery(id).removeClass('inActiveButton');
-    } else {
-        jQuery(id).addClass('inActiveButton');
-        jQuery(id).removeClass('activeButton');
+// Toggle chips, replacing jQuery UI selectable. That widget is a lasso
+// selector, and both call sites coerced it into toggle behaviour by forcing
+// ctrlKey true on every selectablestart - so treat them as what they are.
+// Like the old stop handler, this only records the selection; a separate
+// Apply control pushes it into PlaneFilter.
+function initFilterChips(selector, values, assign) {
+    const list = jQuery(selector);
+    if (!list.length)
+        return;
+
+    list.off('click', 'li').on('click', 'li', function() {
+        jQuery(this).toggleClass('is-on');
+
+        const picked = [];
+        list.find('li').each(function(index) {
+            if (!jQuery(this).hasClass('is-on'))
+                return;
+            const value = values[index];
+            if (Array.isArray(value))
+                value.forEach(member => picked.push(member));
+            else
+                picked.push(value);
+        });
+        assign(picked);
+    });
+}
+
+// Drag the splitter to resize the sidebar, replacing jQuery UI resizable.
+// Pointer events cover mouse and touch in one path, and pointer capture keeps
+// the drag alive when the cursor leaves the 8px handle.
+function initSidebarResize() {
+    const splitter = document.getElementById('splitter');
+    const sidebar = document.getElementById('sidebar_container');
+    if (!splitter || !sidebar)
+        return;
+
+    const MIN_WIDTH = 150;
+    let dragging = false;
+    let startX = 0;
+    let startWidth = 0;
+
+    function onMove(e) {
+        if (!dragging)
+            return;
+        // it is the west edge, so dragging left makes the sidebar wider
+        const maxWidth = window.innerWidth * 0.8;
+        const width = Math.max(MIN_WIDTH, Math.min(maxWidth, startWidth - (e.clientX - startX)));
+        sidebar.style.width = width + 'px';
+        updateMapSize();
+        e.preventDefault();
     }
+
+    function onEnd() {
+        if (!dragging)
+            return;
+        dragging = false;
+        document.body.classList.remove('is-resizing');
+        loStore['sidebar_width'] = Math.round(sidebar.getBoundingClientRect().width);
+        updateMapSize();
+    }
+
+    splitter.addEventListener('pointerdown', function(e) {
+        dragging = true;
+        startX = e.clientX;
+        startWidth = sidebar.getBoundingClientRect().width;
+        // stops the pointer turning into a text selection or a page pan
+        document.body.classList.add('is-resizing');
+        e.preventDefault();
+    });
+
+    // On window rather than the handle: pointer capture is the tidier
+    // mechanism but it fails silently if the browser cancels the pointer
+    // (a pan gesture, a lost capture), leaving a drag that never moves.
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onEnd);
+    window.addEventListener('pointercancel', onEnd);
+}
+
+// Native <input type="date"> in place of the jQuery UI datepicker. Both call
+// sites used dateFormat "yy-mm-dd", which is the value format a date input
+// already uses, so nothing needs converting. The onMobile disable/enable
+// dance existed to stop the jQuery popup fighting the on-screen keyboard and
+// has no equivalent need here.
+function initDatePicker(selector, onSelect) {
+    const el = jQuery(selector);
+    if (!el.length)
+        return;
+    // maxDate: '+1d'
+    el.attr('max', zDateString(new Date(Date.now() + 24 * 3600 * 1000)));
+    el.on('change', function() {
+        if (this.value)
+            onSelect(this.value);
+    });
+}
+
+function setDatePickerValue(selector, dateString) {
+    jQuery(selector).val(dateString);
+}
+
+// Tabs, replacing jQuery UI's. Keeps its markup shape - a <ul> of links whose
+// href names the panel - so the HTML did not have to change. Collapsible like
+// the old widget: clicking the open tab closes it, which stores index -1.
+function initTabs(selector, storeKey) {
+    const root = jQuery(selector);
+    if (!root.length)
+        return;
+
+    const links = root.find('> ul > li > a');
+    const panels = links.map(function() {
+        return jQuery(this.getAttribute('href'));
+    }).get();
+
+    root.find('> ul').addClass('ui-tablist').attr('role', 'tablist');
+    links.addClass('ui-tab').attr('role', 'tab');
+
+    function show(index, save) {
+        links.each(function(i) {
+            const on = (i == index);
+            jQuery(this).toggleClass('is-on', on).attr('aria-selected', on ? 'true' : 'false');
+        });
+        panels.forEach(function(panel, i) {
+            panel.toggle(i == index);
+        });
+        if (save && storeKey)
+            loStore[storeKey] = index;
+    }
+
+    let active = 0;
+    if (storeKey && loStore[storeKey] != undefined) {
+        const stored = parseInt(loStore[storeKey]);
+        if (!isNaN(stored) && stored >= -1 && stored < links.length)
+            active = stored;
+    }
+    show(active, false);
+
+    links.on('click', function(e) {
+        e.preventDefault();
+        const i = links.index(this);
+        show(jQuery(this).hasClass('is-on') ? -1 : i, true);
+    });
+
+    links.on('keydown', function(e) {
+        const delta = (e.key == 'ArrowRight') ? 1 : (e.key == 'ArrowLeft') ? -1 : 0;
+        if (!delta)
+            return;
+        e.preventDefault();
+        const next = (links.index(this) + delta + links.length) % links.length;
+        links.eq(next).trigger('focus');
+        show(next, true);
+    });
+}
+
+// Native <input type="range"> in place of the jQuery UI slider. The option
+// names match what the old widget took, so call sites read the same:
+//   slide  -> the input event, continuous while dragging
+//   change -> the change event, on release
+// Unlike jQuery UI, setting the value programmatically fires nothing, which
+// is what the old replayJumpEnabled guard existed to fake.
+function initRange(selector, opts) {
+    const el = jQuery(selector);
+    if (!el.length)
+        return;
+    el.attr({
+        min: opts.min,
+        max: opts.max,
+        step: (opts.step != undefined) ? opts.step : 'any',
+    });
+    if (opts.value != undefined)
+        el.val(opts.value);
+    if (opts.slide)
+        el.on('input', function() { opts.slide(null, {value: parseFloat(this.value)}); });
+    if (opts.change)
+        el.on('change', function() { opts.change(null, {value: parseFloat(this.value)}); });
+
+    // See setRangeValue: mark the slider as held while the user is on it.
+    el.on('pointerdown', function() { rangeDragging.add(this); });
+    el.on('input', function() { rangeTouchedUntil.set(this, Date.now() + RANGE_GRACE_MS); });
+}
+
+// A native range moves its thumb the instant .value is written, so a
+// background writer will drag the thumb out from under the pointer. That is
+// what made the replay hour and minute sliders snap back to the current time:
+// replayStep -> replaySetTimeHint writes them on every tick. jQuery UI's
+// slider hid this, because it recomputed its handle from the pointer on the
+// next move.
+const rangeDragging = new Set();
+const rangeTouchedUntil = new WeakMap();
+const RANGE_GRACE_MS = 750;
+
+function releaseRangeDrags() {
+    rangeDragging.forEach(el => rangeTouchedUntil.set(el, Date.now() + RANGE_GRACE_MS));
+    rangeDragging.clear();
+}
+window.addEventListener('pointerup', releaseRangeDrags);
+window.addEventListener('pointercancel', releaseRangeDrags);
+
+function rangeIsHeld(el) {
+    if (rangeDragging.has(el))
+        return true;
+    // the grace period also covers keyboard adjustment, where there is no
+    // pointer to track
+    const until = rangeTouchedUntil.get(el);
+    return until != undefined && Date.now() < until;
+}
+
+function setRangeValue(selector, value) {
+    const el = jQuery(selector);
+    if (!el.length)
+        return;
+    if (rangeIsHeld(el[0]))
+        return;
+    el.val(value);
+}
+
+function buttonActive(id, state) {
+    // activeButton/inActiveButton are the pre-refresh classes, is-on is the
+    // ui.css primitive state. Both are set while surfaces are being migrated.
+    jQuery(id).toggleClass('activeButton', !!state);
+    jQuery(id).toggleClass('inActiveButton', !state);
+    jQuery(id).toggleClass('is-on', !!state);
 }
 
 function toggleIsolation(state, noRefresh) {
@@ -5128,17 +5426,9 @@ function togglePersistence() {
 
 function dim(evt) {
     try {
-        let currentDimPercentage = mapDimPercentage * layerDimFactor;
-        let currentContrastPercentage = mapContrastPercentage + layerExtraContrast;
-
-        if (!toggles['MapDim'].state) {
-            // slight dim even if disabled
-            currentDimPercentage /= 4;
-            currentContrastPercentage /= 4;
-        }
-
-        const dim = currentDimPercentage * (1 + 0.25 * toggles['darkerColors'].state);
-        const contrast = currentContrastPercentage * (1 + 0.1 * toggles['darkerColors'].state);
+        const level = currentMapDim();
+        const dim = mapDimPercentage * layerDimFactor * level.dim;
+        const contrast = (mapContrastPercentage + layerExtraContrast) * level.contrast;
         if (dim > 0.0001) {
             evt.context.globalCompositeOperation = 'multiply';
             evt.context.fillStyle = 'rgba(0,0,0,'+dim+')';
@@ -5208,7 +5498,9 @@ function invertMap(evt){
     }
 
     altitudeChart.render = function () {
-        if (toggles['altitudeChart'].state) {
+        // the legend is a fixed-aspect image with numeric ticks; below phone
+        // width the ticks collapse into noise, so don't show it there
+        if (toggles['altitudeChart'].state && !isMobile()) {
             runAfterLoad(loadLegend);
         } else {
             jQuery('#altitude_chart').hide();
@@ -5283,21 +5575,238 @@ function toggleLabels() {
         remakeTrails();
 }
 
-function toggleExtendedLabels(options) {
-    if (isNaN(g.extendedLabels))
-        g.extendedLabels = 0;
+// ---- map label fields ---------------------------------------------------
+//
+// Which fields appear on an aircraft's map label, and in what order. Replaces
+// the old O button that cycled through four hardcoded layouts; those layouts
+// survive as presets in the picker.
 
-    options = options || {};
-    if (!options.noIncrement) {
-        g.extendedLabels++;
+// The modes the old extendedLabels setting could hold, so existing bookmarks
+// and stored settings keep working.
+const extendedLabelsPresets = ['standard', 'compact', 'detailed', 'wind'];
+
+function validLabelFields(list) {
+    if (!Array.isArray(list))
+        return null;
+    const clean = list.filter(id => labelFieldDefs[id]);
+    return clean.length ? clean : null;
+}
+
+function loadLabelFields() {
+    let fields = null;
+
+    if (usp.has('labelFields')) {
+        fields = validLabelFields(usp.get('labelFields').split(','));
+    } else if (loStore['labelFields']) {
+        try {
+            fields = validLabelFields(JSON.parse(loStore['labelFields']));
+        } catch (e) {
+            console.log('ignoring unreadable stored labelFields: ' + e);
+        }
     }
-    g.extendedLabels %= 4;
-    //console.log(extendedLabels);
-    loStore['extendedLabels'] = g.extendedLabels;
+
+    // no field list yet: fall back to the old extendedLabels mode if there is one
+    if (!fields) {
+        let mode = null;
+        if (usp.has('extendedLabels'))
+            mode = parseInt(usp.getFloat('extendedLabels'));
+        else if (loStore['extendedLabels'])
+            mode = parseInt(loStore['extendedLabels']);
+        if (mode > 0 && extendedLabelsPresets[mode])
+            fields = labelFieldPresets[extendedLabelsPresets[mode]].slice();
+    }
+
+    if (fields)
+        g.labelFields = fields;
+
+    refreshLabels();
+}
+
+function saveLabelFields() {
+    loStore['labelFields'] = JSON.stringify(g.labelFields);
+    refreshLabels();
+}
+
+function refreshLabels() {
     for (let key in g.planesOrdered) {
         g.planesOrdered[key].updateMarker();
     }
-    buttonActive('#O', g.extendedLabels);
+    // O reads as active whenever the label carries more than just the callsign,
+    // which is what it meant before
+    buttonActive('#O', g.labelFields.length > 1 || g.labelFields[0] != 'callsign');
+    renderLabelPicker();
+}
+
+function applyLabelPreset(name) {
+    const preset = labelFieldPresets[name];
+    if (!preset)
+        return;
+    g.labelFields = preset.slice();
+    saveLabelFields();
+}
+
+function toggleLabelField(id) {
+    if (!labelFieldDefs[id])
+        return;
+    const at = g.labelFields.indexOf(id);
+    if (at == -1) {
+        g.labelFields.push(id);
+    } else {
+        g.labelFields.splice(at, 1);
+    }
+    saveLabelFields();
+}
+
+function moveLabelField(id, delta) {
+    const at = g.labelFields.indexOf(id);
+    const to = at + delta;
+    if (at == -1 || to < 0 || to >= g.labelFields.length)
+        return;
+    g.labelFields.splice(to, 0, g.labelFields.splice(at, 1)[0]);
+    saveLabelFields();
+}
+
+// Selected fields first, in the order they are drawn, then the rest.
+function labelPickerRows() {
+    const rows = g.labelFields.map((id, i) => ({ id: id, on: true, index: i }));
+    for (const id in labelFieldDefs) {
+        if (g.labelFields.indexOf(id) == -1)
+            rows.push({ id: id, on: false, index: -1 });
+    }
+    return rows;
+}
+
+function renderLabelPicker() {
+    const body = jQuery('#label_picker_body');
+    if (!body.length)
+        return;
+
+    const last = g.labelFields.length - 1;
+    let html = '';
+
+    for (const row of labelPickerRows()) {
+        const def = labelFieldDefs[row.id];
+        const atTop = row.on && row.index == 0;
+        const atBottom = row.on && row.index == last;
+        html += '<div class="ui-row label-picker-row">';
+        html += '<span class="ui-checkbox' + (row.on ? ' is-on' : '') + '"'
+             + ' role="checkbox" tabindex="0" aria-checked="' + (row.on ? 'true' : 'false') + '"'
+             + ' data-field="' + row.id + '"></span>';
+        html += '<span class="ui-row-label">' + def.title + '</span>';
+        html += '<span class="ui-btn-group">';
+        html += '<button type="button" class="ui-btn ui-btn-square ui-btn-quiet" data-move="-1"'
+             + ' data-field="' + row.id + '" title="Move up"'
+             + ((!row.on || atTop) ? ' disabled' : '') + '>↑</button>';
+        html += '<button type="button" class="ui-btn ui-btn-square ui-btn-quiet" data-move="1"'
+             + ' data-field="' + row.id + '" title="Move down"'
+             + ((!row.on || atBottom) ? ' disabled' : '') + '>↓</button>';
+        html += '</span>';
+        html += '</div>';
+    }
+    body.html(html);
+}
+
+function toggleLabelPicker(show) {
+    const panel = jQuery('#label_picker');
+    const open = (show == undefined) ? !panel.is(':visible') : show;
+    if (open) {
+        renderLabelPicker();
+        panel.css('display', 'flex');
+    } else {
+        panel.hide();
+    }
+}
+
+// Remember which infoblock detail groups are left open. Native <details>
+// handles the interaction; this only persists the state.
+// The infoblock's labels were written for a label-left/value-right layout, so
+// many carry a colon - some inside the label element, some as a bare text node
+// beside it. With labels block-level those colons either dangle on a line of
+// their own or trail an uppercased label. The markup is static, so one pass at
+// startup is enough.
+function tidyInfoblockLabels() {
+    const block = document.getElementById('selected_infoblock');
+    if (!block)
+        return;
+
+    const walker = document.createTreeWalker(block, NodeFilter.SHOW_TEXT);
+    const strays = [];
+    while (walker.nextNode()) {
+        if (walker.currentNode.textContent.trim() == ':')
+            strays.push(walker.currentNode);
+    }
+    strays.forEach(node => node.remove());
+
+    jQuery('#selected_infoblock .infoHeading').each(function() {
+        // strip a trailing colon from whichever text node ends the label
+        const walk = document.createTreeWalker(this, NodeFilter.SHOW_TEXT);
+        let last = null;
+        while (walk.nextNode()) {
+            if (walk.currentNode.textContent.trim())
+                last = walk.currentNode;
+        }
+        if (last)
+            last.textContent = last.textContent.replace(/\s*:\s*$/, '');
+    });
+}
+
+function initInfoblockGroups() {
+    let stored = {};
+    if (loStore['infoblockGroups']) {
+        try {
+            stored = JSON.parse(loStore['infoblockGroups']) || {};
+        } catch (e) {
+            console.log('ignoring unreadable stored infoblockGroups: ' + e);
+        }
+    }
+
+    jQuery('.ib-group').each(function() {
+        const key = jQuery(this).attr('data-group');
+        if (stored[key] != undefined)
+            this.open = !!stored[key];
+    });
+
+    // The toggle event does not bubble, so this has to be bound on each
+    // <details> rather than delegated from a container - which is why the open
+    // state was never being saved.
+    jQuery('.ib-group').on('toggle', function() {
+        const state = {};
+        jQuery('.ib-group').each(function() {
+            state[jQuery(this).attr('data-group')] = this.open;
+        });
+        loStore['infoblockGroups'] = JSON.stringify(state);
+    });
+}
+
+function initLabelPicker() {
+    // delegated, because the rows are rebuilt on every change
+    jQuery('#label_picker_body')
+        .on('click', '[data-move]', function() {
+            moveLabelField(jQuery(this).attr('data-field'),
+                parseInt(jQuery(this).attr('data-move')));
+        })
+        .on('click', '.ui-checkbox', function() {
+            toggleLabelField(jQuery(this).attr('data-field'));
+        })
+        .on('keydown', '.ui-checkbox', function(e) {
+            if (e.key == ' ' || e.key == 'Enter') {
+                e.preventDefault();
+                toggleLabelField(jQuery(this).attr('data-field'));
+            }
+        });
+
+    jQuery('#label_picker_presets').on('click', '[data-preset]', function() {
+        applyLabelPreset(jQuery(this).attr('data-preset'));
+    });
+
+    jQuery('#label_picker_close').on('click', function() {
+        toggleLabelPicker(false);
+    });
+}
+
+// the name the O button and the keyboard shortcut already call
+function toggleExtendedLabels() {
+    toggleLabelPicker();
 }
 
 function toggleTrackLabels() {
@@ -5468,7 +5977,7 @@ function getFlightAwareIdentLink(ident, linkText) {
 }
 
 function onResetSourceFilter(e) {
-    jQuery('#sourceFilter .ui-selected').removeClass('ui-selected');
+    jQuery('#sourceFilter li').removeClass('is-on');
 
     sourcesFilter = null;
 
@@ -5485,7 +5994,7 @@ function updateSourceFilter(e) {
 }
 
 function onResetFlagFilter(e) {
-    jQuery('#flagFilter .ui-selected').removeClass('ui-selected');
+    jQuery('#flagFilter li').removeClass('is-on');
 
     flagFilter = null;
 
@@ -5652,12 +6161,12 @@ function initFilters() {
 
         if (PlaneFilter.sources) {
             sourcesFilter = PlaneFilter.sources
-            sourcesFilter.map((f) => jQuery('#source-filter-' + f).addClass('ui-selected'))
+            sourcesFilter.map((f) => jQuery('#source-filter-' + f).addClass('is-on'))
         }
 
         if (PlaneFilter.flagFilter) {
             flagFilter = PlaneFilter.flagFilter
-            flagFilter.map((f) => jQuery('#flag-filter-' + f).addClass('ui-selected'))
+            flagFilter.map((f) => jQuery('#flag-filter-' + f).addClass('is-on'))
         }
     }
 }
@@ -5721,6 +6230,30 @@ function toggleLayer(element, layer) {
                 }
             }
         });
+    });
+}
+
+// Toggles an OpenAIP vector layer category on/off and persists the choice.
+function toggleOpenAIPCategory(category, visible) {
+    openAIPVectorCategories[category] = visible;
+    loStore['openaip_cat_' + category] = String(visible);
+    // Trigger re-render of the vector tile layer.
+    ol.control.LayerSwitcher.forEachRecursive(layers_group, function(lyr) {
+        if (lyr.get('name') === 'openaip_vector') {
+            lyr.changed();
+        }
+    });
+}
+
+// Updates the fill opacity for the OpenAIP vector layer and persists the choice.
+function setOpenAIPFillOpacity(value) {
+    openAIPVectorFillOpacity = parseInt(value, 10);
+    loStore['openaip_fill_opacity'] = String(openAIPVectorFillOpacity);
+    if (window._openAIPClearStyleCache) window._openAIPClearStyleCache();
+    ol.control.LayerSwitcher.forEachRecursive(layers_group, function(lyr) {
+        if (lyr.get('name') === 'openaip_vector') {
+            lyr.changed();
+        }
     });
 }
 
@@ -5815,7 +6348,6 @@ function changeZoom(init) {
     if (!init && showTrace)
         updateAddressBar();
 
-    checkPointermove();
 }
 
 function checkScale() {
@@ -5846,20 +6378,9 @@ function setGlobalScale(scale, init) {
     if (!init) {
         refreshFeatures();
         refreshSelected();
-        refreshHighlighted();
         remakeTrails();
     }
 }
-
-function checkPointermove() {
-    if ((webgl || g.zoomLvl > 5.5) && enableMouseover && !onMobile) {
-        OLMap.on('pointermove', onPointermove);
-    } else {
-        OLMap.un('pointermove', onPointermove);
-        removeHighlight();
-    }
-}
-
 
 function changeCenter(init) {
     const rawCenter = OLMap.getView().getCenter();
@@ -6002,7 +6523,6 @@ function refresh(redraw) {
 
 
     refreshSelected();
-    refreshHighlighted();
 
     triggerRefresh = 0;
 }
@@ -6081,54 +6601,6 @@ function mapRefresh(redraw) {
     }
 }
 
-function onPointermove(evt) {
-    //clearTimeout(pointerMoveTimeout);
-    //pointerMoveTimeout = setTimeout(highlight(evt), 100);
-    highlight(evt);
-}
-
-function highlight(evt) {
-    let evtCoords = evt.map.getCoordinateFromPixel(evt.pixel);
-    let source = webgl ? webglFeatures : PlaneIconFeatures;
-    let feature = source.getClosestFeatureToCoordinate(evtCoords);
-    if (feature) {
-        let fPixel = evt.map.getPixelFromCoordinate(feature.getGeometry().getCoordinates());
-        let a = fPixel[0] - evt.pixel[0];
-        let b = fPixel[1] - evt.pixel[1];
-        let c = globalScale * 20;
-        if (a**2 + b**2 > c**2) {
-            feature = null;
-        }
-    }
-    if (!feature) {
-        HighlightedPlane = null;
-        refreshHighlighted();
-        return;
-    }
-    const hex = feature.hex;
-
-    const values = feature.values_;
-    const mmsi = values ? values.mmsi : null;
-    if (hex) {
-        //console.log(hex);
-    }
-    if (mmsi) {
-        //console.log(mmsi);
-    }
-
-    if (HighlightedPlane && hex == HighlightedPlane.icao)
-        return;
-
-    //clearTimeout(pointerMoveTimeout);
-
-    if (hex) {
-        HighlightedPlane = g.planes[hex];
-    } else {
-        HighlightedPlane = null;
-    }
-    //pointerMoveTimeout = setTimeout(refreshHighlighted(), 300);
-    refreshHighlighted();
-}
 let urlIcaos = [];
 function parseURLIcaos() {
     if (usp.has('icao')) {
@@ -6383,6 +6855,7 @@ function findPlanes(queries, byIcao, byCallsign, byReg, byType, showWarnings) {
 }
 
 function trailReaper() {
+    // reapTrail decides per aircraft whether trimming applies
     for (let i in g.planesOrdered) {
         g.planesOrdered[i].reapTrail();
     }
@@ -6644,6 +7117,11 @@ function updateAddressBar() {
         string += 'icaoFilter=' + icaoFilter.join(',')
     }
 
+    if (tempTrails && !showTrace && !replay) {
+        string += (string ? '&' : '?');
+        string += 'tempTrails=' + tempTrailsTimeout;
+    }
+
     if (shareBaseUrl) {
         shareLink = shareBaseUrl + string;
     } else {
@@ -6797,6 +7275,9 @@ function toggleShowTrace() {
 
     jQuery('#history_collapse').toggle();
     jQuery('#show_trace').toggleClass('active');
+    if (showTrace)
+        // nothing is playing until a speed is picked, which is Stop
+        markReplaySpeed(traceOpts.replaySpeed || 0);
 }
 
 function legShift(offset, plane) {
@@ -6932,7 +7413,7 @@ function shiftTrace(offset) {
     }
 
     //jQuery('#trace_date').text('UTC day:\n' + traceDateString);
-    jQuery("#histDatePicker").datepicker('setDate', traceDateString);
+    setDatePickerValue("#histDatePicker", traceDateString);
 
     for (let i in SelPlanes) {
         selectPlaneByHex(SelPlanes[i].icao, {noDeselect: true, zoom: g.zoomLvl});
@@ -6991,7 +7472,7 @@ function setLineWidth() {
     labelFill = new ol.style.Fill({color: 'white' });
     blackFill = new ol.style.Fill({color: 'black' });
     labelStroke = new ol.style.Stroke({color: 'rgba(0,0,0,0.7', width: 4 * globalScale});
-    labelStrokeNarrow = new ol.style.Stroke({color: 'rgba(0,0,0,0.7', width: 2.5 * globalScale});
+    labelStrokeNarrow = new ol.style.Stroke({color: 'rgba(0,0,0,0.7', width: 3 * globalScale});
     bgFill = new ol.style.Stroke({color: 'rgba(0,0,0,0.25'});
 }
 let lastCallLocationChange = 0;
@@ -8036,7 +8517,7 @@ function initReplay(chunk, data) {
 }
 
 function setReplayTimeHint(date) {
-    if (true || utcTimesHistoric) {
+    if (true) {
         jQuery("#replayDateHintLocal").html(TIMEZONE + " Date: " + lDateString(date));
         jQuery("#replayDateHint").html("" + zDateString(date));
         jQuery("#replayTimeHint").html("UTC:" + NBSP + zuluTime(date) + ' / ' + TIMEZONE + ":" + NBSP + localTime(date));
@@ -8057,11 +8538,8 @@ function replayOnSliderMove() {
 
     setReplayTimeHint(date);
 }
-let replayJumpEnabled = true;
 function replayJump() {
     if (!showingReplayBar)
-        return;
-    if (!replayJumpEnabled)
         return;
     let date = new Date(replay.dateText);
     date.setUTCHours(Number(replay.hours));
@@ -8083,7 +8561,6 @@ function replayJump() {
     loadReplay(date);
 }
 function replaySetTimeHint(arg) {
-    replayJumpEnabled = false;
     let dateString;
     let timeString;
 
@@ -8094,16 +8571,15 @@ function replaySetTimeHint(arg) {
 
     if (replay.datepickerDate != dateString) {
         replay.datepickerDate = dateString;
-        jQuery("#replayDatepicker").datepicker('setDate', dateString);
+        setDatePickerValue("#replayDatepicker", dateString);
     }
 
 
     let hours = replay.ts.getUTCHours();
-    jQuery('#hourSelect').slider("option", "value", hours);
+    setRangeValue('#hourSelect', hours);
 
     let minutes = replay.ts.getUTCMinutes();
-    jQuery('#minuteSelect').slider("option", "value", minutes);
-    replayJumpEnabled = true;
+    setRangeValue('#minuteSelect', minutes);
 }
 
 function replayStep(arg) {
@@ -8430,43 +8906,22 @@ function showReplayBar(){
         jQuery("#replayBar").hide();
         clearTimeout(refreshId);
         replay = null;
-        jQuery('#map_canvas').height('100%');
-        jQuery('#sidebar_canvas').height('100%');
         jQuery("#selected_showTrace_hide").show();
         fetchData({force: true});
     } else {
         jQuery("#replayBar").show();
         jQuery("#replayBar").css('display', 'grid');
-        jQuery('#replayBar').height('100px');
-        jQuery('#map_canvas').height('calc(100% - 100px)');
-        jQuery('#sidebar_canvas').height('calc(100% - 110px)');
+        // the bar floats over the map now; it used to occupy the bottom 100px
         if (!replay) {
             replay = replayDefaults(new Date());
         }
         //ts.setUTCMinutes((parseInt((ts.getUTCMinutes() + 7.5)/15) * 15) % 60);
-        let datepickerOptions = {
-            maxDate: '+1d',
-            dateFormat: "yy-mm-dd",
-            autoSize: true,
-            onSelect: function(dateText) {
-                replay.dateText = dateText;
-                replayJump();
-            },
-        };
-        if (onMobile) {
-            datepickerOptions.onClose = function(dateText, inst){
-                jQuery("replayDatepicker").attr("disabled", false);
-            };
-            datepickerOptions.beforeShow = function(input, inst){
-                jQuery("replayDatepicker").attr("disabled", true);
-            };
-        } else {
-            //
-        }
+        initDatePicker("#replayDatepicker", function(dateText) {
+            replay.dateText = dateText;
+            replayJump();
+        });
 
-        jQuery("#replayDatepicker").datepicker(datepickerOptions);
-
-        jQuery('#hourSelect').slider({
+        initRange('#hourSelect', {
             step: 1,
             min: 0,
             max: 23,
@@ -8478,7 +8933,7 @@ function showReplayBar(){
                 replayJump();
             }
         });
-        jQuery('#minuteSelect').slider({
+        initRange('#minuteSelect', {
             step: 1,
             min: 0,
             max: 59,
@@ -8491,7 +8946,7 @@ function showReplayBar(){
             }
         });
         const slideBase = 3.0;
-        jQuery('#replaySpeedSelect').slider({
+        initRange('#replaySpeedSelect', {
             value: Math.pow(replay.speed, 1 / slideBase),
             step: 0.07,
             min: Math.pow(1, 1 / slideBase),
@@ -9068,19 +9523,6 @@ function deleteTraces() {
     }
 }
 
-function setPictureVisibility() {
-    showPictures = planespottersAPI || planespottingAPI;
-    if (showPictures) {
-        jQuery('#photo_container').removeClass('hidden');
-    } else {
-        jQuery('#photo_container').addClass('hidden');
-    }
-    if (planespottersLinks && !showPictures) {
-        jQuery('#photoLinkRow').removeClass('hidden');
-    } else {
-        jQuery('#photoLinkRow').addClass('hidden');
-    }
-}
 
 // just an idea, unused
 let infoBits = {
@@ -9288,3 +9730,58 @@ globeRateUpdate();
 
 parseURLIcaos();
 initialize();
+
+
+function currentMapDim() {
+    return mapDimLevels[g.mapDimLevel] || mapDimLevels[1];
+}
+
+function setMapDimLevel(level, options) {
+    options = options || {};
+    level = parseInt(level);
+    if (isNaN(level) || level < 0 || level >= mapDimLevels.length)
+        level = 1;
+
+    g.mapDimLevel = level;
+    darkerColors = currentMapDim().darkerMarkers;
+
+    if (!options.noSave)
+        loStore['mapDimLevel'] = level;
+
+    jQuery('#mapdim_levels .ui-btn').each(function() {
+        jQuery(this).toggleClass('is-on', parseInt(jQuery(this).attr('data-dim')) == level);
+    });
+    buttonActive('#B', level > 0);
+
+    if (loadFinished) {
+        OLMap.render();
+        TAR.planeMan.redraw();
+        for (let key in g.planesOrdered) {
+            g.planesOrdered[key].updateMarker();
+        }
+    }
+}
+
+// the B button and the b shortcut step through the levels
+function cycleMapDim() {
+    setMapDimLevel((g.mapDimLevel + 1) % mapDimLevels.length);
+}
+
+function initMapDim() {
+    jQuery('#mapdim_levels').on('click', '.ui-btn', function() {
+        setMapDimLevel(jQuery(this).attr('data-dim'));
+    });
+
+    let level = null;
+    if (usp.has('mapDimLevel')) {
+        level = parseInt(usp.get('mapDimLevel'));
+    } else if (loStore['mapDimLevel'] != undefined) {
+        level = parseInt(loStore['mapDimLevel']);
+    } else {
+        // carry over the two settings this replaced
+        level = MapDim ? 1 : 0;
+        if (usp.has('darkerColors') || loStore['darkerColors'] == 'true')
+            level = 2;
+    }
+    setMapDimLevel(level, {noSave: true});
+}
