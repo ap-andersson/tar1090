@@ -72,21 +72,6 @@ function createBaseLayers() {
         type: 'base',
     }));
 
-    let basemap_id = "rastertiles/voyager";
-    world.push(new ol.layer.Tile({
-        source: new ol.source.OSM({
-            "url" : "https://{a-d}.basemaps.cartocdn.com/"+ basemap_id + "/{z}/{x}/{y}.png",
-            "attributions" : 'Powered by <a href="https://carto.com">CARTO.com</a>'
-            + ' using data by <a href="http://openstreetmap.org">OpenStreetMap</a>, under <a href="http://www.openstreetmap.org/copyright">ODbL</a>.',
-            attributionsCollapsible: false,
-            maxZoom: 15,
-            transition: tileTransition,
-        }),
-        name: "carto_" + basemap_id,
-        title: 'CARTO.com English',
-        type: 'base',
-    }));
-
     world.push(new ol.layer.Tile({
         source: new ol.source.OSM({
             "url" : "https://{a-d}.tile.openstreetmap.de/{z}/{x}/{y}.png",
@@ -346,21 +331,40 @@ function createBaseLayers() {
         title: 'GIBS Clouds ' + yesterday,
         type: 'base',
     }));
-    // carto.com basemaps, see the following URLs for details on them:
-    // http://basemaps.cartocdn.com
-    // https://github.com/CartoDB/cartodb/wiki/BaseMaps-available
 
-    let basemaps = [ "dark_all", "dark_nolabels",
-        "light_all", "light_nolabels"
-    ]
+    if (carto_api_key) {
 
-    if (1) {
+        const params = `?key=${carto_api_key}`;
+
+        let basemap_id = "rastertiles/voyager";
+        world.push(new ol.layer.Tile({
+            source: new ol.source.OSM({
+                "url" : "https://{a-d}.basemaps.cartocdn.com/"+ basemap_id + "/{z}/{x}/{y}.png" + params,
+                "attributions" : 'Powered by <a href="https://carto.com">CARTO.com</a>'
+                + ' using data by <a href="http://openstreetmap.org">OpenStreetMap</a>, under <a href="http://www.openstreetmap.org/copyright">ODbL</a>.',
+                attributionsCollapsible: false,
+                maxZoom: 15,
+                transition: tileTransition,
+            }),
+            name: "carto_" + basemap_id,
+            title: 'CARTO.com English',
+            type: 'base',
+        }));
+
+        // carto.com basemaps, see the following URLs for details on them:
+        // http://basemaps.cartocdn.com
+        // https://github.com/CartoDB/cartodb/wiki/BaseMaps-available
+
+        let basemaps = [ "dark_all", "dark_nolabels",
+            "light_all", "light_nolabels"
+        ]
+
         for (let i in basemaps) {
             let basemap_id = basemaps[i];
 
             world.push(new ol.layer.Tile({
                 source: new ol.source.OSM({
-                    "url" : "https://{a-d}.basemaps.cartocdn.com/"+ basemap_id + "/{z}/{x}/{y}.png",
+                    "url" : "https://{a-d}.basemaps.cartocdn.com/"+ basemap_id + "/{z}/{x}/{y}.png" + params,
                     "attributions" : 'Powered by <a href="https://carto.com">CARTO.com</a>'
                     + ' using data by <a href="http://openstreetmap.org">OpenStreetMap</a>, under <a href="http://www.openstreetmap.org/copyright">ODbL</a>.',
                     attributionsCollapsible: false,
@@ -996,6 +1000,10 @@ function createBaseLayers() {
 
     // Taken from https://github.com/olithissen/AwacsOrbitsDE
     europe.push(createGeoJsonLayer('DE AWACS Orbits', 'deawacsorbits', 'geojson/DE_Mil_AWACS_Orbits.geojson', 'rgba(252, 186, 3, 0.3)', 'rgba(252, 186, 3, 1)', false));
+
+    // Luftwaffe low flying areas (LFA) built from NfL 2025-1-3686 (DFS, https://www.dfs.de/homepage/de/medien/ifr-vfr-informationen/vfr-informationen/lfa-tieffluggebiete-der-bundeswehr/),
+    // railway / river / road / border segments traced along OpenStreetMap data (c) OpenStreetMap contributors, ODbL
+    europe.push(createGeoJsonLayer('DE Low Flying Areas', 'delowflyingareas', 'geojson/DE_Mil_LFA.geojson', 'rgba(255, 60, 0, 0.25)', 'rgba(255, 60, 0, 1)', false));
 
     // Taken from https://github.com/alkissack/Dump1090-OpenLayers3-html
     europe.push(createGeoJsonLayer('UK Radar Corridors', 'ukradarcorridors', 'geojson/UK_Mil_RC.geojson', 'rgba(22, 171, 22, 0.3)', 'rgba(22, 171, 22, 1)'));
