@@ -316,7 +316,7 @@ let showZoomLevel = false;
 let defaultMilitaryOnly = false;    // U: only show military aircraft
 let defaultAllTracks = false;       // T: show all tracks
 let defaultLabels = true;           // L: aircraft labels
-let defaultExtendedLabels = 0;      // O: label extension, 0 - 3
+let defaultExtendedLabels = 0;      // O: label extension, 0 - 2
 let defaultTrackLabels = false;     // K: track labels
 
 // Whether the sidebar with the aircraft table is open on page load. Once it is

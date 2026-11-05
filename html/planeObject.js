@@ -944,14 +944,15 @@ const labelFieldDefs = {
     },
 };
 
-// Named starting points offered by the picker. The first four reproduce the
-// states the O button used to cycle through, so nothing is lost.
+// Named starting points offered by the picker. Standard, compact and detailed
+// stand in for states the O button used to cycle through; detailed keeps the
+// same fields but leads with the callsign rather than the old reg/type-first
+// order. The old wind layout is gone as a preset - the Wind field remains.
 const labelFieldPresets = {
     minimal:  ['callsign'],
     standard: ['callsign', 'route'],
     compact:  ['speedalt', 'callsign', 'route'],
-    detailed: ['regtype', 'speedalt', 'callsign', 'route'],
-    wind:     ['wind', 'speedalt', 'callsign', 'route'],
+    detailed: ['callsign', 'regtype', 'speedalt', 'route'],
 };
 
 PlaneObject.prototype.updateIcon = function() {

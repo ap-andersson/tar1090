@@ -268,7 +268,7 @@ ColorByAlt = {
 // defaultMilitaryOnly = false;    // U: only show military aircraft
 // defaultAllTracks = false;       // T: show all tracks
 // defaultLabels = false;          // L: aircraft labels
-// defaultExtendedLabels = 0;      // O: label extension, 0 - 3
+// defaultExtendedLabels = 0;      // O: label extension, 0 - 2
 // defaultTrackLabels = false;     // K: track labels
 
 // globalScale = 1;

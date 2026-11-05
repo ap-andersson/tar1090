@@ -5656,8 +5656,9 @@ function toggleLabels() {
 // survive as presets in the picker.
 
 // The modes the old extendedLabels setting could hold, so existing bookmarks
-// and stored settings keep working.
-const extendedLabelsPresets = ['standard', 'compact', 'detailed', 'wind'];
+// and stored settings keep working. Mode 3 (wind) no longer has a preset and
+// is ignored, which leaves the default label.
+const extendedLabelsPresets = ['standard', 'compact', 'detailed'];
 
 function validLabelFields(list) {
     if (!Array.isArray(list))
